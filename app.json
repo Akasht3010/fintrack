@@ -1,30 +1,45 @@
 {
   "expo": {
-    "name": "fintrack",
+    "name": "Fintrack",
     "slug": "fintrack",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fintrack.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "package": "com.fintrack.app"
     },
     "web": {
+      "bundler": "metro",
+      "output": "static",
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "scheme": "fintrack",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "http://localhost:8000",
+      "googleClientIdIos": "881441063641-1dhd04lkqss5nolrpeol2raik665mdkb.apps.googleusercontent.com",
+      "googleClientIdWeb": "881441063641-10nb3m5m4bccjshvi9rs9gcdhh1thjh1.apps.googleusercontent.com",
+      "appEnv": "development"
     }
   }
 }
