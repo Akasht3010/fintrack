@@ -20,7 +20,7 @@ export default function SignupScreen() {
 
   const isNameValid = name.trim().length > 0
   const isEmailValid = isValidEmail(email)
-  const isPhoneValid = phone.trim().length === 0 || isValidPhone(phone)
+  const isPhoneValid = isValidPhone(phone)
   const canSubmit = isNameValid && isEmailValid && isPhoneValid
 
   const handleSignup = async () => {
@@ -35,18 +35,17 @@ export default function SignupScreen() {
     }
 
     if (!isPhoneValid) {
-      Alert.alert("Invalid phone", "Please enter a valid 10-digit phone number, or leave it blank")
+      Alert.alert("Invalid phone", "Please enter a valid 10-digit phone number")
       return
     }
 
     setIsLoading(true)
 
     try {
-      const cleanedPhone = phone.replace(/\D/g, "")
       const response = await authApi.signup({
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        ...(cleanedPhone ? { phone: cleanedPhone } : {})
+        phone: phone.replace(/\D/g, "")
       })
 
       await SecureStore.setItemAsync("access_token", response.access_token)
@@ -133,7 +132,7 @@ export default function SignupScreen() {
 
               <View>
                 <TextInput
-                  placeholder="Phone number (optional)"
+                  placeholder="Phone number"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"

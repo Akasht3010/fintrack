@@ -5,7 +5,7 @@ import * as SecureStore from "expo-secure-store"
 export interface SignupRequest {
   name: string
   email: string
-  phone?: string
+  phone: string
 }
 
 export interface SignupResponse {
