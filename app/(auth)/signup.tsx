@@ -6,18 +6,22 @@ import * as SecureStore from "expo-secure-store"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { useState } from "react"
-import { classifyIdentifier } from "@/utils/identifier"
+import { classifyIdentifier, isValidEmail, isValidPhone } from "@/utils/identifier"
 
 export default function SignupScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
+  const prefill = classifyIdentifier(params.identifier ?? "")
+
   const [name, setName] = useState("")
-  const [identifierInput, setIdentifierInput] = useState(params.identifier ?? "")
+  const [email, setEmail] = useState(prefill.kind === "email" ? prefill.value : "")
+  const [phone, setPhone] = useState(prefill.kind === "phone" ? prefill.value : "")
   const [isLoading, setIsLoading] = useState(false)
   const { setUser } = useUserStore()
 
-  const { kind, value, isValid } = classifyIdentifier(identifierInput)
   const isNameValid = name.trim().length > 0
-  const canSubmit = isNameValid && isValid
+  const isEmailValid = isValidEmail(email)
+  const isPhoneValid = phone.trim().length === 0 || isValidPhone(phone)
+  const canSubmit = isNameValid && isEmailValid && isPhoneValid
 
   const handleSignup = async () => {
     if (!isNameValid) {
@@ -25,54 +29,25 @@ export default function SignupScreen() {
       return
     }
 
-    if (!identifierInput.trim()) {
-      Alert.alert("Error", "Please enter a phone number or email")
+    if (!isEmailValid) {
+      Alert.alert("Invalid email", "Please enter a valid email address")
       return
     }
 
-    if (!isValid) {
-      Alert.alert(
-        "Invalid input",
-        kind === "email"
-          ? "Please enter a valid email address"
-          : "Please enter a valid 10-digit phone number"
-      )
+    if (!isPhoneValid) {
+      Alert.alert("Invalid phone", "Please enter a valid 10-digit phone number, or leave it blank")
       return
     }
 
     setIsLoading(true)
 
     try {
-      // Guard against silently "logging in" to someone else's account under a new name
-      const alreadyExists = await authApi
-        .login({ identifier: value })
-        .then(() => true)
-        .catch((error: any) => {
-          if (error.response?.status === 404) return false
-          throw error
-        })
-
-      if (alreadyExists) {
-        setIsLoading(false)
-        Alert.alert(
-          "Account already exists",
-          `An account already exists for that ${kind === "email" ? "email" : "phone number"}. Please log in instead.`,
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Log In",
-              onPress: () => router.replace({ pathname: "/(auth)/login", params: { identifier: value } })
-            }
-          ]
-        )
-        return
-      }
-
-      const response = await authApi.signup(
-        kind === "email"
-          ? { name: name.trim(), email: value }
-          : { name: name.trim(), phone: value }
-      )
+      const cleanedPhone = phone.replace(/\D/g, "")
+      const response = await authApi.signup({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        ...(cleanedPhone ? { phone: cleanedPhone } : {})
+      })
 
       await SecureStore.setItemAsync("access_token", response.access_token)
       await SecureStore.setItemAsync("user", JSON.stringify(response.user))
@@ -80,10 +55,24 @@ export default function SignupScreen() {
       setUser(response.user)
       router.replace("/(tabs)")
     } catch (error: any) {
-      Alert.alert(
-        "Sign up failed",
-        error.response?.data?.detail || error.message || "Something went wrong"
-      )
+      if (error.response?.status === 409) {
+        Alert.alert(
+          "Account already exists",
+          error.response?.data?.detail || "This email or phone number is already registered.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Log In",
+              onPress: () => router.replace({ pathname: "/(auth)/login", params: { identifier: email.trim() } })
+            }
+          ]
+        )
+      } else {
+        Alert.alert(
+          "Sign up failed",
+          error.response?.data?.detail || error.message || "Something went wrong"
+        )
+      }
     } finally {
       setIsLoading(false)
     }
@@ -125,9 +114,9 @@ export default function SignupScreen() {
 
               <View>
                 <TextInput
-                  placeholder="Phone number or email"
-                  value={identifierInput}
-                  onChangeText={setIdentifierInput}
+                  placeholder="Email address"
+                  value={email}
+                  onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -135,11 +124,27 @@ export default function SignupScreen() {
                   className="w-full border border-border rounded-2xl px-4 py-4 text-base"
                   placeholderTextColor="#9ca3af"
                 />
-                {identifierInput.trim().length > 0 && !isValid && (
+                {email.trim().length > 0 && !isEmailValid && (
                   <Text className="text-xs text-red-500 mt-2">
-                    {kind === "email"
-                      ? "Please enter a valid email address"
-                      : "Please enter a valid 10-digit phone number"}
+                    Please enter a valid email address
+                  </Text>
+                )}
+              </View>
+
+              <View>
+                <TextInput
+                  placeholder="Phone number (optional)"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                  editable={!isLoading}
+                  className="w-full border border-border rounded-2xl px-4 py-4 text-base"
+                  placeholderTextColor="#9ca3af"
+                />
+                {phone.trim().length > 0 && !isPhoneValid && (
+                  <Text className="text-xs text-red-500 mt-2">
+                    Please enter a valid 10-digit phone number
                   </Text>
                 )}
               </View>
@@ -159,7 +164,7 @@ export default function SignupScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => router.replace({ pathname: "/(auth)/login", params: { identifier: identifierInput } })}
+                onPress={() => router.replace({ pathname: "/(auth)/login", params: { identifier: email || phone } })}
                 disabled={isLoading}
                 className="w-full items-center py-2"
               >

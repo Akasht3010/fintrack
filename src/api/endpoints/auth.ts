@@ -3,8 +3,8 @@ import { User } from "@/types/domain"
 import * as SecureStore from "expo-secure-store"
 
 export interface SignupRequest {
-  name?: string
-  email?: string
+  name: string
+  email: string
   phone?: string
 }
 
