@@ -99,7 +99,8 @@ export default function TransactionsScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="px-6 mb-6"
+        className="px-6 mb-2"
+        style={{ flexGrow: 0, height: 40 }}
         contentContainerStyle={{ gap: 8, alignItems: "center" }}
       >
         {CATEGORIES.map((category) => (
