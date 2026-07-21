@@ -201,8 +201,8 @@ export default function TransactionsScreen() {
               </View>
             ))}
 
-            {/* Load more spacing */}
-            <View className="h-8" />
+            {/* Clearance for the floating tab bar */}
+            <View style={{ height: 140 }} />
           </ScrollView>
         )}
       </View>

@@ -1,11 +1,14 @@
 import { Tabs } from "expo-router"
+import { Platform } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useColorScheme } from "nativewind"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Colors } from "@/constants/colors"
 
 export default function TabsLayout() {
   const { colorScheme } = useColorScheme()
   const isDark = colorScheme === "dark"
+  const insets = useSafeAreaInsets()
 
   return (
     <Tabs
@@ -14,12 +17,27 @@ export default function TabsLayout() {
         tabBarActiveTintColor: isDark ? Colors.primary[400] : Colors.primary[600],
         tabBarInactiveTintColor: isDark ? "#9ca3af" : Colors.muted,
         tabBarStyle: {
+          position: "absolute",
+          left: 20,
+          right: 20,
+          bottom: insets.bottom + 12,
+          height: 64,
+          borderRadius: 32,
+          borderTopWidth: 0,
           backgroundColor: isDark ? "#171717" : Colors.surface,
-          borderTopColor: isDark ? "#262626" : Colors.border,
-          borderTopWidth: 1,
-          paddingBottom: 8,
+          paddingBottom: 0,
           paddingTop: 8,
-          height: 64
+          ...Platform.select({
+            ios: {
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: isDark ? 0.4 : 0.1,
+              shadowRadius: 12
+            },
+            android: {
+              elevation: 8
+            }
+          })
         },
         tabBarLabelStyle: {
           fontSize: 11,

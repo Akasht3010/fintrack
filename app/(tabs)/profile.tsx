@@ -172,7 +172,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        <View className="px-6 mt-auto pb-6">
+        <View className="px-6 mt-auto" style={{ paddingBottom: 140 }}>
           <TouchableOpacity
             onPress={handleSignOut}
             className="w-full items-center justify-center border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 rounded-2xl py-4"

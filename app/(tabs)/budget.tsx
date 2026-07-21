@@ -141,7 +141,8 @@ export default function BudgetScreen() {
             })}
           </View>
 
-          <View className="h-8" />
+          {/* Clearance for the floating tab bar */}
+          <View style={{ height: 140 }} />
         </ScrollView>
       )}
     </SafeAreaView>
