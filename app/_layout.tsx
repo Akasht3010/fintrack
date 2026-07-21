@@ -64,6 +64,10 @@ function RootLayoutNav() {
         name="(modals)/add-expense"
         options={{ presentation: "modal" }}
       />
+      <Stack.Screen
+        name="(modals)/add-budget"
+        options={{ presentation: "modal" }}
+      />
     </Stack>
   )
 }

@@ -29,12 +29,13 @@ export interface Transaction {
 
 export interface Budget {
   id: string
+  user_id: string
   category: TransactionCategory
-  limitAmount: number
-  spentAmount: number
+  limit_amount: number
+  spent_amount: number
   period: "weekly" | "monthly"
-  startDate: string
-  endDate: string
+  start_date: string
+  end_date: string
 }
 
 export interface User {
