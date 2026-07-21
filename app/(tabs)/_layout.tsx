@@ -10,32 +10,35 @@ export default function TabsLayout() {
   const isDark = colorScheme === "dark"
   const insets = useSafeAreaInsets()
 
+  const sceneBackgroundColor = isDark ? "#0a0a0a" : "#f9fafb"
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: sceneBackgroundColor },
         tabBarActiveTintColor: isDark ? Colors.primary[400] : Colors.primary[600],
         tabBarInactiveTintColor: isDark ? "#9ca3af" : Colors.muted,
         tabBarStyle: {
           position: "absolute",
-          left: 20,
-          right: 20,
-          bottom: insets.bottom + 12,
+          left: 24,
+          right: 24,
+          bottom: insets.bottom + 16,
           height: 64,
           borderRadius: 32,
           borderTopWidth: 0,
-          backgroundColor: isDark ? "#171717" : Colors.surface,
+          backgroundColor: isDark ? "#1f1f1f" : Colors.surface,
           paddingBottom: 0,
           paddingTop: 8,
           ...Platform.select({
             ios: {
               shadowColor: "#000",
               shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: isDark ? 0.4 : 0.1,
-              shadowRadius: 12
+              shadowOpacity: isDark ? 0.5 : 0.12,
+              shadowRadius: 16
             },
             android: {
-              elevation: 8
+              elevation: 12
             }
           })
         },
