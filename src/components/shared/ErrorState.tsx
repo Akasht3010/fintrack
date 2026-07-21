@@ -9,7 +9,7 @@ export function ErrorState({ message = "Something went wrong", onRetry }: ErrorS
   return (
     <View className="flex-1 items-center justify-center px-6 py-12">
       <Text className="text-4xl mb-3">⚠️</Text>
-      <Text className="text-base font-semibold text-neutral-900 text-center">{message}</Text>
+      <Text className="text-base font-semibold text-neutral-900 dark:text-white text-center">{message}</Text>
       {onRetry && (
         <TouchableOpacity
           onPress={onRetry}

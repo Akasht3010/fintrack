@@ -87,12 +87,12 @@ export default function TransactionsScreen() {
     }), { count: 0, total: 0 })
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background dark:bg-neutral-950">
       {/* Header */}
       <View className="px-6 pt-4 pb-4">
-        <Text className="text-3xl font-bold text-neutral-900">Transactions</Text>
+        <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Transactions</Text>
         {selectedCategory !== "all" && (
-          <Text className="text-sm text-muted mt-2 capitalize">
+          <Text className="text-sm text-muted dark:text-neutral-400 mt-2 capitalize">
             {categoryStats.count} transactions • {formatCurrency(categoryStats.total)}
           </Text>
         )}
@@ -116,14 +116,14 @@ export default function TransactionsScreen() {
             className={`px-4 py-2 rounded-full ${
               selectedCategory === category
                 ? "bg-primary-600"
-                : "bg-white border border-border"
+                : "bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800"
             }`}
           >
             <Text
               className={`text-sm font-medium capitalize ${
                 selectedCategory === category
                   ? "text-white"
-                  : "text-neutral-700"
+                  : "text-neutral-700 dark:text-neutral-300"
               }`}
             >
               {category}
@@ -157,7 +157,7 @@ export default function TransactionsScreen() {
             {Object.entries(groupedByDate).map(([date, txns]) => (
               <View key={date} className="mb-6">
                 {/* Date Header */}
-                <Text className="text-sm font-semibold text-neutral-700 mb-3 uppercase tracking-wider">
+                <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3 uppercase tracking-wider">
                   {date}
                 </Text>
 
@@ -167,19 +167,19 @@ export default function TransactionsScreen() {
                     <TouchableOpacity
                       key={transaction.id}
                       onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                      className="bg-white border border-border rounded-2xl p-4 flex-row items-center justify-between"
+                      className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl p-4 flex-row items-center justify-between"
                     >
                       <View className="flex-row items-center gap-3 flex-1">
-                        <View className="w-10 h-10 rounded-full bg-neutral-100 items-center justify-center">
+                        <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 items-center justify-center">
                           <Text className="text-lg">
                             {CATEGORY_ICONS[transaction.category] || "📌"}
                           </Text>
                         </View>
                         <View className="flex-1">
-                          <Text className="text-sm font-semibold text-neutral-900">
+                          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                             {transaction.merchant}
                           </Text>
-                          <Text className="text-xs text-muted capitalize">
+                          <Text className="text-xs text-muted dark:text-neutral-400 capitalize">
                             {transaction.category}
                           </Text>
                         </View>

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import * as SecureStore from "expo-secure-store"
 import * as SplashScreen from "expo-splash-screen"
 import { useUserStore } from "@/store/useUserStore"
+import { useThemeStore } from "@/store/useThemeStore"
 import { authApi } from "@/api/endpoints/auth"
 import "../src/constants/global.css"
 
@@ -21,9 +22,10 @@ const queryClient = new QueryClient({
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading, setUser, setLoading } = useUserStore()
+  const hydrateTheme = useThemeStore((state) => state.hydrate)
 
   useEffect(() => {
-    checkAuth()
+    Promise.all([checkAuth(), hydrateTheme()])
   }, [])
 
   useEffect(() => {

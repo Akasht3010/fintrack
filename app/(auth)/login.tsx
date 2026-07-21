@@ -91,8 +91,8 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar style="dark" />
+    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
+      <StatusBar style="auto" />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -106,10 +106,10 @@ export default function LoginScreen() {
             <View className="w-20 h-20 rounded-3xl bg-primary-500 items-center justify-center mb-8">
               <Text className="text-4xl">₹</Text>
             </View>
-            <Text className="text-4xl font-bold text-neutral-900 text-center mb-3">
+            <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
               Fintrack
             </Text>
-            <Text className="text-base text-muted text-center leading-6 mb-12">
+            <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
               All your expenses across every app,{"\n"}in one clear view.
             </Text>
 
@@ -123,7 +123,7 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!isLoading}
-                  className="w-full border border-border rounded-2xl px-4 py-4 text-base"
+                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
                   placeholderTextColor="#9ca3af"
                 />
                 {identifierInput.trim().length > 0 && !isValid && (
@@ -150,20 +150,20 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <View className="flex-row items-center gap-3 my-1">
-                <View className="flex-1 h-px bg-border" />
-                <Text className="text-xs text-muted">or</Text>
-                <View className="flex-1 h-px bg-border" />
+                <View className="flex-1 h-px bg-border dark:bg-neutral-800" />
+                <Text className="text-xs text-muted dark:text-neutral-400">or</Text>
+                <View className="flex-1 h-px bg-border dark:bg-neutral-800" />
               </View>
 
               <TouchableOpacity
                 onPress={handleGoogleSignIn}
                 disabled={isLoading || isGoogleLoading}
-                className="w-full flex-row items-center justify-center border border-border rounded-2xl py-4"
+                className="w-full flex-row items-center justify-center border border-border dark:border-neutral-700 rounded-2xl py-4"
               >
                 {isGoogleLoading ? (
                   <ActivityIndicator color="#111827" />
                 ) : (
-                  <Text className="text-base font-semibold text-neutral-900">
+                  <Text className="text-base font-semibold text-neutral-900 dark:text-white">
                     Continue with Google
                   </Text>
                 )}
@@ -174,17 +174,17 @@ export default function LoginScreen() {
                 disabled={isLoading}
                 className="w-full items-center py-2"
               >
-                <Text className="text-sm text-muted">
+                <Text className="text-sm text-muted dark:text-neutral-400">
                   Don&apos;t have an account?{" "}
-                  <Text className="text-primary-600 font-semibold">Sign Up</Text>
+                  <Text className="text-primary-600 dark:text-primary-400 font-semibold">Sign Up</Text>
                 </Text>
               </TouchableOpacity>
 
-              <Text className="text-xs text-muted text-center mt-4 leading-5">
+              <Text className="text-xs text-muted dark:text-neutral-400 text-center mt-4 leading-5">
                 By continuing, you agree to our{" "}
-                <Text className="text-primary-600">Terms of Service</Text>
+                <Text className="text-primary-600 dark:text-primary-400">Terms of Service</Text>
                 {" "}and{" "}
-                <Text className="text-primary-600">Privacy Policy</Text>
+                <Text className="text-primary-600 dark:text-primary-400">Privacy Policy</Text>
               </Text>
             </View>
           </View>

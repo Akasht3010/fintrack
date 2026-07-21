@@ -101,35 +101,35 @@ export default function AddExpenseScreen() {
 
   if (isEditMode && isLoadingExisting) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950 items-center justify-center">
         <ActivityIndicator size="large" />
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border">
-        <Text className="text-lg font-semibold text-neutral-900">
+    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
+      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-neutral-800">
+        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
           {isEditMode ? "Edit Transaction" : "Add Expense"}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-base text-primary-600">✕</Text>
+          <Text className="text-base text-primary-600 dark:text-primary-400">✕</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
         {/* Amount */}
         <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 mb-2">Amount</Text>
-          <View className="flex-row items-center border border-border rounded-2xl px-4">
-            <Text className="text-2xl font-bold text-neutral-900">₹</Text>
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Amount</Text>
+          <View className="flex-row items-center border border-border dark:border-neutral-700 rounded-2xl px-4">
+            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">₹</Text>
             <TextInput
               placeholder="0.00"
               value={amount}
               onChangeText={setAmount}
               keyboardType="decimal-pad"
-              className="flex-1 py-4 px-3 text-xl font-bold text-neutral-900"
+              className="flex-1 py-4 px-3 text-xl font-bold text-neutral-900 dark:text-white"
               placeholderTextColor="#9ca3af"
             />
           </View>
@@ -137,19 +137,19 @@ export default function AddExpenseScreen() {
 
         {/* Merchant */}
         <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 mb-2">Merchant</Text>
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Merchant</Text>
           <TextInput
             placeholder="e.g., Swiggy, Uber, etc."
             value={merchant}
             onChangeText={setMerchant}
-            className="border border-border rounded-2xl px-4 py-3 text-base text-neutral-900"
+            className="border border-border dark:border-neutral-700 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
             placeholderTextColor="#9ca3af"
           />
         </View>
 
         {/* Category */}
         <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 mb-2">Category</Text>
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
           <View className="flex-row flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <TouchableOpacity
@@ -158,14 +158,14 @@ export default function AddExpenseScreen() {
                 className={`px-4 py-2 rounded-full ${
                   selectedCategory === cat
                     ? "bg-primary-600"
-                    : "bg-neutral-100"
+                    : "bg-neutral-100 dark:bg-neutral-800"
                 }`}
               >
                 <Text
                   className={`text-sm font-medium capitalize ${
                     selectedCategory === cat
                       ? "text-white"
-                      : "text-neutral-700"
+                      : "text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
                   {cat}
@@ -177,12 +177,12 @@ export default function AddExpenseScreen() {
 
         {/* Description */}
         <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 mb-2">Description (optional)</Text>
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Description (optional)</Text>
           <TextInput
             placeholder="Add notes"
             value={description}
             onChangeText={setDescription}
-            className="border border-border rounded-2xl px-4 py-3 text-base text-neutral-900 h-20"
+            className="border border-border dark:border-neutral-700 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white h-20"
             placeholderTextColor="#9ca3af"
             multiline
           />
@@ -195,7 +195,7 @@ export default function AddExpenseScreen() {
           onPress={handleSubmit}
           disabled={isPending}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isPending ? "bg-neutral-200" : "bg-primary-600"
+            isPending ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600"
           }`}
         >
           <Text className={`text-base font-semibold ${
@@ -207,9 +207,9 @@ export default function AddExpenseScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           disabled={isPending}
-          className="w-full items-center justify-center border border-border rounded-2xl py-4"
+          className="w-full items-center justify-center border border-border dark:border-neutral-700 rounded-2xl py-4"
         >
-          <Text className="text-base font-semibold text-neutral-900">Cancel</Text>
+          <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

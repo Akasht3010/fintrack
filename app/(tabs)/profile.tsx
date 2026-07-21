@@ -4,6 +4,7 @@ import { router } from "expo-router"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useUserStore } from "@/store/useUserStore"
+import { useThemeStore, ThemeMode } from "@/store/useThemeStore"
 import { useGmailConnect } from "@/hooks/useGmailConnect"
 import { gmailApi } from "@/api/endpoints/gmail"
 import { formatDate } from "@/utils/date"
@@ -18,8 +19,11 @@ function initialsFor(name?: string): string {
     .join("")
 }
 
+const THEME_OPTIONS: ThemeMode[] = ["light", "dark", "system"]
+
 export default function ProfileScreen() {
   const { user, logout } = useUserStore()
+  const { mode, setMode } = useThemeStore()
   const { connect: connectGmail, isLoading: isConnecting } = useGmailConnect()
   const [isSyncing, setIsSyncing] = useState(false)
   const queryClient = useQueryClient()
@@ -63,10 +67,10 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background dark:bg-neutral-950">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         <View className="px-6 pt-4 pb-6">
-          <Text className="text-3xl font-bold text-neutral-900">Profile</Text>
+          <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Profile</Text>
         </View>
 
         <View className="px-6 items-center mb-8">
@@ -82,36 +86,61 @@ export default function ProfileScreen() {
               </Text>
             </View>
           )}
-          <Text className="text-xl font-bold text-neutral-900">
+          <Text className="text-xl font-bold text-neutral-900 dark:text-white">
             {user?.name ?? "User"}
           </Text>
-          <Text className="text-sm text-muted mt-1">{user?.email}</Text>
+          <Text className="text-sm text-muted dark:text-neutral-400 mt-1">{user?.email}</Text>
         </View>
 
         <View className="px-6 mb-6">
-          <View className="bg-white border border-border rounded-2xl overflow-hidden">
-            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border">
-              <Text className="text-sm text-muted">Phone</Text>
-              <Text className="text-sm font-semibold text-neutral-900">
+          <View className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl overflow-hidden">
+            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+              <Text className="text-sm text-muted dark:text-neutral-400">Phone</Text>
+              <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                 {user?.phone || "Not added"}
               </Text>
             </View>
 
-            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border">
-              <Text className="text-sm text-muted">Gmail</Text>
-              <View className={`px-3 py-1 rounded-full ${user?.gmail_connected ? "bg-primary-100" : "bg-neutral-100"}`}>
-                <Text className={`text-xs font-medium ${user?.gmail_connected ? "text-primary-600" : "text-neutral-500"}`}>
+            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+              <Text className="text-sm text-muted dark:text-neutral-400">Gmail</Text>
+              <View className={`px-3 py-1 rounded-full ${user?.gmail_connected ? "bg-primary-100 dark:bg-primary-900" : "bg-neutral-100 dark:bg-neutral-800"}`}>
+                <Text className={`text-xs font-medium ${user?.gmail_connected ? "text-primary-600 dark:text-primary-400" : "text-neutral-500 dark:text-neutral-400"}`}>
                   {user?.gmail_connected ? "Connected" : "Not connected"}
                 </Text>
               </View>
             </View>
 
             <View className="flex-row items-center justify-between px-4 py-4">
-              <Text className="text-sm text-muted">Member since</Text>
-              <Text className="text-sm font-semibold text-neutral-900">
+              <Text className="text-sm text-muted dark:text-neutral-400">Member since</Text>
+              <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                 {user?.created_at ? formatDate(user.created_at) : "—"}
               </Text>
             </View>
+          </View>
+        </View>
+
+        <View className="px-6 mb-6">
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Appearance</Text>
+          <View className="flex-row bg-neutral-100 dark:bg-neutral-800 rounded-2xl p-1">
+            {THEME_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option}
+                onPress={() => setMode(option)}
+                className={`flex-1 items-center py-2 rounded-xl ${
+                  mode === option ? "bg-white dark:bg-neutral-700" : ""
+                }`}
+              >
+                <Text
+                  className={`text-sm font-medium capitalize ${
+                    mode === option
+                      ? "text-neutral-900 dark:text-white"
+                      : "text-muted dark:text-neutral-400"
+                  }`}
+                >
+                  {option}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -120,24 +149,24 @@ export default function ProfileScreen() {
             <TouchableOpacity
               onPress={handleSyncGmail}
               disabled={isSyncing}
-              className="w-full items-center justify-center border border-border bg-white rounded-2xl py-4"
+              className="w-full items-center justify-center border border-border dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-2xl py-4"
             >
               {isSyncing ? (
                 <ActivityIndicator color="#16a34a" />
               ) : (
-                <Text className="text-base font-semibold text-primary-600">Sync Gmail Now</Text>
+                <Text className="text-base font-semibold text-primary-600 dark:text-primary-400">Sync Gmail Now</Text>
               )}
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               onPress={handleConnectGmail}
               disabled={isConnecting}
-              className="w-full items-center justify-center border border-border bg-white rounded-2xl py-4"
+              className="w-full items-center justify-center border border-border dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-2xl py-4"
             >
               {isConnecting ? (
                 <ActivityIndicator color="#16a34a" />
               ) : (
-                <Text className="text-base font-semibold text-primary-600">Connect Gmail</Text>
+                <Text className="text-base font-semibold text-primary-600 dark:text-primary-400">Connect Gmail</Text>
               )}
             </TouchableOpacity>
           )}
@@ -146,9 +175,9 @@ export default function ProfileScreen() {
         <View className="px-6 mt-auto pb-6">
           <TouchableOpacity
             onPress={handleSignOut}
-            className="w-full items-center justify-center border border-red-200 bg-red-50 rounded-2xl py-4"
+            className="w-full items-center justify-center border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 rounded-2xl py-4"
           >
-            <Text className="text-base font-semibold text-red-600">Sign Out</Text>
+            <Text className="text-base font-semibold text-red-600 dark:text-red-400">Sign Out</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

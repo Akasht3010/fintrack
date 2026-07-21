@@ -53,11 +53,11 @@ export default function TransactionDetailScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border">
-        <Text className="text-lg font-semibold text-neutral-900">Transaction</Text>
+    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
+      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-neutral-800">
+        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Transaction</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-base text-primary-600">✕</Text>
+          <Text className="text-base text-primary-600 dark:text-primary-400">✕</Text>
         </TouchableOpacity>
       </View>
 
@@ -67,15 +67,15 @@ export default function TransactionDetailScreen() {
         </View>
       ) : error || !transaction ? (
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-neutral-500 text-center">Couldn&apos;t load this transaction</Text>
+          <Text className="text-neutral-500 dark:text-neutral-400 text-center">Couldn&apos;t load this transaction</Text>
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
           <View className="items-center px-6 pt-8 pb-6">
-            <View className="w-16 h-16 rounded-full bg-neutral-100 items-center justify-center mb-4">
+            <View className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 items-center justify-center mb-4">
               <Text className="text-3xl">{CATEGORY_ICONS[transaction.category] || "📌"}</Text>
             </View>
-            <Text className="text-lg font-semibold text-neutral-900">{transaction.merchant}</Text>
+            <Text className="text-lg font-semibold text-neutral-900 dark:text-white">{transaction.merchant}</Text>
             <Text
               className={`text-3xl font-bold mt-2 ${
                 transaction.type === "debit" ? "text-red-600" : "text-green-600"
@@ -87,48 +87,48 @@ export default function TransactionDetailScreen() {
           </View>
 
           <View className="px-6 mb-6">
-            <View className="bg-white border border-border rounded-2xl overflow-hidden">
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border">
-                <Text className="text-sm text-muted">Category</Text>
-                <Text className="text-sm font-semibold text-neutral-900 capitalize">
+            <View className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl overflow-hidden">
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+                <Text className="text-sm text-muted dark:text-neutral-400">Category</Text>
+                <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                   {transaction.category}
                 </Text>
               </View>
 
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border">
-                <Text className="text-sm text-muted">Date</Text>
-                <Text className="text-sm font-semibold text-neutral-900">
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+                <Text className="text-sm text-muted dark:text-neutral-400">Date</Text>
+                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                   {formatDate(transaction.date)}
                 </Text>
               </View>
 
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border">
-                <Text className="text-sm text-muted">Type</Text>
-                <Text className="text-sm font-semibold text-neutral-900 capitalize">
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+                <Text className="text-sm text-muted dark:text-neutral-400">Type</Text>
+                <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                   {transaction.type}
                 </Text>
               </View>
 
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border">
-                <Text className="text-sm text-muted">Source</Text>
-                <Text className="text-sm font-semibold text-neutral-900">
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+                <Text className="text-sm text-muted dark:text-neutral-400">Source</Text>
+                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                   {SOURCE_LABELS[transaction.source] || transaction.source}
                 </Text>
               </View>
 
               {transaction.is_recurring && (
-                <View className="flex-row items-center justify-between px-4 py-4 border-b border-border">
-                  <Text className="text-sm text-muted">Recurring</Text>
-                  <View className="px-3 py-1 rounded-full bg-primary-100">
-                    <Text className="text-xs font-medium text-primary-600">Yes</Text>
+                <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+                  <Text className="text-sm text-muted dark:text-neutral-400">Recurring</Text>
+                  <View className="px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900">
+                    <Text className="text-xs font-medium text-primary-600 dark:text-primary-400">Yes</Text>
                   </View>
                 </View>
               )}
 
               {!!transaction.description && (
                 <View className="px-4 py-4">
-                  <Text className="text-sm text-muted mb-1">Description</Text>
-                  <Text className="text-sm text-neutral-900">{transaction.description}</Text>
+                  <Text className="text-sm text-muted dark:text-neutral-400 mb-1">Description</Text>
+                  <Text className="text-sm text-neutral-900 dark:text-white">{transaction.description}</Text>
                 </View>
               )}
             </View>
@@ -146,12 +146,12 @@ export default function TransactionDetailScreen() {
             <TouchableOpacity
               onPress={handleDelete}
               disabled={isDeleting}
-              className="w-full items-center justify-center border border-red-200 bg-red-50 rounded-2xl py-4"
+              className="w-full items-center justify-center border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 rounded-2xl py-4"
             >
               {isDeleting ? (
                 <ActivityIndicator color="#dc2626" />
               ) : (
-                <Text className="text-base font-semibold text-red-600">Delete Transaction</Text>
+                <Text className="text-base font-semibold text-red-600 dark:text-red-400">Delete Transaction</Text>
               )}
             </TouchableOpacity>
           </View>

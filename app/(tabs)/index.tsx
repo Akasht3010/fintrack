@@ -60,7 +60,7 @@ export default function DashboardScreen() {
   const topCategory = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background dark:bg-neutral-950">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}
@@ -71,8 +71,8 @@ export default function DashboardScreen() {
         {/* Header */}
         <View className="px-6 pt-4 pb-6 flex-row items-center justify-between">
           <View className="flex-1">
-            <Text className="text-sm text-muted">Welcome back,</Text>
-            <Text className="text-3xl font-bold text-neutral-900 mt-1">
+            <Text className="text-sm text-muted dark:text-neutral-400">Welcome back,</Text>
+            <Text className="text-3xl font-bold text-neutral-900 dark:text-white mt-1">
               {user?.name ?? "User"}
             </Text>
           </View>
@@ -102,15 +102,15 @@ export default function DashboardScreen() {
         {/* Top Category */}
         {topCategory && (
           <View className="px-6 mb-6">
-            <View className="bg-white border border-border rounded-2xl p-4">
-              <Text className="text-xs text-muted uppercase tracking-wider mb-2">
+            <View className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl p-4">
+              <Text className="text-xs text-muted dark:text-neutral-400 uppercase tracking-wider mb-2">
                 Top Category
               </Text>
               <View className="flex-row items-center justify-between">
-                <Text className="text-lg font-semibold text-neutral-900 capitalize">
+                <Text className="text-lg font-semibold text-neutral-900 dark:text-white capitalize">
                   {topCategory[0]}
                 </Text>
-                <Text className="text-lg font-bold text-primary-600">
+                <Text className="text-lg font-bold text-primary-600 dark:text-primary-400">
                   {formatCurrency(topCategory[1])}
                 </Text>
               </View>
@@ -120,7 +120,7 @@ export default function DashboardScreen() {
 
         {/* Recent Transactions */}
         <View className="px-6 mb-6">
-          <Text className="text-lg font-semibold text-neutral-900 mb-4">
+          <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
             Recent
           </Text>
 
@@ -148,19 +148,19 @@ export default function DashboardScreen() {
                 <TouchableOpacity
                   key={transaction.id}
                   onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                  className="bg-white border border-border rounded-2xl p-4 flex-row items-center justify-between"
+                  className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl p-4 flex-row items-center justify-between"
                 >
                   <View className="flex-row items-center gap-3 flex-1">
-                    <View className="w-10 h-10 rounded-full bg-neutral-100 items-center justify-center">
+                    <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 items-center justify-center">
                       <Text className="text-lg">
                         {CATEGORY_ICONS[transaction.category] || "📌"}
                       </Text>
                     </View>
                     <View className="flex-1">
-                      <Text className="text-sm font-semibold text-neutral-900">
+                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                         {transaction.merchant}
                       </Text>
-                      <Text className="text-xs text-muted mt-1">
+                      <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
                         {formatDateShort(transaction.date)}
                       </Text>
                     </View>
