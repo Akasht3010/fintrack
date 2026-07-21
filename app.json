@@ -37,8 +37,7 @@
     },
     "extra": {
       "apiUrl": "http://localhost:8000",
-      "googleClientIdIos": "881441063641-1dhd04lkqss5nolrpeol2raik665mdkb.apps.googleusercontent.com",
-      "googleClientIdWeb": "881441063641-10nb3m5m4bccjshvi9rs9gcdhh1thjh1.apps.googleusercontent.com",
+      "googleClientIdWeb": "989422306373-vjomjm06cfj8p4efvm98qp4acd6bsagg.apps.googleusercontent.com",
       "appEnv": "development"
     }
   }
