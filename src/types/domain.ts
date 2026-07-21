@@ -14,6 +14,7 @@ export type TransactionCategory =
 
 export interface Transaction {
   id: string
+  user_id: string
   amount: number
   currency: string
   type: TransactionType
@@ -22,9 +23,8 @@ export interface Transaction {
   description: string
   date: string
   source: "gmail" | "manual" | "sms" | "aa"
-  rawText?: string
-  isRecurring: boolean
-  metadata?: Record<string, string>
+  is_recurring: boolean
+  created_at: string
 }
 
 export interface Budget {
@@ -43,8 +43,8 @@ export interface User {
   email: string
   phone?: string
   avatar?: string
-  gmailConnected: boolean
-  createdAt: string
+  gmail_connected: boolean
+  created_at: string
 }
 
 export interface MonthlySummary {

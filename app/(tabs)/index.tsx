@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
+import { router } from "expo-router"
 import { useQuery } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
 import { useTransactionStore } from "@/store/useTransactionStore"
@@ -129,8 +130,9 @@ export default function DashboardScreen() {
           {!isLoading && transactions.length > 0 && (
             <View className="gap-3">
               {transactions.slice(0, 10).map((transaction) => (
-                <View
+                <TouchableOpacity
                   key={transaction.id}
+                  onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
                   className="bg-white border border-border rounded-2xl p-4 flex-row items-center justify-between"
                 >
                   <View className="flex-1">
@@ -149,7 +151,7 @@ export default function DashboardScreen() {
                     {transaction.type === "debit" ? "-" : "+"}
                     {formatCurrency(transaction.amount)}
                   </Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}

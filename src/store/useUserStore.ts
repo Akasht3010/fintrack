@@ -23,6 +23,7 @@ export const useUserStore = create<UserState>((set) => ({
   logout: async () => {
     await SecureStore.deleteItemAsync("access_token")
     await SecureStore.deleteItemAsync("refresh_token")
+    await SecureStore.deleteItemAsync("user")
     set({ user: null, isAuthenticated: false, isLoading: false })
   }
 }))

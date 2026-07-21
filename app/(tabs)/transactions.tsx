@@ -1,12 +1,14 @@
 import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useFocusEffect } from "@react-navigation/native"
+import { router } from "expo-router"
 import { useQuery } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency } from "@/utils/currency"
 import { formatDateShort, formatDate } from "@/utils/date"
 import { Colors } from "@/constants/colors"
+import { CATEGORY_ICONS } from "@/constants/categories"
 import { useState, useCallback } from "react"
 
 const CATEGORIES = [
@@ -22,19 +24,6 @@ const CATEGORIES = [
   "transfer",
   "other"
 ]
-
-const CATEGORY_ICONS: Record<string, string> = {
-  food: "🍔",
-  transport: "🚗",
-  shopping: "🛍️",
-  entertainment: "🎬",
-  health: "🏥",
-  utilities: "💡",
-  rent: "🏠",
-  subscriptions: "🔄",
-  transfer: "💸",
-  other: "📌"
-}
 
 export default function TransactionsScreen() {
   const { user } = useUserStore()
@@ -173,8 +162,9 @@ export default function TransactionsScreen() {
                 {/* Transactions for this date */}
                 <View className="gap-2">
                   {txns.map((transaction) => (
-                    <View
+                    <TouchableOpacity
                       key={transaction.id}
+                      onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
                       className="bg-white border border-border rounded-2xl p-4 flex-row items-center justify-between"
                     >
                       <View className="flex-row items-center gap-3 flex-1">
@@ -203,7 +193,7 @@ export default function TransactionsScreen() {
                         {transaction.type === "debit" ? "−" : "+"}
                         {formatCurrency(transaction.amount)}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
               </View>
