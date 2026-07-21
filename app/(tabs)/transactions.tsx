@@ -96,11 +96,11 @@ export default function TransactionsScreen() {
       </View>
 
       {/* Category Filter */}
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         className="px-6 mb-6"
-        contentContainerStyle={{ gap: 8 }}
+        contentContainerStyle={{ gap: 8, alignItems: "center" }}
       >
         {CATEGORIES.map((category) => (
           <TouchableOpacity
