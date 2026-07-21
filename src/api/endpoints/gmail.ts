@@ -8,7 +8,12 @@ export interface GmailSyncResult {
 
 export const gmailApi = {
   async sync(): Promise<GmailSyncResult> {
-    const response = await apiClient.post<GmailSyncResult>("/api/gmail/sync")
+    // Fetching/parsing up to 50 emails one by one from Gmail's API can
+    // comfortably exceed the default 10s client timeout — give this
+    // specific call more room instead of raising the global default.
+    const response = await apiClient.post<GmailSyncResult>("/api/gmail/sync", null, {
+      timeout: 60000
+    })
     return response.data
   }
 }
