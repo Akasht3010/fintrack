@@ -43,9 +43,13 @@ src/
 
 ## Auth
 
-Login/signup accept either a **phone number or an email address** — a single "identifier" field is classified client-side (`src/utils/identifier.ts`) and validated accordingly. The login screen calls `/api/auth/login` and only offers to create an account if none exists for that identifier, so you can't accidentally end up with duplicate accounts for the same phone/email under different names.
+Three ways in, all issuing the same kind of backend JWT:
 
-Google OAuth (`src/hooks/useGoogleAuth.ts`) is wired up but not yet the primary flow — phone/email is the current default while Google sign-in is finished.
+- **Log in** with a phone number or email — a single "identifier" field is classified client-side (`src/utils/identifier.ts`), calls `/api/auth/login`, and only offers to sign up if no account exists for that identifier.
+- **Sign up** with name, a real email, and a phone number (all required) via `/api/auth/signup`. 409s with an "already exists" prompt if the email or phone is taken.
+- **Continue with Google** (`src/hooks/useGoogleAuth.ts`) — backend-mediated OAuth (see the backend README's Google OAuth setup section for why: Expo Go's deep link changes every session, so Google can't redirect to it directly). Requires the backend to have real Google OAuth credentials and, for local testing, a tunnel like ngrok — until that's configured, this button will fail.
+
+All authenticated requests send the token as `Authorization: Bearer <token>` (attached automatically by the axios client in `src/api/client.ts`); the backend derives the user from that token rather than trusting any client-supplied id.
 
 ## Features
 

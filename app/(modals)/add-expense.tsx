@@ -36,7 +36,6 @@ export default function AddExpenseScreen() {
     }
 
     createTransaction({
-      user_id: user.id,
       amount: parseFloat(amount),
       currency: "INR",
       type: "debit",

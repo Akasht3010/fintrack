@@ -2,7 +2,6 @@ import { apiClient } from "@/api/client"
 import { Transaction } from "@/types/domain"
 
 export interface TransactionCreatePayload {
-  user_id: string
   amount: number
   currency: string
   type: "debit" | "credit"
@@ -31,9 +30,9 @@ export const transactionApi = {
     return response.data
   },
 
-  async list(userId: string, page: number = 1, limit: number = 20) {
+  async list(page: number = 1, limit: number = 20) {
     const response = await apiClient.get<TransactionListResponse>(
-      `/api/transactions?user_id=${userId}&page=${page}&limit=${limit}`
+      `/api/transactions?page=${page}&limit=${limit}`
     )
     return response.data
   },

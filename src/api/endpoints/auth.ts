@@ -1,6 +1,5 @@
 import { apiClient } from "@/api/client"
 import { User } from "@/types/domain"
-import * as SecureStore from "expo-secure-store"
 
 export interface SignupRequest {
   name: string
@@ -39,17 +38,13 @@ export const authApi = {
     return response.data
   },
 
-  async getMe(userId: string): Promise<User> {
-    const response = await apiClient.get<User>(
-      `/api/auth/me?user_id=${userId}`
-    )
+  async getMe(): Promise<User> {
+    const response = await apiClient.get<User>("/api/auth/me")
     return response.data
   },
 
-  async refreshToken(userId: string): Promise<{ access_token: string }> {
-    const response = await apiClient.post<{ access_token: string }>(
-      `/api/auth/refresh?user_id=${userId}`
-    )
+  async refreshToken(): Promise<{ access_token: string }> {
+    const response = await apiClient.post<{ access_token: string }>("/api/auth/refresh")
     return response.data
   }
 }

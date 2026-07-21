@@ -7,6 +7,7 @@ import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { useState } from "react"
 import { classifyIdentifier, isValidEmail, isValidPhone } from "@/utils/identifier"
+import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 
 export default function SignupScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
@@ -17,11 +18,21 @@ export default function SignupScreen() {
   const [phone, setPhone] = useState(prefill.kind === "phone" ? prefill.value : "")
   const [isLoading, setIsLoading] = useState(false)
   const { setUser } = useUserStore()
+  const { signIn: signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth()
 
   const isNameValid = name.trim().length > 0
   const isEmailValid = isValidEmail(email)
   const isPhoneValid = isValidPhone(phone)
   const canSubmit = isNameValid && isEmailValid && isPhoneValid
+
+  const handleGoogleSignIn = async () => {
+    const result = await signInWithGoogle()
+    if (result.success) {
+      router.replace("/(tabs)")
+    } else if (result.error) {
+      Alert.alert("Google sign-in failed", result.error)
+    }
+  }
 
   const handleSignup = async () => {
     if (!isNameValid) {
@@ -158,6 +169,26 @@ export default function SignupScreen() {
                 ) : (
                   <Text className={`text-base font-semibold ${isLoading || !canSubmit ? 'text-neutral-400' : 'text-white'}`}>
                     Sign Up
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <View className="flex-row items-center gap-3 my-1">
+                <View className="flex-1 h-px bg-border" />
+                <Text className="text-xs text-muted">or</Text>
+                <View className="flex-1 h-px bg-border" />
+              </View>
+
+              <TouchableOpacity
+                onPress={handleGoogleSignIn}
+                disabled={isLoading || isGoogleLoading}
+                className="w-full flex-row items-center justify-center border border-border rounded-2xl py-4"
+              >
+                {isGoogleLoading ? (
+                  <ActivityIndicator color="#111827" />
+                ) : (
+                  <Text className="text-base font-semibold text-neutral-900">
+                    Continue with Google
                   </Text>
                 )}
               </TouchableOpacity>

@@ -47,7 +47,7 @@ export default function TransactionsScreen() {
     queryKey: ["transactions", user?.id, selectedCategory, page],
     queryFn: async () => {
       if (!user?.id) return null
-      const response = await transactionApi.list(user.id, page, 50)
+      const response = await transactionApi.list(page, 50)
       
       if (page === 1) {
         setAllTransactions(response.transactions)

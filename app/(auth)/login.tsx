@@ -7,12 +7,14 @@ import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { useState, useEffect } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
+import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 
 export default function LoginScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
   const [identifierInput, setIdentifierInput] = useState(params.identifier ?? "")
   const [isLoading, setIsLoading] = useState(false)
   const { setUser } = useUserStore()
+  const { signIn: signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth()
 
   useEffect(() => {
     clearOldTokens()
@@ -28,6 +30,15 @@ export default function LoginScreen() {
   }
 
   const { kind, value, isValid } = classifyIdentifier(identifierInput)
+
+  const handleGoogleSignIn = async () => {
+    const result = await signInWithGoogle()
+    if (result.success) {
+      router.replace("/(tabs)")
+    } else if (result.error) {
+      Alert.alert("Google sign-in failed", result.error)
+    }
+  }
 
   const handleLogin = async () => {
     if (!identifierInput.trim()) {
@@ -134,6 +145,26 @@ export default function LoginScreen() {
                 ) : (
                   <Text className={`text-base font-semibold ${isLoading || !isValid ? 'text-neutral-400' : 'text-white'}`}>
                     Log In
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <View className="flex-row items-center gap-3 my-1">
+                <View className="flex-1 h-px bg-border" />
+                <Text className="text-xs text-muted">or</Text>
+                <View className="flex-1 h-px bg-border" />
+              </View>
+
+              <TouchableOpacity
+                onPress={handleGoogleSignIn}
+                disabled={isLoading || isGoogleLoading}
+                className="w-full flex-row items-center justify-center border border-border rounded-2xl py-4"
+              >
+                {isGoogleLoading ? (
+                  <ActivityIndicator color="#111827" />
+                ) : (
+                  <Text className="text-base font-semibold text-neutral-900">
+                    Continue with Google
                   </Text>
                 )}
               </TouchableOpacity>
