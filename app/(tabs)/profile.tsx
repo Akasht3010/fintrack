@@ -1,7 +1,11 @@
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert } from "react-native"
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
+import { useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { useUserStore } from "@/store/useUserStore"
+import { useGmailConnect } from "@/hooks/useGmailConnect"
+import { gmailApi } from "@/api/endpoints/gmail"
 import { formatDate } from "@/utils/date"
 
 function initialsFor(name?: string): string {
@@ -16,6 +20,9 @@ function initialsFor(name?: string): string {
 
 export default function ProfileScreen() {
   const { user, logout } = useUserStore()
+  const { connect: connectGmail, isLoading: isConnecting } = useGmailConnect()
+  const [isSyncing, setIsSyncing] = useState(false)
+  const queryClient = useQueryClient()
 
   const handleSignOut = () => {
     Alert.alert("Sign out", "Are you sure you want to sign out?", [
@@ -29,6 +36,30 @@ export default function ProfileScreen() {
         }
       }
     ])
+  }
+
+  const handleConnectGmail = async () => {
+    const result = await connectGmail()
+    if (!result.success && result.error) {
+      Alert.alert("Couldn't connect Gmail", result.error)
+    }
+  }
+
+  const handleSyncGmail = async () => {
+    setIsSyncing(true)
+    try {
+      const result = await gmailApi.sync()
+      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: ["budgets"] })
+      Alert.alert(
+        "Sync complete",
+        `Imported ${result.imported} new transaction${result.imported === 1 ? "" : "s"}.\n${result.skipped_duplicate} already imported, ${result.skipped_unparsed} couldn't be read.`
+      )
+    } catch (error: any) {
+      Alert.alert("Sync failed", error.response?.data?.detail || "Something went wrong")
+    } finally {
+      setIsSyncing(false)
+    }
   }
 
   return (
@@ -82,6 +113,34 @@ export default function ProfileScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        <View className="px-6 mb-6">
+          {user?.gmail_connected ? (
+            <TouchableOpacity
+              onPress={handleSyncGmail}
+              disabled={isSyncing}
+              className="w-full items-center justify-center border border-border bg-white rounded-2xl py-4"
+            >
+              {isSyncing ? (
+                <ActivityIndicator color="#16a34a" />
+              ) : (
+                <Text className="text-base font-semibold text-primary-600">Sync Gmail Now</Text>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={handleConnectGmail}
+              disabled={isConnecting}
+              className="w-full items-center justify-center border border-border bg-white rounded-2xl py-4"
+            >
+              {isConnecting ? (
+                <ActivityIndicator color="#16a34a" />
+              ) : (
+                <Text className="text-base font-semibold text-primary-600">Connect Gmail</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         <View className="px-6 mt-auto pb-6">
