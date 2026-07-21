@@ -134,7 +134,15 @@ export default function TransactionDetailScreen() {
             </View>
           </View>
 
-          <View className="px-6 pb-6 mt-auto">
+          <View className="px-6 pb-6 mt-auto gap-3">
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: "/(modals)/add-expense", params: { id: transaction.id } })}
+              disabled={isDeleting}
+              className="w-full items-center justify-center bg-primary-600 rounded-2xl py-4"
+            >
+              <Text className="text-base font-semibold text-white">Edit Transaction</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={handleDelete}
               disabled={isDeleting}

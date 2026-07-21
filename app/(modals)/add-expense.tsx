@@ -1,9 +1,11 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { router } from "expo-router"
+import { router, useLocalSearchParams } from "expo-router"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
 import { useCreateTransaction } from "@/hooks/useCreateTransaction"
-import { useState } from "react"
+import { transactionApi } from "@/api/endpoints/transactions"
+import { useState, useEffect } from "react"
 
 const CATEGORIES = [
   "food", "transport", "shopping", "entertainment",
@@ -11,15 +13,36 @@ const CATEGORIES = [
 ]
 
 export default function AddExpenseScreen() {
+  const { id } = useLocalSearchParams<{ id?: string }>()
+  const isEditMode = !!id
   const { user } = useUserStore()
-  const { mutate: createTransaction, isPending } = useCreateTransaction()
+  const { mutate: createTransaction, isPending: isCreating } = useCreateTransaction()
+  const queryClient = useQueryClient()
+  const [isSaving, setIsSaving] = useState(false)
+
+  const { data: existing, isLoading: isLoadingExisting } = useQuery({
+    queryKey: ["transaction", id],
+    queryFn: () => transactionApi.getById(id!),
+    enabled: isEditMode
+  })
 
   const [amount, setAmount] = useState("")
   const [merchant, setMerchant] = useState("")
   const [description, setDescription] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("food")
 
-  const handleAdd = () => {
+  useEffect(() => {
+    if (existing) {
+      setAmount(String(existing.amount))
+      setMerchant(existing.merchant)
+      setDescription(existing.description === existing.merchant ? "" : existing.description)
+      setSelectedCategory(existing.category)
+    }
+  }, [existing])
+
+  const isPending = isCreating || isSaving
+
+  const handleSubmit = async () => {
     if (!amount.trim()) {
       Alert.alert("Error", "Please enter an amount")
       return
@@ -27,6 +50,27 @@ export default function AddExpenseScreen() {
 
     if (!merchant.trim()) {
       Alert.alert("Error", "Please enter merchant name")
+      return
+    }
+
+    if (isEditMode) {
+      setIsSaving(true)
+      try {
+        await transactionApi.update(id!, {
+          amount: parseFloat(amount),
+          category: selectedCategory,
+          merchant,
+          description: description || merchant
+        })
+        queryClient.invalidateQueries({ queryKey: ["transactions"] })
+        queryClient.invalidateQueries({ queryKey: ["transaction", id] })
+        queryClient.invalidateQueries({ queryKey: ["budgets"] })
+        router.back()
+      } catch (error: any) {
+        Alert.alert("Error", "Failed to update transaction")
+      } finally {
+        setIsSaving(false)
+      }
       return
     }
 
@@ -55,10 +99,20 @@ export default function AddExpenseScreen() {
     })
   }
 
+  if (isEditMode && isLoadingExisting) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" />
+      </SafeAreaView>
+    )
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border">
-        <Text className="text-lg font-semibold text-neutral-900">Add Expense</Text>
+        <Text className="text-lg font-semibold text-neutral-900">
+          {isEditMode ? "Edit Transaction" : "Add Expense"}
+        </Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text className="text-base text-primary-600">✕</Text>
         </TouchableOpacity>
@@ -135,10 +189,10 @@ export default function AddExpenseScreen() {
         </View>
       </ScrollView>
 
-      {/* Add Button */}
+      {/* Submit Button */}
       <View className="px-6 pb-8 gap-3">
         <TouchableOpacity
-          onPress={handleAdd}
+          onPress={handleSubmit}
           disabled={isPending}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
             isPending ? "bg-neutral-200" : "bg-primary-600"
@@ -147,7 +201,7 @@ export default function AddExpenseScreen() {
           <Text className={`text-base font-semibold ${
             isPending ? "text-neutral-400" : "text-white"
           }`}>
-            {isPending ? "Adding..." : "Add Expense"}
+            {isPending ? "Saving..." : isEditMode ? "Save Changes" : "Add Expense"}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity

@@ -14,6 +14,13 @@ export interface TransactionCreatePayload {
   raw_text?: string
 }
 
+export interface TransactionUpdatePayload {
+  amount?: number
+  category?: string
+  merchant?: string
+  description?: string
+}
+
 export interface TransactionListResponse {
   transactions: Transaction[]
   total: number
@@ -25,6 +32,14 @@ export const transactionApi = {
   async create(data: TransactionCreatePayload): Promise<Transaction> {
     const response = await apiClient.post<Transaction>(
       "/api/transactions",
+      data
+    )
+    return response.data
+  },
+
+  async update(transactionId: string, data: TransactionUpdatePayload): Promise<Transaction> {
+    const response = await apiClient.patch<Transaction>(
+      `/api/transactions/${transactionId}`,
       data
     )
     return response.data
