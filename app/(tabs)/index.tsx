@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { router } from "expo-router"
@@ -7,14 +7,18 @@ import { useUserStore } from "@/store/useUserStore"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency, formatCompactCurrency } from "@/utils/currency"
-import { formatDateShort } from "@/utils/date"
+import { formatDateShort, isThisMonth } from "@/utils/date"
 import { Colors } from "@/constants/colors"
-import { useCallback } from "react"
+import { CATEGORY_ICONS } from "@/constants/categories"
+import { EmptyState } from "@/components/shared/EmptyState"
+import { ErrorState } from "@/components/shared/ErrorState"
+import { useCallback, useState } from "react"
 
 export default function DashboardScreen() {
   const navigation = useNavigation()
   const { user } = useUserStore()
   const { transactions, setTransactions } = useTransactionStore()
+  const [refreshing, setRefreshing] = useState(false)
 
   const { isLoading, error, refetch } = useQuery({
     queryKey: ["transactions", user?.id],
@@ -33,11 +37,20 @@ export default function DashboardScreen() {
     }, [refetch])
   )
 
-  const totalSpent = transactions
+  const onRefresh = useCallback(() => {
+    setRefreshing(true)
+    refetch().finally(() => setRefreshing(false))
+  }, [refetch])
+
+  // "This month" should mean this month — scope the summary to it rather
+  // than whatever happens to be in the last 50 fetched transactions.
+  const thisMonthTransactions = transactions.filter(t => isThisMonth(t.date))
+
+  const totalSpent = thisMonthTransactions
     .filter(t => t.type === "debit")
     .reduce((sum, t) => sum + t.amount, 0)
 
-  const categoryTotals = transactions
+  const categoryTotals = thisMonthTransactions
     .filter(t => t.type === "debit")
     .reduce((acc, t) => {
       acc[t.category] = (acc[t.category] || 0) + t.amount
@@ -48,7 +61,13 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Header */}
         <View className="px-6 pt-4 pb-6 flex-row items-center justify-between">
           <View className="flex-1">
@@ -57,7 +76,7 @@ export default function DashboardScreen() {
               {user?.name ?? "User"}
             </Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => navigation.navigate("(modals)/add-expense" as never)}
             className="bg-primary-600 rounded-full w-12 h-12 items-center justify-center"
           >
@@ -75,7 +94,7 @@ export default function DashboardScreen() {
               {formatCompactCurrency(totalSpent)}
             </Text>
             <Text className="text-white text-xs mt-3 opacity-70">
-              {transactions.filter(t => t.type === "debit").length} transactions
+              {thisMonthTransactions.filter(t => t.type === "debit").length} transactions
             </Text>
           </View>
         </View>
@@ -111,23 +130,19 @@ export default function DashboardScreen() {
             </View>
           )}
 
-          {error && (
-            <View className="bg-red-50 border border-red-200 rounded-2xl p-4">
-              <Text className="text-red-700 text-sm">
-                Failed to load transactions
-              </Text>
-            </View>
+          {!isLoading && error && (
+            <ErrorState message="Failed to load transactions" onRetry={refetch} />
           )}
 
-          {!isLoading && transactions.length === 0 && (
-            <View className="bg-neutral-50 rounded-2xl p-6 items-center justify-center py-12">
-              <Text className="text-neutral-500 text-center text-sm">
-                No transactions yet.{"\n"}Add your first expense to get started.
-              </Text>
-            </View>
+          {!isLoading && !error && transactions.length === 0 && (
+            <EmptyState
+              icon="💸"
+              title="No transactions yet"
+              subtitle="Add your first expense to get started."
+            />
           )}
 
-          {!isLoading && transactions.length > 0 && (
+          {!isLoading && !error && transactions.length > 0 && (
             <View className="gap-3">
               {transactions.slice(0, 10).map((transaction) => (
                 <TouchableOpacity
@@ -135,20 +150,27 @@ export default function DashboardScreen() {
                   onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
                   className="bg-white border border-border rounded-2xl p-4 flex-row items-center justify-between"
                 >
-                  <View className="flex-1">
-                    <Text className="text-sm font-semibold text-neutral-900">
-                      {transaction.merchant}
-                    </Text>
-                    <Text className="text-xs text-muted mt-1">
-                      {formatDateShort(transaction.date)}
-                    </Text>
+                  <View className="flex-row items-center gap-3 flex-1">
+                    <View className="w-10 h-10 rounded-full bg-neutral-100 items-center justify-center">
+                      <Text className="text-lg">
+                        {CATEGORY_ICONS[transaction.category] || "📌"}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-sm font-semibold text-neutral-900">
+                        {transaction.merchant}
+                      </Text>
+                      <Text className="text-xs text-muted mt-1">
+                        {formatDateShort(transaction.date)}
+                      </Text>
+                    </View>
                   </View>
                   <Text className={`text-sm font-bold ${
                     transaction.type === "debit"
                       ? "text-red-600"
                       : "text-green-600"
                   }`}>
-                    {transaction.type === "debit" ? "-" : "+"}
+                    {transaction.type === "debit" ? "−" : "+"}
                     {formatCurrency(transaction.amount)}
                   </Text>
                 </TouchableOpacity>

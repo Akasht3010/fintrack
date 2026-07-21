@@ -9,6 +9,9 @@ import { formatCurrency } from "@/utils/currency"
 import { formatDateShort, formatDate } from "@/utils/date"
 import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
+import { EmptyState } from "@/components/shared/EmptyState"
+import { ErrorState } from "@/components/shared/ErrorState"
+import { Transaction } from "@/types/domain"
 import { useState, useCallback } from "react"
 
 const CATEGORIES = [
@@ -29,7 +32,7 @@ export default function TransactionsScreen() {
   const { user } = useUserStore()
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [page, setPage] = useState(1)
-  const [allTransactions, setAllTransactions] = useState<any[]>([])
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([])
   const [refreshing, setRefreshing] = useState(false)
 
   const { isLoading, error, refetch } = useQuery({
@@ -136,15 +139,13 @@ export default function TransactionsScreen() {
             <ActivityIndicator size="large" color={Colors.primary[600]} />
           </View>
         ) : error ? (
-          <View className="flex-1 items-center justify-center px-6">
-            <Text className="text-red-600 text-center">Failed to load transactions</Text>
-          </View>
+          <ErrorState message="Failed to load transactions" onRetry={refetch} />
         ) : filteredTransactions.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-6">
-            <Text className="text-neutral-500 text-center">
-              No transactions in this category
-            </Text>
-          </View>
+          <EmptyState
+            icon="🔍"
+            title="No transactions"
+            subtitle={selectedCategory === "all" ? "Add your first expense to get started." : "No transactions in this category yet."}
+          />
         ) : (
           <ScrollView 
             className="px-6"

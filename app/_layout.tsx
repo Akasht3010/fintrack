@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import * as SecureStore from "expo-secure-store"
 import * as SplashScreen from "expo-splash-screen"
 import { useUserStore } from "@/store/useUserStore"
+import { authApi } from "@/api/endpoints/auth"
 import "../src/constants/global.css"
 
 SplashScreen.preventAutoHideAsync()
@@ -34,7 +35,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        router.replace("/(tabs)/")
+        router.replace("/(tabs)")
       } else {
         router.replace("/(auth)/login")
       }
@@ -43,11 +44,22 @@ function RootLayoutNav() {
 
   const checkAuth = async () => {
     try {
-      // Clear tokens to force login
-      await SecureStore.deleteItemAsync("access_token")
-      await SecureStore.deleteItemAsync("user")
-      setLoading(false)
+      const token = await SecureStore.getItemAsync("access_token")
+      if (!token) {
+        return
+      }
+
+      // Validates the token and refreshes the cached user in one step —
+      // if it's expired/invalid this throws and we fall through to clearing
+      // the stale session instead of leaving the user stuck on a broken one.
+      const user = await authApi.getMe()
+      await SecureStore.setItemAsync("user", JSON.stringify(user))
+      setUser(user)
     } catch (err) {
+      await SecureStore.deleteItemAsync("access_token")
+      await SecureStore.deleteItemAsync("refresh_token")
+      await SecureStore.deleteItemAsync("user")
+    } finally {
       setLoading(false)
     }
   }
