@@ -5,6 +5,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
 import { useCreateTransaction } from "@/hooks/useCreateTransaction"
 import { transactionApi } from "@/api/endpoints/transactions"
+import { budgetApi } from "@/api/endpoints/budgets"
+import { Budget } from "@/types/domain"
+import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { useState, useEffect } from "react"
 
 const CATEGORIES = [
@@ -79,6 +82,13 @@ export default function AddExpenseScreen() {
       return
     }
 
+    let budgetsBefore: Budget[] = []
+    try {
+      budgetsBefore = await budgetApi.list()
+    } catch {
+      // Alerting is best-effort — don't block adding the expense over this
+    }
+
     createTransaction({
       amount: parseFloat(amount),
       currency: "INR",
@@ -90,7 +100,14 @@ export default function AddExpenseScreen() {
       source: "manual",
       is_recurring: false
     }, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        try {
+          const budgetsAfter = await budgetApi.list()
+          await notifyBudgetThresholdCrossings(budgetsBefore, budgetsAfter)
+          queryClient.invalidateQueries({ queryKey: ["budgets"] })
+        } catch {
+          // Same — never let alerting get in the way of the actual save
+        }
         router.back()
       },
       onError: (error: any) => {

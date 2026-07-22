@@ -7,8 +7,10 @@ import { useUserStore } from "@/store/useUserStore"
 import { useThemeStore, ThemeMode } from "@/store/useThemeStore"
 import { useGmailConnect } from "@/hooks/useGmailConnect"
 import { gmailApi } from "@/api/endpoints/gmail"
+import { budgetApi } from "@/api/endpoints/budgets"
 import { formatDate } from "@/utils/date"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
+import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 
 function initialsFor(name?: string): string {
   if (!name) return "?"
@@ -54,9 +56,16 @@ export default function ProfileScreen() {
   const handleSyncGmail = async () => {
     setIsSyncing(true)
     try {
+      const budgetsBefore = await budgetApi.list().catch(() => [])
       const result = await gmailApi.sync()
       queryClient.invalidateQueries({ queryKey: ["transactions"] })
       queryClient.invalidateQueries({ queryKey: ["budgets"] })
+
+      if (result.imported > 0) {
+        const budgetsAfter = await budgetApi.list().catch(() => [])
+        await notifyBudgetThresholdCrossings(budgetsBefore, budgetsAfter)
+      }
+
       Alert.alert(
         "Sync complete",
         `Imported ${result.imported} new transaction${result.imported === 1 ? "" : "s"}.\n${result.skipped_duplicate} already imported, ${result.skipped_unparsed} couldn't be read.`

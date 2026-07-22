@@ -5,6 +5,11 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}"
   ],
   presets: [require("nativewind/preset")],
+  // NativeWind's web target needs "class" (not the default "media") to allow
+  // manually overriding the theme via colorScheme.set() — "media" can only
+  // follow the OS/browser's prefers-color-scheme. Native is unaffected by
+  // this setting; it uses a different mechanism (Appearance.setColorScheme).
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
