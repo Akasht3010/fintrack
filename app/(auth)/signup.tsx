@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingVi
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { router, useLocalSearchParams } from "expo-router"
-import * as SecureStore from "expo-secure-store"
+import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { useState } from "react"

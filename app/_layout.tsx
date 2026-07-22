@@ -2,7 +2,7 @@ import { useEffect } from "react"
 import { Stack, router } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import * as SecureStore from "expo-secure-store"
+import { storage as SecureStore } from "@/utils/storage"
 import * as SplashScreen from "expo-splash-screen"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import { useUserStore } from "@/store/useUserStore"
@@ -68,7 +68,14 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: {
+          backgroundColor: "transparent"
+        }
+      }}
+    >
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen
@@ -91,7 +98,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <StatusBar style="auto" translucent backgroundColor="transparent" />
+        <StatusBar style="auto" translucent backgroundColor="transparent" hidden={false} />
         <RootLayoutNav />
       </SafeAreaProvider>
     </QueryClientProvider>

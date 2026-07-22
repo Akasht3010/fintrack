@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Colors } from "@/constants/colors"
 
 const TAB_BAR_HEIGHT = 64
-const TAB_BAR_SIDE_MARGIN = 32
+const TAB_BAR_SIDE_MARGIN = 16
 const TAB_BAR_RADIUS = 32
 
 export default function TabsLayout() {
@@ -23,7 +23,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: isDark ? "#9ca3af" : Colors.muted,
         tabBarBackground: () => (
           <BlurView
-            intensity={80}
+            intensity={14}
             tint={isDark ? "dark" : "light"}
             style={{ flex: 1, borderRadius: TAB_BAR_RADIUS, overflow: "hidden" }}
           />

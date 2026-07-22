@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import * as SecureStore from "expo-secure-store"
+import { storage as SecureStore } from "@/utils/storage"
 import { colorScheme } from "nativewind"
 
 export type ThemeMode = "light" | "dark" | "system"

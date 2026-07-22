@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import * as SecureStore from "expo-secure-store"
+import { storage as SecureStore } from "@/utils/storage"
 import { User } from "@/types/domain"
 
 interface UserState {
