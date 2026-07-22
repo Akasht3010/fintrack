@@ -56,3 +56,27 @@ export interface MonthlySummary {
   transactionCount: number
   insight: string
 }
+
+export interface MonthlyTotal {
+  year: number
+  month: number
+  label: string
+  total: number
+}
+
+export interface CategoryBreakdownItem {
+  category: TransactionCategory
+  total: number
+}
+
+export interface MerchantBreakdownItem {
+  merchant: string
+  total: number
+  count: number
+}
+
+export interface InsightsSummary {
+  monthly_totals: MonthlyTotal[]
+  category_breakdown: CategoryBreakdownItem[]
+  top_merchants: MerchantBreakdownItem[]
+}
