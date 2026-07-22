@@ -8,6 +8,7 @@ import { transactionApi } from "@/api/endpoints/transactions"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { Budget } from "@/types/domain"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
+import { GlowBackground } from "@/components/shared/GlowBackground"
 import { useState, useEffect } from "react"
 
 const CATEGORIES = [
@@ -118,20 +119,22 @@ export default function AddExpenseScreen() {
 
   if (isEditMode && isLoadingExisting) {
     return (
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950 items-center justify-center">
+      <SafeAreaView className="flex-1 bg-white dark:bg-transparent items-center justify-center">
+        <GlowBackground />
         <ActivityIndicator size="large" />
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-neutral-800">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
+      <GlowBackground />
+      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
           {isEditMode ? "Edit Transaction" : "Add Expense"}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-base text-primary-600 dark:text-primary-400">✕</Text>
+          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
 
@@ -139,7 +142,7 @@ export default function AddExpenseScreen() {
         {/* Amount */}
         <View className="mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Amount</Text>
-          <View className="flex-row items-center border border-border dark:border-neutral-700 rounded-2xl px-4">
+          <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4">
             <Text className="text-2xl font-bold text-neutral-900 dark:text-white">₹</Text>
             <TextInput
               placeholder="0.00"
@@ -159,7 +162,7 @@ export default function AddExpenseScreen() {
             placeholder="e.g., Swiggy, Uber, etc."
             value={merchant}
             onChangeText={setMerchant}
-            className="border border-border dark:border-neutral-700 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
+            className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
             placeholderTextColor="#9ca3af"
           />
         </View>
@@ -174,8 +177,8 @@ export default function AddExpenseScreen() {
                 onPress={() => setSelectedCategory(cat)}
                 className={`px-4 py-2 rounded-full ${
                   selectedCategory === cat
-                    ? "bg-primary-600"
-                    : "bg-neutral-100 dark:bg-neutral-800"
+                    ? "bg-primary-600 dark:bg-accent-600"
+                    : "bg-neutral-100 dark:bg-white/10"
                 }`}
               >
                 <Text
@@ -199,7 +202,7 @@ export default function AddExpenseScreen() {
             placeholder="Add notes"
             value={description}
             onChangeText={setDescription}
-            className="border border-border dark:border-neutral-700 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white h-20"
+            className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white h-20"
             placeholderTextColor="#9ca3af"
             multiline
           />
@@ -212,7 +215,7 @@ export default function AddExpenseScreen() {
           onPress={handleSubmit}
           disabled={isPending}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isPending ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600"
+            isPending ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600 dark:bg-accent-600"
           }`}
         >
           <Text className={`text-base font-semibold ${
@@ -224,7 +227,7 @@ export default function AddExpenseScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           disabled={isPending}
-          className="w-full items-center justify-center border border-border dark:border-neutral-700 rounded-2xl py-4"
+          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4"
         >
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
         </TouchableOpacity>

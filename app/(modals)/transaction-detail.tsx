@@ -7,6 +7,8 @@ import { formatCurrency } from "@/utils/currency"
 import { formatDate } from "@/utils/date"
 import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
+import { GlowBackground } from "@/components/shared/GlowBackground"
+import { GlassCard } from "@/components/shared/GlassCard"
 import { useState } from "react"
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -53,11 +55,12 @@ export default function TransactionDetailScreen() {
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-neutral-800">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
+      <GlowBackground />
+      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Transaction</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-base text-primary-600 dark:text-primary-400">✕</Text>
+          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
 
@@ -72,13 +75,13 @@ export default function TransactionDetailScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
           <View className="items-center px-6 pt-8 pb-6">
-            <View className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-neutral-800 items-center justify-center mb-4">
+            <View className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center mb-4">
               <Text className="text-3xl">{CATEGORY_ICONS[transaction.category] || "📌"}</Text>
             </View>
             <Text className="text-lg font-semibold text-neutral-900 dark:text-white">{transaction.merchant}</Text>
             <Text
               className={`text-3xl font-bold mt-2 ${
-                transaction.type === "debit" ? "text-red-600" : "text-green-600"
+                transaction.type === "debit" ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-emerald-400"
               }`}
             >
               {transaction.type === "debit" ? "−" : "+"}
@@ -87,29 +90,29 @@ export default function TransactionDetailScreen() {
           </View>
 
           <View className="px-6 mb-6">
-            <View className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl overflow-hidden">
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+            <GlassCard>
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
                 <Text className="text-sm text-muted dark:text-neutral-400">Category</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                   {transaction.category}
                 </Text>
               </View>
 
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
                 <Text className="text-sm text-muted dark:text-neutral-400">Date</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                   {formatDate(transaction.date)}
                 </Text>
               </View>
 
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
                 <Text className="text-sm text-muted dark:text-neutral-400">Type</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                   {transaction.type}
                 </Text>
               </View>
 
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
                 <Text className="text-sm text-muted dark:text-neutral-400">Source</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                   {SOURCE_LABELS[transaction.source] || transaction.source}
@@ -117,10 +120,10 @@ export default function TransactionDetailScreen() {
               </View>
 
               {transaction.is_recurring && (
-                <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+                <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
                   <Text className="text-sm text-muted dark:text-neutral-400">Recurring</Text>
-                  <View className="px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900">
-                    <Text className="text-xs font-medium text-primary-600 dark:text-primary-400">Yes</Text>
+                  <View className="px-3 py-1 rounded-full bg-primary-100 dark:bg-accent-900">
+                    <Text className="text-xs font-medium text-primary-600 dark:text-accent-400">Yes</Text>
                   </View>
                 </View>
               )}
@@ -131,14 +134,14 @@ export default function TransactionDetailScreen() {
                   <Text className="text-sm text-neutral-900 dark:text-white">{transaction.description}</Text>
                 </View>
               )}
-            </View>
+            </GlassCard>
           </View>
 
           <View className="px-6 pb-6 mt-auto gap-3">
             <TouchableOpacity
               onPress={() => router.push({ pathname: "/(modals)/add-expense", params: { id: transaction.id } })}
               disabled={isDeleting}
-              className="w-full items-center justify-center bg-primary-600 rounded-2xl py-4"
+              className="w-full items-center justify-center bg-primary-600 dark:bg-accent-600 rounded-2xl py-4"
             >
               <Text className="text-base font-semibold text-white">Edit Transaction</Text>
             </TouchableOpacity>
@@ -146,7 +149,7 @@ export default function TransactionDetailScreen() {
             <TouchableOpacity
               onPress={handleDelete}
               disabled={isDeleting}
-              className="w-full items-center justify-center border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 rounded-2xl py-4"
+              className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4"
             >
               {isDeleting ? (
                 <ActivityIndicator color="#dc2626" />

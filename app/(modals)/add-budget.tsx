@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useMemo, useEffect } from "react"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { TransactionCategory } from "@/types/domain"
+import { GlowBackground } from "@/components/shared/GlowBackground"
 
 const CATEGORIES: TransactionCategory[] = [
   "food", "transport", "shopping", "entertainment",
@@ -70,20 +71,22 @@ export default function AddBudgetScreen() {
 
   if (isEditMode && !existing) {
     return (
-      <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950 items-center justify-center">
+      <SafeAreaView className="flex-1 bg-white dark:bg-transparent items-center justify-center">
+        <GlowBackground />
         <ActivityIndicator size="large" />
       </SafeAreaView>
     )
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-neutral-800">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
+      <GlowBackground />
+      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
           {isEditMode ? "Edit Budget" : "New Budget"}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-base text-primary-600 dark:text-primary-400">✕</Text>
+          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
 
@@ -92,7 +95,7 @@ export default function AddBudgetScreen() {
         <View className="mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
           {isEditMode ? (
-            <View className="px-4 py-3 rounded-2xl bg-neutral-100 dark:bg-neutral-800">
+            <View className="px-4 py-3 rounded-2xl bg-neutral-100 dark:bg-white/10">
               <Text className="text-base font-medium text-neutral-700 dark:text-neutral-300 capitalize">{category}</Text>
             </View>
           ) : (
@@ -102,7 +105,7 @@ export default function AddBudgetScreen() {
                   key={cat}
                   onPress={() => setCategory(cat)}
                   className={`px-4 py-2 rounded-full ${
-                    category === cat ? "bg-primary-600" : "bg-neutral-100 dark:bg-neutral-800"
+                    category === cat ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
                   }`}
                 >
                   <Text
@@ -122,7 +125,7 @@ export default function AddBudgetScreen() {
         <View className="mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Period</Text>
           {isEditMode ? (
-            <View className="px-4 py-3 rounded-2xl bg-neutral-100 dark:bg-neutral-800">
+            <View className="px-4 py-3 rounded-2xl bg-neutral-100 dark:bg-white/10">
               <Text className="text-base font-medium text-neutral-700 dark:text-neutral-300 capitalize">{period}</Text>
             </View>
           ) : (
@@ -132,7 +135,7 @@ export default function AddBudgetScreen() {
                   key={p}
                   onPress={() => setPeriod(p)}
                   className={`flex-1 items-center py-3 rounded-2xl ${
-                    period === p ? "bg-primary-600" : "bg-neutral-100 dark:bg-neutral-800"
+                    period === p ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
                   }`}
                 >
                   <Text
@@ -151,7 +154,7 @@ export default function AddBudgetScreen() {
         {/* Limit amount */}
         <View className="mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Limit</Text>
-          <View className="flex-row items-center border border-border dark:border-neutral-700 rounded-2xl px-4">
+          <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4">
             <Text className="text-2xl font-bold text-neutral-900 dark:text-white">₹</Text>
             <TextInput
               placeholder="0.00"
@@ -170,7 +173,7 @@ export default function AddBudgetScreen() {
           onPress={handleSubmit}
           disabled={isSubmitting}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isSubmitting ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600"
+            isSubmitting ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600 dark:bg-accent-600"
           }`}
         >
           <Text className={`text-base font-semibold ${isSubmitting ? "text-neutral-400" : "text-white"}`}>
@@ -180,7 +183,7 @@ export default function AddBudgetScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           disabled={isSubmitting}
-          className="w-full items-center justify-center border border-border dark:border-neutral-700 rounded-2xl py-4"
+          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4"
         >
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
         </TouchableOpacity>
