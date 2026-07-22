@@ -89,7 +89,7 @@ export default function TransactionsScreen() {
     }), { count: 0, total: 0 })
 
   return (
-    <SafeAreaView className="flex-1 bg-background dark:bg-neutral-950">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-neutral-950">
       {/* Header */}
       <View className="px-6 pt-4 pb-4">
         <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Transactions</Text>

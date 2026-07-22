@@ -62,7 +62,7 @@ export default function DashboardScreen() {
   const topCategory = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]
 
   return (
-    <SafeAreaView className="flex-1 bg-background dark:bg-neutral-950">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-neutral-950">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: tabBarClearance }}

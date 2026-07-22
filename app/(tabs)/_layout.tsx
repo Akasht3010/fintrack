@@ -1,9 +1,14 @@
 import { Tabs } from "expo-router"
 import { Platform } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { BlurView } from "expo-blur"
 import { useColorScheme } from "nativewind"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Colors } from "@/constants/colors"
+
+const TAB_BAR_HEIGHT = 64
+const TAB_BAR_SIDE_MARGIN = 32
+const TAB_BAR_RADIUS = 32
 
 export default function TabsLayout() {
   const { colorScheme } = useColorScheme()
@@ -16,17 +21,26 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: isDark ? Colors.primary[400] : Colors.primary[600],
         tabBarInactiveTintColor: isDark ? "#9ca3af" : Colors.muted,
+        tabBarBackground: () => (
+          <BlurView
+            intensity={80}
+            tint={isDark ? "dark" : "light"}
+            style={{ flex: 1, borderRadius: TAB_BAR_RADIUS, overflow: "hidden" }}
+          />
+        ),
         tabBarStyle: {
           position: "absolute",
-          left: 24,
-          right: 24,
+          left: TAB_BAR_SIDE_MARGIN,
+          right: TAB_BAR_SIDE_MARGIN,
           bottom: insets.bottom + 16,
-          height: 64,
-          borderRadius: 32,
+          height: TAB_BAR_HEIGHT,
+          borderRadius: TAB_BAR_RADIUS,
           borderTopWidth: 0,
-          backgroundColor: isDark ? "#1f1f1f" : Colors.surface,
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
           paddingBottom: 0,
           paddingTop: 8,
+          overflow: "hidden",
           ...Platform.select({
             ios: {
               shadowColor: "#000",

@@ -56,7 +56,7 @@ export default function BudgetScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background dark:bg-neutral-950">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-neutral-950">
       <View className="px-6 pt-4 pb-6 flex-row items-center justify-between">
         <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Budget</Text>
         <TouchableOpacity

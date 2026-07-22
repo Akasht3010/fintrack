@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import * as SecureStore from "expo-secure-store"
 import * as SplashScreen from "expo-splash-screen"
+import { SafeAreaProvider } from "react-native-safe-area-context"
 import { useUserStore } from "@/store/useUserStore"
 import { useThemeStore } from "@/store/useThemeStore"
 import { authApi } from "@/api/endpoints/auth"
@@ -89,8 +90,10 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="auto" />
-      <RootLayoutNav />
+      <SafeAreaProvider>
+        <StatusBar style="auto" translucent backgroundColor="transparent" />
+        <RootLayoutNav />
+      </SafeAreaProvider>
     </QueryClientProvider>
   )
 }

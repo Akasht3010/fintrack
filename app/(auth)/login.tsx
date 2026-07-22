@@ -91,7 +91,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
       <StatusBar style="auto" />
 
       <KeyboardAvoidingView

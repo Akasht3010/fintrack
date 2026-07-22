@@ -77,7 +77,7 @@ export default function AddBudgetScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-neutral-950">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-neutral-800">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
           {isEditMode ? "Edit Budget" : "New Budget"}
