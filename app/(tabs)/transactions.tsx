@@ -12,6 +12,7 @@ import { CATEGORY_ICONS } from "@/constants/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { Transaction } from "@/types/domain"
+import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { useState, useCallback } from "react"
 
 const CATEGORIES = [
@@ -34,6 +35,7 @@ export default function TransactionsScreen() {
   const [page, setPage] = useState(1)
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([])
   const [refreshing, setRefreshing] = useState(false)
+  const tabBarClearance = useTabBarClearance()
 
   const { isLoading, error, refetch } = useQuery({
     queryKey: ["transactions", user?.id, selectedCategory, page],
@@ -202,7 +204,7 @@ export default function TransactionsScreen() {
             ))}
 
             {/* Clearance for the floating tab bar */}
-            <View style={{ height: 140 }} />
+            <View style={{ height: tabBarClearance }} />
           </ScrollView>
         )}
       </View>

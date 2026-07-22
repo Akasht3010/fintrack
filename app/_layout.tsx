@@ -2,7 +2,6 @@ import { useEffect } from "react"
 import { Stack, router } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { useColorScheme } from "nativewind"
 import * as SecureStore from "expo-secure-store"
 import * as SplashScreen from "expo-splash-screen"
 import { useUserStore } from "@/store/useUserStore"
@@ -24,13 +23,6 @@ const queryClient = new QueryClient({
 function RootLayoutNav() {
   const { isAuthenticated, isLoading, setUser, setLoading } = useUserStore()
   const hydrateTheme = useThemeStore((state) => state.hydrate)
-  const { colorScheme } = useColorScheme()
-  const isDark = colorScheme === "dark"
-  // React Navigation's own scene background defaults to pure #000000 in dark
-  // mode (from its automatic DarkTheme), which is a visibly different shade
-  // than our neutral-950 screens — wherever the navigator's raw background
-  // peeks through, that mismatch shows up as a seam. Pin it to match exactly.
-  const sceneBackgroundColor = isDark ? "#0a0a0a" : "#f9fafb"
 
   useEffect(() => {
     Promise.all([checkAuth(), hydrateTheme()])
@@ -75,7 +67,7 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: sceneBackgroundColor } }}>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen

@@ -12,12 +12,14 @@ import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
+import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 
 export default function BudgetScreen() {
   const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
   const { colorScheme } = useColorScheme()
   const trashColor = colorScheme === "dark" ? "#9ca3af" : Colors.muted
+  const tabBarClearance = useTabBarClearance()
 
   const { data: budgets, isLoading, error, refetch } = useQuery({
     queryKey: ["budgets"],
@@ -142,7 +144,7 @@ export default function BudgetScreen() {
           </View>
 
           {/* Clearance for the floating tab bar */}
-          <View style={{ height: 140 }} />
+          <View style={{ height: tabBarClearance }} />
         </ScrollView>
       )}
     </SafeAreaView>

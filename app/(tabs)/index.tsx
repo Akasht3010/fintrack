@@ -12,6 +12,7 @@ import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
+import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { useCallback, useState } from "react"
 
 export default function DashboardScreen() {
@@ -19,6 +20,7 @@ export default function DashboardScreen() {
   const { user } = useUserStore()
   const { transactions, setTransactions } = useTransactionStore()
   const [refreshing, setRefreshing] = useState(false)
+  const tabBarClearance = useTabBarClearance()
 
   const { isLoading, error, refetch } = useQuery({
     queryKey: ["transactions", user?.id],
@@ -63,7 +65,7 @@ export default function DashboardScreen() {
     <SafeAreaView className="flex-1 bg-background dark:bg-neutral-950">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: tabBarClearance }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }

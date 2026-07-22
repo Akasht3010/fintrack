@@ -8,6 +8,7 @@ import { useThemeStore, ThemeMode } from "@/store/useThemeStore"
 import { useGmailConnect } from "@/hooks/useGmailConnect"
 import { gmailApi } from "@/api/endpoints/gmail"
 import { formatDate } from "@/utils/date"
+import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 
 function initialsFor(name?: string): string {
   if (!name) return "?"
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
   const { user, logout } = useUserStore()
   const { mode, setMode } = useThemeStore()
   const { connect: connectGmail, isLoading: isConnecting } = useGmailConnect()
+  const tabBarClearance = useTabBarClearance()
   const [isSyncing, setIsSyncing] = useState(false)
   const queryClient = useQueryClient()
 
@@ -172,7 +174,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        <View className="px-6 mt-auto" style={{ paddingBottom: 140 }}>
+        <View className="px-6 mt-auto" style={{ paddingBottom: tabBarClearance }}>
           <TouchableOpacity
             onPress={handleSignOut}
             className="w-full items-center justify-center border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 rounded-2xl py-4"

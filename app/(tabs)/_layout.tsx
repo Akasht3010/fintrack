@@ -10,13 +10,10 @@ export default function TabsLayout() {
   const isDark = colorScheme === "dark"
   const insets = useSafeAreaInsets()
 
-  const sceneBackgroundColor = isDark ? "#0a0a0a" : "#f9fafb"
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: sceneBackgroundColor },
         tabBarActiveTintColor: isDark ? Colors.primary[400] : Colors.primary[600],
         tabBarInactiveTintColor: isDark ? "#9ca3af" : Colors.muted,
         tabBarStyle: {
