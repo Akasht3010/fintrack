@@ -11,6 +11,8 @@ import { budgetApi } from "@/api/endpoints/budgets"
 import { formatDate } from "@/utils/date"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
+import { GlowBackground } from "@/components/shared/GlowBackground"
+import { GlassCard } from "@/components/shared/GlassCard"
 
 function initialsFor(name?: string): string {
   if (!name) return "?"
@@ -78,7 +80,8 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-neutral-950">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
+      <GlowBackground />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         <View className="px-6 pt-4 pb-6">
           <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Profile</Text>
@@ -91,7 +94,7 @@ export default function ProfileScreen() {
               className="w-24 h-24 rounded-full mb-4"
             />
           ) : (
-            <View className="w-24 h-24 rounded-full bg-primary-500 items-center justify-center mb-4">
+            <View className="w-24 h-24 rounded-full bg-primary-500 dark:bg-accent-600 items-center justify-center mb-4">
               <Text className="text-3xl font-bold text-white">
                 {initialsFor(user?.name)}
               </Text>
@@ -104,18 +107,18 @@ export default function ProfileScreen() {
         </View>
 
         <View className="px-6 mb-6">
-          <View className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl overflow-hidden">
-            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+          <GlassCard>
+            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
               <Text className="text-sm text-muted dark:text-neutral-400">Phone</Text>
               <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                 {user?.phone || "Not added"}
               </Text>
             </View>
 
-            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-neutral-800">
+            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
               <Text className="text-sm text-muted dark:text-neutral-400">Gmail</Text>
-              <View className={`px-3 py-1 rounded-full ${user?.gmail_connected ? "bg-primary-100 dark:bg-primary-900" : "bg-neutral-100 dark:bg-neutral-800"}`}>
-                <Text className={`text-xs font-medium ${user?.gmail_connected ? "text-primary-600 dark:text-primary-400" : "text-neutral-500 dark:text-neutral-400"}`}>
+              <View className={`px-3 py-1 rounded-full ${user?.gmail_connected ? "bg-primary-100 dark:bg-accent-900" : "bg-neutral-100 dark:bg-white/10"}`}>
+                <Text className={`text-xs font-medium ${user?.gmail_connected ? "text-primary-600 dark:text-accent-400" : "text-neutral-500 dark:text-neutral-400"}`}>
                   {user?.gmail_connected ? "Connected" : "Not connected"}
                 </Text>
               </View>
@@ -127,18 +130,18 @@ export default function ProfileScreen() {
                 {user?.created_at ? formatDate(user.created_at) : "—"}
               </Text>
             </View>
-          </View>
+          </GlassCard>
         </View>
 
         <View className="px-6 mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Appearance</Text>
-          <View className="flex-row bg-neutral-100 dark:bg-neutral-800 rounded-2xl p-1">
+          <View className="flex-row bg-neutral-100 dark:bg-white/10 rounded-2xl p-1">
             {THEME_OPTIONS.map((option) => (
               <TouchableOpacity
                 key={option}
                 onPress={() => setMode(option)}
                 className={`flex-1 items-center py-2 rounded-xl ${
-                  mode === option ? "bg-white dark:bg-neutral-700" : ""
+                  mode === option ? "bg-white dark:bg-white/20" : ""
                 }`}
               >
                 <Text
@@ -157,36 +160,28 @@ export default function ProfileScreen() {
 
         <View className="px-6 mb-6">
           {user?.gmail_connected ? (
-            <TouchableOpacity
-              onPress={handleSyncGmail}
-              disabled={isSyncing}
-              className="w-full items-center justify-center border border-border dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-2xl py-4"
-            >
+            <GlassCard onPress={isSyncing ? undefined : handleSyncGmail} className="items-center justify-center py-4">
               {isSyncing ? (
                 <ActivityIndicator color="#16a34a" />
               ) : (
-                <Text className="text-base font-semibold text-primary-600 dark:text-primary-400">Sync Gmail Now</Text>
+                <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Sync Gmail Now</Text>
               )}
-            </TouchableOpacity>
+            </GlassCard>
           ) : (
-            <TouchableOpacity
-              onPress={handleConnectGmail}
-              disabled={isConnecting}
-              className="w-full items-center justify-center border border-border dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-2xl py-4"
-            >
+            <GlassCard onPress={isConnecting ? undefined : handleConnectGmail} className="items-center justify-center py-4">
               {isConnecting ? (
                 <ActivityIndicator color="#16a34a" />
               ) : (
-                <Text className="text-base font-semibold text-primary-600 dark:text-primary-400">Connect Gmail</Text>
+                <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Connect Gmail</Text>
               )}
-            </TouchableOpacity>
+            </GlassCard>
           )}
         </View>
 
         <View className="px-6 mt-auto" style={{ paddingBottom: tabBarClearance }}>
           <TouchableOpacity
             onPress={handleSignOut}
-            className="w-full items-center justify-center border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 rounded-2xl py-4"
+            className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4"
           >
             <Text className="text-base font-semibold text-red-600 dark:text-red-400">Sign Out</Text>
           </TouchableOpacity>

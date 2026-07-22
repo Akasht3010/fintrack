@@ -1,5 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { LinearGradient } from "expo-linear-gradient"
+import { useColorScheme } from "nativewind"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { router } from "expo-router"
 import { useQuery } from "@tanstack/react-query"
@@ -12,6 +14,8 @@ import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
+import { GlowBackground } from "@/components/shared/GlowBackground"
+import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { useCallback, useState } from "react"
 
@@ -21,6 +25,8 @@ export default function DashboardScreen() {
   const { transactions, setTransactions } = useTransactionStore()
   const [refreshing, setRefreshing] = useState(false)
   const tabBarClearance = useTabBarClearance()
+  const { colorScheme } = useColorScheme()
+  const isDark = colorScheme === "dark"
 
   const { isLoading, error, refetch } = useQuery({
     queryKey: ["transactions", user?.id],
@@ -62,7 +68,8 @@ export default function DashboardScreen() {
   const topCategory = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-neutral-950">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
+      <GlowBackground />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: tabBarClearance }}
@@ -80,7 +87,7 @@ export default function DashboardScreen() {
           </View>
           <TouchableOpacity
             onPress={() => navigation.navigate("(modals)/add-expense" as never)}
-            className="bg-primary-600 rounded-full w-12 h-12 items-center justify-center"
+            className="bg-primary-600 dark:bg-accent-600 rounded-full w-12 h-12 items-center justify-center"
           >
             <Text className="text-white text-xl font-bold">+</Text>
           </TouchableOpacity>
@@ -88,23 +95,38 @@ export default function DashboardScreen() {
 
         {/* Summary Card */}
         <View className="px-6 mb-6">
-          <View className="bg-primary-600 rounded-3xl p-6">
-            <Text className="text-white text-sm font-medium opacity-80">
-              This month
-            </Text>
-            <Text className="text-4xl font-bold text-white mt-2">
-              {formatCompactCurrency(totalSpent)}
-            </Text>
-            <Text className="text-white text-xs mt-3 opacity-70">
-              {thisMonthTransactions.filter(t => t.type === "debit").length} transactions
-            </Text>
-          </View>
+          {isDark ? (
+            <LinearGradient
+              colors={["#6366f1", "#7c3aed"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ borderRadius: 24, padding: 24 }}
+            >
+              <Text className="text-white text-sm font-medium opacity-80">This month</Text>
+              <Text className="text-4xl font-bold text-white mt-2">
+                {formatCompactCurrency(totalSpent)}
+              </Text>
+              <Text className="text-white text-xs mt-3 opacity-70">
+                {thisMonthTransactions.filter(t => t.type === "debit").length} transactions
+              </Text>
+            </LinearGradient>
+          ) : (
+            <View className="bg-primary-600 rounded-3xl p-6">
+              <Text className="text-white text-sm font-medium opacity-80">This month</Text>
+              <Text className="text-4xl font-bold text-white mt-2">
+                {formatCompactCurrency(totalSpent)}
+              </Text>
+              <Text className="text-white text-xs mt-3 opacity-70">
+                {thisMonthTransactions.filter(t => t.type === "debit").length} transactions
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Top Category */}
         {topCategory && (
           <View className="px-6 mb-6">
-            <View className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl p-4">
+            <GlassCard className="p-4">
               <Text className="text-xs text-muted dark:text-neutral-400 uppercase tracking-wider mb-2">
                 Top Category
               </Text>
@@ -112,11 +134,11 @@ export default function DashboardScreen() {
                 <Text className="text-lg font-semibold text-neutral-900 dark:text-white capitalize">
                   {topCategory[0]}
                 </Text>
-                <Text className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                <Text className="text-lg font-bold text-primary-600 dark:text-accent-400">
                   {formatCurrency(topCategory[1])}
                 </Text>
               </View>
-            </View>
+            </GlassCard>
           </View>
         )}
 
@@ -147,13 +169,13 @@ export default function DashboardScreen() {
           {!isLoading && !error && transactions.length > 0 && (
             <View className="gap-3">
               {transactions.slice(0, 10).map((transaction) => (
-                <TouchableOpacity
+                <GlassCard
                   key={transaction.id}
                   onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                  className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl p-4 flex-row items-center justify-between"
+                  className="p-4 flex-row items-center justify-between"
                 >
                   <View className="flex-row items-center gap-3 flex-1">
-                    <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 items-center justify-center">
+                    <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
                       <Text className="text-lg">
                         {CATEGORY_ICONS[transaction.category] || "📌"}
                       </Text>
@@ -169,13 +191,13 @@ export default function DashboardScreen() {
                   </View>
                   <Text className={`text-sm font-bold ${
                     transaction.type === "debit"
-                      ? "text-red-600"
-                      : "text-green-600"
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-green-600 dark:text-emerald-400"
                   }`}>
                     {transaction.type === "debit" ? "−" : "+"}
                     {formatCurrency(transaction.amount)}
                   </Text>
-                </TouchableOpacity>
+                </GlassCard>
               ))}
             </View>
           )}

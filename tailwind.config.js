@@ -21,6 +21,16 @@ module.exports = {
           600: "#16a34a",
           900: "#14532d"
         },
+        // Dark-mode-only accent (indigo/violet), used for the "liquid glass"
+        // look — light mode keeps `primary` (green) untouched.
+        accent: {
+          100: "#e0e7ff",
+          400: "#a5b4fc",
+          500: "#818cf8",
+          600: "#6366f1",
+          700: "#4f46e5",
+          900: "#312e81"
+        },
         surface: "#ffffff",
         background: "#f9fafb",
         border: "#e5e7eb",

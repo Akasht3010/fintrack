@@ -11,6 +11,8 @@ import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
+import { GlowBackground } from "@/components/shared/GlowBackground"
+import { GlassCard } from "@/components/shared/GlassCard"
 import { Transaction } from "@/types/domain"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { useState, useCallback } from "react"
@@ -42,13 +44,13 @@ export default function TransactionsScreen() {
     queryFn: async () => {
       if (!user?.id) return null
       const response = await transactionApi.list(page, 50)
-      
+
       if (page === 1) {
         setAllTransactions(response.transactions)
       } else {
         setAllTransactions(prev => [...prev, ...response.transactions])
       }
-      
+
       return response.transactions
     },
     enabled: !!user?.id
@@ -89,7 +91,8 @@ export default function TransactionsScreen() {
     }), { count: 0, total: 0 })
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-neutral-950">
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
+      <GlowBackground />
       {/* Header */}
       <View className="px-6 pt-4 pb-4">
         <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Transactions</Text>
@@ -117,8 +120,8 @@ export default function TransactionsScreen() {
             }}
             className={`px-4 py-2 rounded-full ${
               selectedCategory === category
-                ? "bg-primary-600"
-                : "bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800"
+                ? "bg-primary-600 dark:bg-accent-600"
+                : "bg-white dark:bg-white/10 border border-border dark:border-white/15"
             }`}
           >
             <Text
@@ -149,7 +152,7 @@ export default function TransactionsScreen() {
             subtitle={selectedCategory === "all" ? "Add your first expense to get started." : "No transactions in this category yet."}
           />
         ) : (
-          <ScrollView 
+          <ScrollView
             className="px-6"
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -166,13 +169,13 @@ export default function TransactionsScreen() {
                 {/* Transactions for this date */}
                 <View className="gap-2">
                   {txns.map((transaction) => (
-                    <TouchableOpacity
+                    <GlassCard
                       key={transaction.id}
                       onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                      className="bg-white dark:bg-neutral-900 border border-border dark:border-neutral-800 rounded-2xl p-4 flex-row items-center justify-between"
+                      className="p-4 flex-row items-center justify-between"
                     >
                       <View className="flex-row items-center gap-3 flex-1">
-                        <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 items-center justify-center">
+                        <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
                           <Text className="text-lg">
                             {CATEGORY_ICONS[transaction.category] || "📌"}
                           </Text>
@@ -190,14 +193,14 @@ export default function TransactionsScreen() {
                       <Text
                         className={`text-sm font-bold ${
                           transaction.type === "debit"
-                            ? "text-red-600"
-                            : "text-green-600"
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-green-600 dark:text-emerald-400"
                         }`}
                       >
                         {transaction.type === "debit" ? "−" : "+"}
                         {formatCurrency(transaction.amount)}
                       </Text>
-                    </TouchableOpacity>
+                    </GlassCard>
                   ))}
                 </View>
               </View>
