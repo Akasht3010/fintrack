@@ -71,7 +71,7 @@ export default function InsightsScreen() {
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
           {/* Recurring subscriptions */}
-          {recurring && recurring.items.length > 0 && (
+          {recurring && (
             <View className="mb-6">
               <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
                 Subscriptions
@@ -80,15 +80,26 @@ export default function InsightsScreen() {
                 onPress={() => router.push("/(modals)/recurring")}
                 className="p-4 flex-row items-center justify-between"
               >
-                <View>
-                  <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-                    {formatCurrency(recurring.monthly_total)}
-                    <Text className="text-sm font-medium text-muted dark:text-neutral-400">/mo</Text>
-                  </Text>
-                  <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
-                    {recurring.items.length} recurring bill{recurring.items.length === 1 ? "" : "s"} detected
-                  </Text>
-                </View>
+                {recurring.items.length > 0 ? (
+                  <View>
+                    <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+                      {formatCurrency(recurring.monthly_total)}
+                      <Text className="text-sm font-medium text-muted dark:text-neutral-400">/mo</Text>
+                    </Text>
+                    <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                      {recurring.items.length} recurring bill{recurring.items.length === 1 ? "" : "s"} detected
+                    </Text>
+                  </View>
+                ) : (
+                  <View className="flex-1 mr-3">
+                    <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                      Nothing detected yet
+                    </Text>
+                    <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                      We'll spot subscriptions once a merchant charges you a few times on a regular cadence
+                    </Text>
+                  </View>
+                )}
                 <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
               </GlassCard>
             </View>
