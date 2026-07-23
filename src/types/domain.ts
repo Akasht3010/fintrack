@@ -77,6 +77,7 @@ export interface MerchantBreakdownItem {
 
 export interface InsightsSummary {
   monthly_totals: MonthlyTotal[]
+  monthly_income_totals: MonthlyTotal[]
   category_breakdown: CategoryBreakdownItem[]
   top_merchants: MerchantBreakdownItem[]
 }

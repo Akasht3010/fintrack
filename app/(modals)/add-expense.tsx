@@ -34,6 +34,7 @@ export default function AddExpenseScreen() {
   const [merchant, setMerchant] = useState("")
   const [description, setDescription] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("food")
+  const [transactionType, setTransactionType] = useState<"debit" | "credit">("debit")
 
   useEffect(() => {
     if (existing) {
@@ -41,6 +42,7 @@ export default function AddExpenseScreen() {
       setMerchant(existing.merchant)
       setDescription(existing.description === existing.merchant ? "" : existing.description)
       setSelectedCategory(existing.category)
+      setTransactionType(existing.type)
     }
   }, [existing])
 
@@ -62,7 +64,8 @@ export default function AddExpenseScreen() {
       try {
         await transactionApi.update(id!, {
           amount: parseFloat(amount),
-          category: selectedCategory,
+          type: transactionType,
+          category: transactionType === "credit" ? "other" : selectedCategory,
           merchant,
           description: description || merchant
         })
@@ -84,17 +87,19 @@ export default function AddExpenseScreen() {
     }
 
     let budgetsBefore: Budget[] = []
-    try {
-      budgetsBefore = await budgetApi.list()
-    } catch {
-      // Alerting is best-effort — don't block adding the expense over this
+    if (transactionType === "debit") {
+      try {
+        budgetsBefore = await budgetApi.list()
+      } catch {
+        // Alerting is best-effort — don't block adding the expense over this
+      }
     }
 
     createTransaction({
       amount: parseFloat(amount),
       currency: "INR",
-      type: "debit",
-      category: selectedCategory,
+      type: transactionType,
+      category: transactionType === "credit" ? "other" : selectedCategory,
       merchant,
       description: description || merchant,
       date: new Date().toISOString(),
@@ -102,17 +107,19 @@ export default function AddExpenseScreen() {
       is_recurring: false
     }, {
       onSuccess: async () => {
-        try {
-          const budgetsAfter = await budgetApi.list()
-          await notifyBudgetThresholdCrossings(budgetsBefore, budgetsAfter)
-          queryClient.invalidateQueries({ queryKey: ["budgets"] })
-        } catch {
-          // Same — never let alerting get in the way of the actual save
+        if (transactionType === "debit") {
+          try {
+            const budgetsAfter = await budgetApi.list()
+            await notifyBudgetThresholdCrossings(budgetsBefore, budgetsAfter)
+            queryClient.invalidateQueries({ queryKey: ["budgets"] })
+          } catch {
+            // Same — never let alerting get in the way of the actual save
+          }
         }
         router.back()
       },
       onError: (error: any) => {
-        Alert.alert("Error", "Failed to add expense")
+        Alert.alert("Error", `Failed to add ${transactionType === "credit" ? "income" : "expense"}`)
       }
     })
   }
@@ -131,7 +138,7 @@ export default function AddExpenseScreen() {
       <GlowBackground />
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
-          {isEditMode ? "Edit Transaction" : "Add Expense"}
+          {isEditMode ? "Edit Transaction" : transactionType === "credit" ? "Add Income" : "Add Expense"}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
@@ -139,6 +146,29 @@ export default function AddExpenseScreen() {
       </View>
 
       <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
+        {/* Type toggle */}
+        <View className="flex-row bg-neutral-100 dark:bg-white/10 rounded-2xl p-1 mb-6">
+          {(["debit", "credit"] as const).map((t) => (
+            <TouchableOpacity
+              key={t}
+              onPress={() => setTransactionType(t)}
+              className={`flex-1 items-center py-2 rounded-xl ${
+                transactionType === t ? "bg-white dark:bg-white/20" : ""
+              }`}
+            >
+              <Text
+                className={`text-sm font-semibold ${
+                  transactionType === t
+                    ? "text-neutral-900 dark:text-white"
+                    : "text-muted dark:text-neutral-400"
+                }`}
+              >
+                {t === "debit" ? "Expense" : "Income"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Amount */}
         <View className="mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Amount</Text>
@@ -155,11 +185,13 @@ export default function AddExpenseScreen() {
           </View>
         </View>
 
-        {/* Merchant */}
+        {/* Merchant / Source */}
         <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Merchant</Text>
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">
+            {transactionType === "credit" ? "Source" : "Merchant"}
+          </Text>
           <TextInput
-            placeholder="e.g., Swiggy, Uber, etc."
+            placeholder={transactionType === "credit" ? "e.g., Salary, Freelance, etc." : "e.g., Swiggy, Uber, etc."}
             value={merchant}
             onChangeText={setMerchant}
             className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
@@ -168,32 +200,34 @@ export default function AddExpenseScreen() {
         </View>
 
         {/* Category */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                onPress={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-full ${
-                  selectedCategory === cat
-                    ? "bg-primary-600 dark:bg-accent-600"
-                    : "bg-neutral-100 dark:bg-white/10"
-                }`}
-              >
-                <Text
-                  className={`text-sm font-medium capitalize ${
+        {transactionType === "debit" && (
+          <View className="mb-6">
+            <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {CATEGORIES.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  onPress={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-full ${
                     selectedCategory === cat
-                      ? "text-white"
-                      : "text-neutral-700 dark:text-neutral-300"
+                      ? "bg-primary-600 dark:bg-accent-600"
+                      : "bg-neutral-100 dark:bg-white/10"
                   }`}
                 >
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    className={`text-sm font-medium capitalize ${
+                      selectedCategory === cat
+                        ? "text-white"
+                        : "text-neutral-700 dark:text-neutral-300"
+                    }`}
+                  >
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Description */}
         <View className="mb-6">
@@ -221,7 +255,11 @@ export default function AddExpenseScreen() {
           <Text className={`text-base font-semibold ${
             isPending ? "text-neutral-400" : "text-white"
           }`}>
-            {isPending ? "Saving..." : isEditMode ? "Save Changes" : "Add Expense"}
+            {isPending
+              ? "Saving..."
+              : isEditMode
+                ? "Save Changes"
+                : transactionType === "credit" ? "Add Income" : "Add Expense"}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity

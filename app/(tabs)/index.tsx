@@ -19,6 +19,31 @@ import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { useCallback, useState } from "react"
 
+function SummaryCardContent({ totalSpent, totalIncome, net }: { totalSpent: number; totalIncome: number; net: number }) {
+  return (
+    <>
+      <Text className="text-white text-sm font-medium opacity-80">This month</Text>
+      <View className="flex-row items-center mt-3">
+        <View className="flex-1">
+          <Text className="text-white text-xs opacity-70">Expenses</Text>
+          <Text className="text-white text-2xl font-bold mt-1">{formatCompactCurrency(totalSpent)}</Text>
+        </View>
+        <View className="w-px h-10 bg-white/25" />
+        <View className="flex-1 items-end">
+          <Text className="text-white text-xs opacity-70">Income</Text>
+          <Text className="text-white text-2xl font-bold mt-1">{formatCompactCurrency(totalIncome)}</Text>
+        </View>
+      </View>
+      <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-white/20">
+        <Text className="text-white text-xs opacity-70">Net</Text>
+        <Text className="text-white text-sm font-bold">
+          {net >= 0 ? "+" : "−"}{formatCompactCurrency(Math.abs(net))}
+        </Text>
+      </View>
+    </>
+  )
+}
+
 export default function DashboardScreen() {
   const navigation = useNavigation()
   const { user } = useUserStore()
@@ -57,6 +82,12 @@ export default function DashboardScreen() {
   const totalSpent = thisMonthTransactions
     .filter(t => t.type === "debit")
     .reduce((sum, t) => sum + t.amount, 0)
+
+  const totalIncome = thisMonthTransactions
+    .filter(t => t.type === "credit")
+    .reduce((sum, t) => sum + t.amount, 0)
+
+  const net = totalIncome - totalSpent
 
   const categoryTotals = thisMonthTransactions
     .filter(t => t.type === "debit")
@@ -102,23 +133,11 @@ export default function DashboardScreen() {
               end={{ x: 1, y: 1 }}
               style={{ borderRadius: 24, padding: 24 }}
             >
-              <Text className="text-white text-sm font-medium opacity-80">This month</Text>
-              <Text className="text-4xl font-bold text-white mt-2">
-                {formatCompactCurrency(totalSpent)}
-              </Text>
-              <Text className="text-white text-xs mt-3 opacity-70">
-                {thisMonthTransactions.filter(t => t.type === "debit").length} transactions
-              </Text>
+              <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} />
             </LinearGradient>
           ) : (
             <View className="bg-primary-600 rounded-3xl p-6">
-              <Text className="text-white text-sm font-medium opacity-80">This month</Text>
-              <Text className="text-4xl font-bold text-white mt-2">
-                {formatCompactCurrency(totalSpent)}
-              </Text>
-              <Text className="text-white text-xs mt-3 opacity-70">
-                {thisMonthTransactions.filter(t => t.type === "debit").length} transactions
-              </Text>
+              <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} />
             </View>
           )}
         </View>

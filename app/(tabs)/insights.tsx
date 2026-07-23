@@ -39,11 +39,19 @@ export default function InsightsScreen() {
   const hasAnySpend =
     !!data &&
     (data.monthly_totals.some(m => m.total > 0) ||
+      data.monthly_income_totals.some(m => m.total > 0) ||
       data.category_breakdown.length > 0 ||
       data.top_merchants.length > 0)
 
-  const maxMonthly = data ? Math.max(1, ...data.monthly_totals.map(m => m.total)) : 1
+  const maxMonthly = data
+    ? Math.max(1, ...data.monthly_totals.map(m => m.total), ...data.monthly_income_totals.map(m => m.total))
+    : 1
   const categoryTotal = data ? data.category_breakdown.reduce((sum, c) => sum + c.total, 0) : 0
+
+  const currentMonthExpense = data?.monthly_totals[data.monthly_totals.length - 1]?.total ?? 0
+  const currentMonthIncome = data?.monthly_income_totals[data.monthly_income_totals.length - 1]?.total ?? 0
+  const savings = currentMonthIncome - currentMonthExpense
+  const savingsRate = currentMonthIncome > 0 ? Math.round((savings / currentMonthIncome) * 100) : 0
 
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
@@ -70,6 +78,38 @@ export default function InsightsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
+          {/* This month: income vs expense */}
+          <View className="mb-6">
+            <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
+              This month
+            </Text>
+            <GlassCard className="p-4">
+              <View className="flex-row items-center">
+                <View className="flex-1">
+                  <Text className="text-xs text-muted dark:text-neutral-400">Income</Text>
+                  <Text className="text-xl font-bold text-green-600 dark:text-emerald-400 mt-1">
+                    {formatCompactCurrency(currentMonthIncome)}
+                  </Text>
+                </View>
+                <View className="w-px h-10 bg-border dark:bg-white/10" />
+                <View className="flex-1 items-end">
+                  <Text className="text-xs text-muted dark:text-neutral-400">Expenses</Text>
+                  <Text className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
+                    {formatCompactCurrency(currentMonthExpense)}
+                  </Text>
+                </View>
+              </View>
+              <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-border dark:border-white/10">
+                <Text className="text-xs text-muted dark:text-neutral-400">
+                  {currentMonthIncome > 0 ? `Saved ${savingsRate}% of income` : "Net this month"}
+                </Text>
+                <Text className={`text-sm font-bold ${savings >= 0 ? "text-neutral-900 dark:text-white" : "text-red-600 dark:text-red-400"}`}>
+                  {savings >= 0 ? "+" : "−"}{formatCompactCurrency(Math.abs(savings))}
+                </Text>
+              </View>
+            </GlassCard>
+          </View>
+
           {/* Recurring subscriptions */}
           {recurring && (
             <View className="mb-6">
@@ -107,19 +147,37 @@ export default function InsightsScreen() {
 
           {/* Monthly trend */}
           <View className="mb-6">
-            <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-              Last {data.monthly_totals.length} months
-            </Text>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
+                Last {data.monthly_totals.length} months
+              </Text>
+              <View className="flex-row items-center gap-3">
+                <View className="flex-row items-center gap-1.5">
+                  <View className="w-2 h-2 rounded-full bg-green-500 dark:bg-emerald-400" />
+                  <Text className="text-[11px] text-muted dark:text-neutral-400">Income</Text>
+                </View>
+                <View className="flex-row items-center gap-1.5">
+                  <View className="w-2 h-2 rounded-full bg-primary-600 dark:bg-accent-500" />
+                  <Text className="text-[11px] text-muted dark:text-neutral-400">Expenses</Text>
+                </View>
+              </View>
+            </View>
             <GlassCard className="p-4">
               <View className="flex-row items-end justify-between h-32">
-                {data.monthly_totals.map((m) => {
-                  const heightPct = Math.max(4, (m.total / maxMonthly) * 100)
+                {data.monthly_totals.map((m, i) => {
+                  const income = data.monthly_income_totals[i]?.total ?? 0
+                  const expenseHeightPct = Math.max(4, (m.total / maxMonthly) * 100)
+                  const incomeHeightPct = Math.max(4, (income / maxMonthly) * 100)
                   return (
                     <View key={`${m.year}-${m.month}`} className="flex-1 items-center gap-2">
-                      <View className="flex-1 justify-end w-full items-center">
+                      <View className="flex-1 flex-row justify-center items-end gap-1 w-full">
                         <View
-                          style={{ height: `${heightPct}%` }}
-                          className="w-3 rounded-full bg-primary-600 dark:bg-accent-500"
+                          style={{ height: `${incomeHeightPct}%` }}
+                          className="w-2.5 rounded-full bg-green-500 dark:bg-emerald-400"
+                        />
+                        <View
+                          style={{ height: `${expenseHeightPct}%` }}
+                          className="w-2.5 rounded-full bg-primary-600 dark:bg-accent-500"
                         />
                       </View>
                       <Text className="text-[10px] font-medium text-muted dark:text-neutral-400">
