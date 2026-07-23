@@ -119,7 +119,12 @@ export default function AddExpenseScreen() {
         router.back()
       },
       onError: (error: any) => {
-        Alert.alert("Error", `Failed to add ${transactionType === "credit" ? "income" : "expense"}`)
+        console.log("Add transaction failed:", error?.response?.status, error?.response?.data, error?.message)
+        const detail = error?.response?.data?.detail
+        Alert.alert(
+          "Error",
+          detail || `Failed to add ${transactionType === "credit" ? "income" : "expense"} (${error?.message || "unknown error"})`
+        )
       }
     })
   }
