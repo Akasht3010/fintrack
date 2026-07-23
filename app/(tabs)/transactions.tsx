@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useFocusEffect } from "@react-navigation/native"
 import { router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { useQuery } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import { useUserStore } from "@/store/useUserStore"
 import { transactionApi } from "@/api/endpoints/transactions"
@@ -15,7 +15,6 @@ import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
-import { Transaction } from "@/types/domain"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { useState, useCallback, useEffect } from "react"
 
@@ -62,9 +61,6 @@ export default function TransactionsScreen() {
   const [minAmount, setMinAmount] = useState("")
   const [maxAmount, setMaxAmount] = useState("")
   const [showFilters, setShowFilters] = useState(false)
-  const [page, setPage] = useState(1)
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>([])
-  const [total, setTotal] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const tabBarClearance = useTabBarClearance()
 
@@ -73,60 +69,47 @@ export default function TransactionsScreen() {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
-  useEffect(() => {
-    setPage(1)
-  }, [selectedCategory, debouncedSearch, dateRange, minAmount, maxAmount])
-
   const hasActiveFilters =
     selectedCategory !== "all" || !!debouncedSearch || dateRange !== "all" || !!minAmount || !!maxAmount
 
-  const { isLoading, isFetching, error, refetch } = useQuery({
-    queryKey: ["transactions", user?.id, selectedCategory, debouncedSearch, dateRange, minAmount, maxAmount, page],
-    queryFn: async () => {
-      if (!user?.id) return null
-      const response = await transactionApi.list({
-        page,
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage
+  } = useInfiniteQuery({
+    queryKey: ["transactions", user?.id, selectedCategory, debouncedSearch, dateRange, minAmount, maxAmount],
+    queryFn: ({ pageParam }) =>
+      transactionApi.list({
+        page: pageParam,
         limit: PAGE_SIZE,
         category: selectedCategory === "all" ? undefined : selectedCategory,
         q: debouncedSearch || undefined,
         date_from: dateFromForRange(dateRange),
         min_amount: minAmount ? parseFloat(minAmount) : undefined,
         max_amount: maxAmount ? parseFloat(maxAmount) : undefined
-      })
-
-      setTotal(response.total)
-      if (page === 1) {
-        setAllTransactions(response.transactions)
-      } else {
-        setAllTransactions(prev => [...prev, ...response.transactions])
-      }
-
-      return response.transactions
-    },
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page * lastPage.limit < lastPage.total ? lastPage.page + 1 : undefined,
     enabled: !!user?.id
   })
 
+  const allTransactions = data?.pages.flatMap(p => p.transactions) ?? []
+
   useFocusEffect(
     useCallback(() => {
-      if (page === 1) {
-        refetch()
-      } else {
-        setPage(1)
-      }
-    }, [refetch]) // eslint-disable-line react-hooks/exhaustive-deps
+      refetch()
+    }, [refetch])
   )
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
-    if (page === 1) {
-      refetch().finally(() => setRefreshing(false))
-    } else {
-      setPage(1)
-      setRefreshing(false)
-    }
-  }, [refetch, page])
-
-  const onLoadMore = () => setPage(p => p + 1)
+    refetch().finally(() => setRefreshing(false))
+  }, [refetch])
 
   // Group by date
   const groupedByDate = allTransactions.reduce((acc, t) => {
@@ -275,7 +258,7 @@ export default function TransactionsScreen() {
 
       {/* Transactions List */}
       <View className="flex-1">
-        {isLoading && page === 1 ? (
+        {isLoading ? (
           <View className="flex-1 items-center justify-center">
             <ActivityIndicator size="large" color={Colors.primary[600]} />
           </View>
@@ -342,13 +325,13 @@ export default function TransactionsScreen() {
               </View>
             ))}
 
-            {allTransactions.length < total && (
+            {hasNextPage && (
               <TouchableOpacity
-                onPress={onLoadMore}
-                disabled={isFetching}
+                onPress={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
                 className="items-center justify-center py-4 mb-2"
               >
-                {isFetching ? (
+                {isFetchingNextPage ? (
                   <ActivityIndicator color={Colors.primary[600]} />
                 ) : (
                   <Text className="text-sm font-semibold text-primary-600 dark:text-accent-400">Load more</Text>
