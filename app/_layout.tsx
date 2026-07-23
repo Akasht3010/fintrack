@@ -83,6 +83,10 @@ function RootLayoutNav() {
         name="(modals)/add-budget"
         options={{ presentation: "modal" }}
       />
+      <Stack.Screen
+        name="(modals)/recurring"
+        options={{ presentation: "modal" }}
+      />
     </Stack>
   )
 }

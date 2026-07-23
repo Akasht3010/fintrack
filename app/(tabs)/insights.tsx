@@ -1,9 +1,12 @@
 import { View, Text, ScrollView, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useFocusEffect } from "@react-navigation/native"
+import { router } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
 import { useQuery } from "@tanstack/react-query"
 import { useCallback } from "react"
 import { insightsApi } from "@/api/endpoints/insights"
+import { recurringApi } from "@/api/endpoints/recurring"
 import { formatCurrency, formatCompactCurrency } from "@/utils/currency"
 import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
@@ -21,10 +24,16 @@ export default function InsightsScreen() {
     queryFn: () => insightsApi.summary(6)
   })
 
+  const { data: recurring, refetch: refetchRecurring } = useQuery({
+    queryKey: ["recurring"],
+    queryFn: () => recurringApi.summary()
+  })
+
   useFocusEffect(
     useCallback(() => {
       refetch()
-    }, [refetch])
+      refetchRecurring()
+    }, [refetch, refetchRecurring])
   )
 
   const hasAnySpend =
@@ -61,6 +70,30 @@ export default function InsightsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
+          {/* Recurring subscriptions */}
+          {recurring && recurring.items.length > 0 && (
+            <View className="mb-6">
+              <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
+                Subscriptions
+              </Text>
+              <GlassCard
+                onPress={() => router.push("/(modals)/recurring")}
+                className="p-4 flex-row items-center justify-between"
+              >
+                <View>
+                  <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+                    {formatCurrency(recurring.monthly_total)}
+                    <Text className="text-sm font-medium text-muted dark:text-neutral-400">/mo</Text>
+                  </Text>
+                  <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                    {recurring.items.length} recurring bill{recurring.items.length === 1 ? "" : "s"} detected
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
+              </GlassCard>
+            </View>
+          )}
+
           {/* Monthly trend */}
           <View className="mb-6">
             <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">

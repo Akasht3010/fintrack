@@ -80,3 +80,20 @@ export interface InsightsSummary {
   category_breakdown: CategoryBreakdownItem[]
   top_merchants: MerchantBreakdownItem[]
 }
+
+export type RecurringCadence = "weekly" | "monthly" | "yearly"
+
+export interface RecurringItem {
+  merchant: string
+  category: TransactionCategory
+  average_amount: number
+  cadence: RecurringCadence
+  occurrences: number
+  last_date: string
+  next_due_date: string
+}
+
+export interface RecurringSummary {
+  items: RecurringItem[]
+  monthly_total: number
+}
