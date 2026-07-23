@@ -32,7 +32,7 @@ export default function DashboardScreen() {
     queryKey: ["transactions", user?.id],
     queryFn: async () => {
       if (!user?.id) return null
-      const response = await transactionApi.list(1, 50)
+      const response = await transactionApi.list({ page: 1, limit: 50 })
       setTransactions(response.transactions)
       return response.transactions
     },

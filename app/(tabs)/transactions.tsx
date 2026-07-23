@@ -1,12 +1,14 @@
-import { View, Text, ScrollView, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
+import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useFocusEffect } from "@react-navigation/native"
 import { router } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
 import { useQuery } from "@tanstack/react-query"
+import dayjs from "dayjs"
 import { useUserStore } from "@/store/useUserStore"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency } from "@/utils/currency"
-import { formatDateShort, formatDate } from "@/utils/date"
+import { formatDate } from "@/utils/date"
 import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -15,7 +17,7 @@ import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { Transaction } from "@/types/domain"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 
 const CATEGORIES = [
   "all",
@@ -31,20 +33,68 @@ const CATEGORIES = [
   "other"
 ]
 
+type DateRange = "all" | "7d" | "30d" | "month"
+
+const DATE_RANGES: { key: DateRange; label: string }[] = [
+  { key: "all", label: "All time" },
+  { key: "7d", label: "7 days" },
+  { key: "30d", label: "30 days" },
+  { key: "month", label: "This month" }
+]
+
+function dateFromForRange(range: DateRange): string | undefined {
+  switch (range) {
+    case "7d": return dayjs().subtract(7, "day").startOf("day").toISOString()
+    case "30d": return dayjs().subtract(30, "day").startOf("day").toISOString()
+    case "month": return dayjs().startOf("month").toISOString()
+    default: return undefined
+  }
+}
+
+const PAGE_SIZE = 50
+
 export default function TransactionsScreen() {
   const { user } = useUserStore()
   const [selectedCategory, setSelectedCategory] = useState("all")
+  const [searchInput, setSearchInput] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [dateRange, setDateRange] = useState<DateRange>("all")
+  const [minAmount, setMinAmount] = useState("")
+  const [maxAmount, setMaxAmount] = useState("")
+  const [showFilters, setShowFilters] = useState(false)
   const [page, setPage] = useState(1)
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([])
+  const [total, setTotal] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const tabBarClearance = useTabBarClearance()
 
-  const { isLoading, error, refetch } = useQuery({
-    queryKey: ["transactions", user?.id, selectedCategory, page],
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
+    return () => clearTimeout(timeout)
+  }, [searchInput])
+
+  useEffect(() => {
+    setPage(1)
+  }, [selectedCategory, debouncedSearch, dateRange, minAmount, maxAmount])
+
+  const hasActiveFilters =
+    selectedCategory !== "all" || !!debouncedSearch || dateRange !== "all" || !!minAmount || !!maxAmount
+
+  const { isLoading, isFetching, error, refetch } = useQuery({
+    queryKey: ["transactions", user?.id, selectedCategory, debouncedSearch, dateRange, minAmount, maxAmount, page],
     queryFn: async () => {
       if (!user?.id) return null
-      const response = await transactionApi.list(page, 50)
+      const response = await transactionApi.list({
+        page,
+        limit: PAGE_SIZE,
+        category: selectedCategory === "all" ? undefined : selectedCategory,
+        q: debouncedSearch || undefined,
+        date_from: dateFromForRange(dateRange),
+        min_amount: minAmount ? parseFloat(minAmount) : undefined,
+        max_amount: maxAmount ? parseFloat(maxAmount) : undefined
+      })
 
+      setTotal(response.total)
       if (page === 1) {
         setAllTransactions(response.transactions)
       } else {
@@ -58,32 +108,35 @@ export default function TransactionsScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      setPage(1)
-      refetch()
-    }, [refetch])
+      if (page === 1) {
+        refetch()
+      } else {
+        setPage(1)
+      }
+    }, [refetch]) // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
-    setPage(1)
-    setAllTransactions([])
-    refetch().finally(() => setRefreshing(false))
-  }, [refetch])
+    if (page === 1) {
+      refetch().finally(() => setRefreshing(false))
+    } else {
+      setPage(1)
+      setRefreshing(false)
+    }
+  }, [refetch, page])
 
-  const filteredTransactions = allTransactions.filter(t => {
-    if (selectedCategory === "all") return true
-    return t.category === selectedCategory
-  })
+  const onLoadMore = () => setPage(p => p + 1)
 
   // Group by date
-  const groupedByDate = filteredTransactions.reduce((acc, t) => {
+  const groupedByDate = allTransactions.reduce((acc, t) => {
     const date = formatDate(t.date)
     if (!acc[date]) acc[date] = []
     acc[date].push(t)
     return acc
-  }, {} as Record<string, typeof filteredTransactions>)
+  }, {} as Record<string, typeof allTransactions>)
 
-  const categoryStats = filteredTransactions
+  const stats = allTransactions
     .filter(t => t.type === "debit")
     .reduce((acc, t) => ({
       count: acc.count + 1,
@@ -96,12 +149,98 @@ export default function TransactionsScreen() {
       {/* Header */}
       <View className="px-6 pt-4 pb-4">
         <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Transactions</Text>
-        {selectedCategory !== "all" && (
-          <Text className="text-sm text-muted dark:text-neutral-400 mt-2 capitalize">
-            {categoryStats.count} transactions • {formatCurrency(categoryStats.total)}
+        {hasActiveFilters && (
+          <Text className="text-sm text-muted dark:text-neutral-400 mt-2">
+            {stats.count} transactions • {formatCurrency(stats.total)}
           </Text>
         )}
       </View>
+
+      {/* Search + filter toggle */}
+      <View className="px-6 mb-3 flex-row items-center gap-2">
+        <View className="flex-1 flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-3">
+          <Ionicons name="search" size={16} color={Colors.muted} />
+          <TextInput
+            placeholder="Search merchant or description"
+            value={searchInput}
+            onChangeText={setSearchInput}
+            className="flex-1 py-3 px-2 text-sm text-neutral-900 dark:text-white"
+            placeholderTextColor="#9ca3af"
+          />
+          {searchInput.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchInput("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="close-circle" size={16} color={Colors.muted} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <TouchableOpacity
+          onPress={() => setShowFilters(v => !v)}
+          className={`w-11 h-11 items-center justify-center rounded-2xl border ${
+            showFilters || dateRange !== "all" || minAmount || maxAmount
+              ? "bg-primary-600 dark:bg-accent-600 border-transparent"
+              : "border-border dark:border-white/15 dark:bg-white/5"
+          }`}
+        >
+          <Ionicons
+            name="options-outline"
+            size={18}
+            color={showFilters || dateRange !== "all" || minAmount || maxAmount ? "#fff" : Colors.muted}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Expandable filter panel */}
+      {showFilters && (
+        <View className="px-6 mb-3">
+          <GlassCard className="p-4">
+            <Text className="text-xs font-medium text-muted dark:text-neutral-400 uppercase tracking-wider mb-2">
+              Date range
+            </Text>
+            <View className="flex-row flex-wrap gap-2 mb-4">
+              {DATE_RANGES.map((r) => (
+                <TouchableOpacity
+                  key={r.key}
+                  onPress={() => setDateRange(r.key)}
+                  className={`px-3 py-2 rounded-full ${
+                    dateRange === r.key ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-medium ${
+                      dateRange === r.key ? "text-white" : "text-neutral-700 dark:text-neutral-300"
+                    }`}
+                  >
+                    {r.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text className="text-xs font-medium text-muted dark:text-neutral-400 uppercase tracking-wider mb-2">
+              Amount
+            </Text>
+            <View className="flex-row items-center gap-3">
+              <TextInput
+                placeholder="Min"
+                value={minAmount}
+                onChangeText={setMinAmount}
+                keyboardType="decimal-pad"
+                className="flex-1 border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-white"
+                placeholderTextColor="#9ca3af"
+              />
+              <Text className="text-muted dark:text-neutral-400">–</Text>
+              <TextInput
+                placeholder="Max"
+                value={maxAmount}
+                onChangeText={setMaxAmount}
+                keyboardType="decimal-pad"
+                className="flex-1 border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-white"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+          </GlassCard>
+        </View>
+      )}
 
       {/* Category Filter */}
       <ScrollView
@@ -114,10 +253,7 @@ export default function TransactionsScreen() {
         {CATEGORIES.map((category) => (
           <TouchableOpacity
             key={category}
-            onPress={() => {
-              setSelectedCategory(category)
-              setPage(1)
-            }}
+            onPress={() => setSelectedCategory(category)}
             className={`px-4 py-2 rounded-full ${
               selectedCategory === category
                 ? "bg-primary-600 dark:bg-accent-600"
@@ -145,11 +281,11 @@ export default function TransactionsScreen() {
           </View>
         ) : error ? (
           <ErrorState message="Failed to load transactions" onRetry={refetch} />
-        ) : filteredTransactions.length === 0 ? (
+        ) : allTransactions.length === 0 ? (
           <EmptyState
             icon="🔍"
             title="No transactions"
-            subtitle={selectedCategory === "all" ? "Add your first expense to get started." : "No transactions in this category yet."}
+            subtitle={hasActiveFilters ? "No transactions match these filters." : "Add your first expense to get started."}
           />
         ) : (
           <ScrollView
@@ -205,6 +341,20 @@ export default function TransactionsScreen() {
                 </View>
               </View>
             ))}
+
+            {allTransactions.length < total && (
+              <TouchableOpacity
+                onPress={onLoadMore}
+                disabled={isFetching}
+                className="items-center justify-center py-4 mb-2"
+              >
+                {isFetching ? (
+                  <ActivityIndicator color={Colors.primary[600]} />
+                ) : (
+                  <Text className="text-sm font-semibold text-primary-600 dark:text-accent-400">Load more</Text>
+                )}
+              </TouchableOpacity>
+            )}
 
             {/* Clearance for the floating tab bar */}
             <View style={{ height: tabBarClearance }} />

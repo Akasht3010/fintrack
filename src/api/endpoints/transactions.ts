@@ -28,6 +28,17 @@ export interface TransactionListResponse {
   limit: number
 }
 
+export interface TransactionListFilters {
+  page?: number
+  limit?: number
+  category?: string
+  q?: string
+  date_from?: string
+  date_to?: string
+  min_amount?: number
+  max_amount?: number
+}
+
 export const transactionApi = {
   async create(data: TransactionCreatePayload): Promise<Transaction> {
     const response = await apiClient.post<Transaction>(
@@ -45,9 +56,11 @@ export const transactionApi = {
     return response.data
   },
 
-  async list(page: number = 1, limit: number = 20) {
+  async list(filters: TransactionListFilters = {}) {
+    const { page = 1, limit = 20, ...rest } = filters
     const response = await apiClient.get<TransactionListResponse>(
-      `/api/transactions?page=${page}&limit=${limit}`
+      "/api/transactions",
+      { params: { page, limit, ...rest } }
     )
     return response.data
   },
