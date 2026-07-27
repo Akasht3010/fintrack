@@ -87,6 +87,10 @@ function RootLayoutNav() {
         name="(modals)/recurring"
         options={{ presentation: "modal" }}
       />
+      <Stack.Screen
+        name="(modals)/export"
+        options={{ presentation: "modal" }}
+      />
     </Stack>
   )
 }

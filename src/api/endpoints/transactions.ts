@@ -40,6 +40,16 @@ export interface TransactionListFilters {
   max_amount?: number
 }
 
+export interface TransactionExportFilters {
+  category?: string
+  date_from?: string
+  date_to?: string
+  min_amount?: number
+  max_amount?: number
+  source?: string
+  type?: string
+}
+
 export const transactionApi = {
   async create(data: TransactionCreatePayload): Promise<Transaction> {
     const response = await apiClient.post<Transaction>(
@@ -77,8 +87,9 @@ export const transactionApi = {
     return await apiClient.delete(`/api/transactions/${transactionId}`)
   },
 
-  async exportCsv(): Promise<string> {
+  async exportCsv(filters: TransactionExportFilters = {}): Promise<string> {
     const response = await apiClient.get<string>("/api/transactions/export", {
+      params: filters,
       responseType: "text",
       transformResponse: (data) => data
     })

@@ -2,15 +2,15 @@ import { Platform } from "react-native"
 import { File, Paths } from "expo-file-system"
 import * as Sharing from "expo-sharing"
 import { useState } from "react"
-import { transactionApi } from "@/api/endpoints/transactions"
+import { transactionApi, TransactionExportFilters } from "@/api/endpoints/transactions"
 
 export function useExportTransactions() {
   const [isExporting, setIsExporting] = useState(false)
 
-  const exportCsv = async (): Promise<{ success: boolean; error?: string }> => {
+  const exportCsv = async (filters: TransactionExportFilters = {}): Promise<{ success: boolean; error?: string }> => {
     setIsExporting(true)
     try {
-      const csv = await transactionApi.exportCsv()
+      const csv = await transactionApi.exportCsv(filters)
       const filename = `fintrack-transactions-${new Date().toISOString().slice(0, 10)}.csv`
 
       if (Platform.OS === "web") {

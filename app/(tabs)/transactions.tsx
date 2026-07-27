@@ -4,7 +4,6 @@ import { useFocusEffect } from "@react-navigation/native"
 import { router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useInfiniteQuery } from "@tanstack/react-query"
-import dayjs from "dayjs"
 import { useUserStore } from "@/store/useUserStore"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency } from "@/utils/currency"
@@ -16,6 +15,7 @@ import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
+import { DateRange, DATE_RANGES, dateFromForRange } from "@/utils/dateRanges"
 import { useState, useCallback, useEffect } from "react"
 
 const CATEGORIES = [
@@ -31,24 +31,6 @@ const CATEGORIES = [
   "transfer",
   "other"
 ]
-
-type DateRange = "all" | "7d" | "30d" | "month"
-
-const DATE_RANGES: { key: DateRange; label: string }[] = [
-  { key: "all", label: "All time" },
-  { key: "7d", label: "7 days" },
-  { key: "30d", label: "30 days" },
-  { key: "month", label: "This month" }
-]
-
-function dateFromForRange(range: DateRange): string | undefined {
-  switch (range) {
-    case "7d": return dayjs().subtract(7, "day").startOf("day").toISOString()
-    case "30d": return dayjs().subtract(30, "day").startOf("day").toISOString()
-    case "month": return dayjs().startOf("month").toISOString()
-    default: return undefined
-  }
-}
 
 const PAGE_SIZE = 50
 
