@@ -75,5 +75,13 @@ export const transactionApi = {
 
   async delete(transactionId: string) {
     return await apiClient.delete(`/api/transactions/${transactionId}`)
+  },
+
+  async exportCsv(): Promise<string> {
+    const response = await apiClient.get<string>("/api/transactions/export", {
+      responseType: "text",
+      transformResponse: (data) => data
+    })
+    return response.data
   }
 }

@@ -11,6 +11,7 @@ import { budgetApi } from "@/api/endpoints/budgets"
 import { formatDate } from "@/utils/date"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
+import { useExportTransactions } from "@/hooks/useExportTransactions"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
   const { user, logout } = useUserStore()
   const { mode, setMode } = useThemeStore()
   const { connect: connectGmail, isLoading: isConnecting } = useGmailConnect()
+  const { exportCsv, isExporting } = useExportTransactions()
   const tabBarClearance = useTabBarClearance()
   const [isSyncing, setIsSyncing] = useState(false)
   const queryClient = useQueryClient()
@@ -52,6 +54,13 @@ export default function ProfileScreen() {
     const result = await connectGmail()
     if (!result.success && result.error) {
       Alert.alert("Couldn't connect Gmail", result.error)
+    }
+  }
+
+  const handleExportCsv = async () => {
+    const result = await exportCsv()
+    if (!result.success && result.error) {
+      Alert.alert("Export failed", result.error)
     }
   }
 
@@ -176,6 +185,17 @@ export default function ProfileScreen() {
               )}
             </GlassCard>
           )}
+        </View>
+
+        <View className="px-6 mb-6">
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Data</Text>
+          <GlassCard onPress={isExporting ? undefined : handleExportCsv} className="items-center justify-center py-4">
+            {isExporting ? (
+              <ActivityIndicator color="#16a34a" />
+            ) : (
+              <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Export Transactions (CSV)</Text>
+            )}
+          </GlassCard>
         </View>
 
         <View className="px-6 mt-auto" style={{ paddingBottom: tabBarClearance }}>
