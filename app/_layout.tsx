@@ -91,6 +91,10 @@ function RootLayoutNav() {
         name="(modals)/export"
         options={{ presentation: "modal" }}
       />
+      <Stack.Screen
+        name="(modals)/edit-profile"
+        options={{ presentation: "modal" }}
+      />
     </Stack>
   )
 }

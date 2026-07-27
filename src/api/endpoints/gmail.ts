@@ -15,5 +15,10 @@ export const gmailApi = {
       timeout: 60000
     })
     return response.data
+  },
+
+  async disconnect(): Promise<{ gmail_connected: boolean }> {
+    const response = await apiClient.post<{ gmail_connected: boolean }>("/api/gmail/disconnect")
+    return response.data
   }
 }

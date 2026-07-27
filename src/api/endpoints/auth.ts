@@ -21,12 +21,23 @@ export interface LoginResponse {
   user: User
 }
 
+export interface UpdateProfileRequest {
+  name?: string
+  email?: string
+  phone?: string
+}
+
 export const authApi = {
   async signup(data: SignupRequest): Promise<SignupResponse> {
     const response = await apiClient.post<SignupResponse>(
       "/api/auth/signup",
       data
     )
+    return response.data
+  },
+
+  async updateMe(data: UpdateProfileRequest): Promise<User> {
+    const response = await apiClient.patch<User>("/api/auth/me", data)
     return response.data
   },
 

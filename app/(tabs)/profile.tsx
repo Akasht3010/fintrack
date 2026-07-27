@@ -1,13 +1,16 @@
 import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
+import { Ionicons } from "@expo/vector-icons"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useUserStore } from "@/store/useUserStore"
 import { useThemeStore, ThemeMode } from "@/store/useThemeStore"
 import { useGmailConnect } from "@/hooks/useGmailConnect"
 import { gmailApi } from "@/api/endpoints/gmail"
+import { authApi } from "@/api/endpoints/auth"
 import { budgetApi } from "@/api/endpoints/budgets"
+import { storage as SecureStore } from "@/utils/storage"
 import { formatDate } from "@/utils/date"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
@@ -27,11 +30,12 @@ function initialsFor(name?: string): string {
 const THEME_OPTIONS: ThemeMode[] = ["light", "dark", "system"]
 
 export default function ProfileScreen() {
-  const { user, logout } = useUserStore()
+  const { user, logout, setUser } = useUserStore()
   const { mode, setMode } = useThemeStore()
   const { connect: connectGmail, isLoading: isConnecting } = useGmailConnect()
   const tabBarClearance = useTabBarClearance()
   const [isSyncing, setIsSyncing] = useState(false)
+  const [isDisconnecting, setIsDisconnecting] = useState(false)
   const queryClient = useQueryClient()
 
   const handleSignOut = () => {
@@ -53,6 +57,33 @@ export default function ProfileScreen() {
     if (!result.success && result.error) {
       Alert.alert("Couldn't connect Gmail", result.error)
     }
+  }
+
+  const handleDisconnectGmail = () => {
+    Alert.alert(
+      "Disconnect Gmail",
+      "Fintrack will stop syncing new transactions from Gmail. Transactions already imported won't be removed.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Disconnect",
+          style: "destructive",
+          onPress: async () => {
+            setIsDisconnecting(true)
+            try {
+              await gmailApi.disconnect()
+              const refreshed = await authApi.getMe()
+              await SecureStore.setItemAsync("user", JSON.stringify(refreshed))
+              setUser(refreshed)
+            } catch (error: any) {
+              Alert.alert("Error", error?.response?.data?.detail || "Failed to disconnect Gmail")
+            } finally {
+              setIsDisconnecting(false)
+            }
+          }
+        }
+      ]
+    )
   }
 
   const handleSyncGmail = async () => {
@@ -83,8 +114,14 @@ export default function ProfileScreen() {
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
       <GlowBackground />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="px-6 pt-4 pb-6">
+        <View className="px-6 pt-4 pb-6 flex-row items-center justify-between">
           <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Profile</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/(modals)/edit-profile")}
+            className="w-11 h-11 items-center justify-center rounded-full bg-neutral-100 dark:bg-white/10"
+          >
+            <Ionicons name="pencil" size={18} color="#6b7280" />
+          </TouchableOpacity>
         </View>
 
         <View className="px-6 items-center mb-8">
@@ -158,15 +195,28 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View className="px-6 mb-6">
+        <View className="px-6 mb-6 gap-3">
           {user?.gmail_connected ? (
-            <GlassCard onPress={isSyncing ? undefined : handleSyncGmail} className="items-center justify-center py-4">
-              {isSyncing ? (
-                <ActivityIndicator color="#16a34a" />
-              ) : (
-                <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Sync Gmail Now</Text>
-              )}
-            </GlassCard>
+            <>
+              <GlassCard onPress={isSyncing ? undefined : handleSyncGmail} className="items-center justify-center py-4">
+                {isSyncing ? (
+                  <ActivityIndicator color="#16a34a" />
+                ) : (
+                  <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Sync Gmail Now</Text>
+                )}
+              </GlassCard>
+              <TouchableOpacity
+                onPress={isDisconnecting ? undefined : handleDisconnectGmail}
+                disabled={isDisconnecting}
+                className="items-center justify-center py-2"
+              >
+                {isDisconnecting ? (
+                  <ActivityIndicator color="#dc2626" />
+                ) : (
+                  <Text className="text-sm font-medium text-red-600 dark:text-red-400">Disconnect Gmail</Text>
+                )}
+              </TouchableOpacity>
+            </>
           ) : (
             <GlassCard onPress={isConnecting ? undefined : handleConnectGmail} className="items-center justify-center py-4">
               {isConnecting ? (
