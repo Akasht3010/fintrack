@@ -235,12 +235,18 @@ export default function ProfileScreen() {
           </GlassCard>
         </View>
 
-        <View className="px-6 mt-auto" style={{ paddingBottom: tabBarClearance }}>
+        <View className="px-6 mt-auto gap-3" style={{ paddingBottom: tabBarClearance }}>
           <TouchableOpacity
             onPress={handleSignOut}
             className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4"
           >
             <Text className="text-base font-semibold text-red-600 dark:text-red-400">Sign Out</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push("/(modals)/delete-account")}
+            className="w-full items-center justify-center py-2"
+          >
+            <Text className="text-sm font-medium text-muted dark:text-neutral-500">Delete Account</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -41,6 +41,10 @@ export const authApi = {
     return response.data
   },
 
+  async deleteMe(): Promise<void> {
+    await apiClient.delete("/api/auth/me")
+  },
+
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await apiClient.post<LoginResponse>(
       "/api/auth/login",

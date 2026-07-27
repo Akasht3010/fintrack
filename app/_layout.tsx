@@ -95,6 +95,10 @@ function RootLayoutNav() {
         name="(modals)/edit-profile"
         options={{ presentation: "modal" }}
       />
+      <Stack.Screen
+        name="(modals)/delete-account"
+        options={{ presentation: "modal" }}
+      />
     </Stack>
   )
 }
