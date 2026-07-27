@@ -6,10 +6,13 @@ dayjs.extend(relativeTime)
 dayjs.extend(localizedFormat)
 
 export const formatDate = (date: string): string =>
-  dayjs(date).format("DD MMM YYYY")
+  dayjs(date).format("DD/MM/YYYY")
 
 export const formatDateShort = (date: string): string =>
-  dayjs(date).format("DD MMM")
+  dayjs(date).format("DD/MM")
+
+export const formatDateTime = (date: string): string =>
+  dayjs(date).format("DD/MM/YYYY HH:mm")
 
 export const formatRelative = (date: string): string =>
   dayjs(date).fromNow()

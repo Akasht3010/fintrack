@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency } from "@/utils/currency"
-import { formatDate } from "@/utils/date"
+import { formatDateTime } from "@/utils/date"
 import { Colors } from "@/constants/colors"
 import { CATEGORY_ICONS } from "@/constants/categories"
 import { GlowBackground } from "@/components/shared/GlowBackground"
@@ -101,7 +101,7 @@ export default function TransactionDetailScreen() {
               <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
                 <Text className="text-sm text-muted dark:text-neutral-400">Date</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                  {formatDate(transaction.date)}
+                  {formatDateTime(transaction.date)}
                 </Text>
               </View>
 
