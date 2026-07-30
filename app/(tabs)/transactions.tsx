@@ -9,28 +9,14 @@ import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency } from "@/utils/currency"
 import { formatDate } from "@/utils/date"
 import { Colors } from "@/constants/colors"
-import { CATEGORY_ICONS } from "@/constants/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
+import { useCategories, useCategoryIcons } from "@/hooks/useCategories"
 import { DateRange, DATE_RANGES, dateFromForRange } from "@/utils/dateRanges"
 import { useState, useCallback, useEffect } from "react"
-
-const CATEGORIES = [
-  "all",
-  "food",
-  "transport",
-  "shopping",
-  "entertainment",
-  "health",
-  "utilities",
-  "rent",
-  "subscriptions",
-  "transfer",
-  "other"
-]
 
 const PAGE_SIZE = 50
 
@@ -45,6 +31,9 @@ export default function TransactionsScreen() {
   const [showFilters, setShowFilters] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const tabBarClearance = useTabBarClearance()
+  const { data: categories } = useCategories()
+  const CATEGORY_ICONS = useCategoryIcons()
+  const categoryFilters = ["all", ...(categories?.map(c => c.name) ?? [])]
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
@@ -215,7 +204,7 @@ export default function TransactionsScreen() {
         style={{ flexGrow: 0, height: 40 }}
         contentContainerStyle={{ gap: 8, alignItems: "center" }}
       >
-        {CATEGORIES.map((category) => (
+        {categoryFilters.map((category) => (
           <TouchableOpacity
             key={category}
             onPress={() => setSelectedCategory(category)}

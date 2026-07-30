@@ -11,6 +11,7 @@ Notifications.setNotificationHandler({
 })
 
 let channelReady = false
+let billChannelReady = false
 
 async function ensureAndroidChannel() {
   if (Platform.OS !== "android" || channelReady) return
@@ -19,6 +20,15 @@ async function ensureAndroidChannel() {
     importance: Notifications.AndroidImportance.DEFAULT
   })
   channelReady = true
+}
+
+async function ensureBillReminderChannel() {
+  if (Platform.OS !== "android" || billChannelReady) return
+  await Notifications.setNotificationChannelAsync("bill-reminders", {
+    name: "Bill reminders",
+    importance: Notifications.AndroidImportance.DEFAULT
+  })
+  billChannelReady = true
 }
 
 async function ensurePermission(): Promise<boolean> {
@@ -45,5 +55,49 @@ export async function sendBudgetAlert(title: string, body: string): Promise<void
     // block the actual action (adding an expense, syncing Gmail) that
     // triggered it.
     console.log("Failed to send budget alert:", err)
+  }
+}
+
+const BILL_REMINDER_PREFIX = "bill-reminder-"
+
+/**
+ * Replaces all previously scheduled bill reminders with the given set.
+ * Called with the full current list each time (e.g. on app start) rather
+ * than incrementally, so merchants that stop recurring or get re-estimated
+ * don't leave stale notifications behind.
+ */
+export async function scheduleBillReminders(
+  reminders: { identifier: string; title: string; body: string; date: Date }[]
+): Promise<void> {
+  try {
+    const granted = await ensurePermission()
+    if (!granted) return
+
+    await ensureBillReminderChannel()
+
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync()
+    await Promise.all(
+      scheduled
+        .filter(n => n.identifier.startsWith(BILL_REMINDER_PREFIX))
+        .map(n => Notifications.cancelScheduledNotificationAsync(n.identifier))
+    )
+
+    await Promise.all(
+      reminders
+        .filter(r => r.date.getTime() > Date.now())
+        .map(r =>
+          Notifications.scheduleNotificationAsync({
+            identifier: `${BILL_REMINDER_PREFIX}${r.identifier}`,
+            content: { title: r.title, body: r.body },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: r.date,
+              channelId: "bill-reminders"
+            }
+          })
+        )
+    )
+  } catch (err) {
+    console.log("Failed to schedule bill reminders:", err)
   }
 }

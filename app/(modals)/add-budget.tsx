@@ -4,18 +4,15 @@ import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useMemo, useEffect } from "react"
 import { budgetApi } from "@/api/endpoints/budgets"
+import { useCategories } from "@/hooks/useCategories"
 import { TransactionCategory } from "@/types/domain"
 import { GlowBackground } from "@/components/shared/GlowBackground"
-
-const CATEGORIES: TransactionCategory[] = [
-  "food", "transport", "shopping", "entertainment",
-  "health", "utilities", "rent", "subscriptions", "transfer", "other"
-]
 
 export default function AddBudgetScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
   const isEditMode = !!id
   const queryClient = useQueryClient()
+  const { data: categories } = useCategories()
 
   const { data: budgets } = useQuery({
     queryKey: ["budgets"],
@@ -100,20 +97,20 @@ export default function AddBudgetScreen() {
             </View>
           ) : (
             <View className="flex-row flex-wrap gap-2">
-              {CATEGORIES.map((cat) => (
+              {categories?.map((cat) => (
                 <TouchableOpacity
-                  key={cat}
-                  onPress={() => setCategory(cat)}
+                  key={cat.id}
+                  onPress={() => setCategory(cat.name)}
                   className={`px-4 py-2 rounded-full ${
-                    category === cat ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
+                    category === cat.name ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
                   }`}
                 >
                   <Text
                     className={`text-sm font-medium capitalize ${
-                      category === cat ? "text-white" : "text-neutral-700 dark:text-neutral-300"
+                      category === cat.name ? "text-white" : "text-neutral-700 dark:text-neutral-300"
                     }`}
                   >
-                    {cat}
+                    {cat.icon} {cat.name}
                   </Text>
                 </TouchableOpacity>
               ))}

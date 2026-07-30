@@ -11,12 +11,13 @@ import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency, formatCompactCurrency } from "@/utils/currency"
 import { formatDateShort, isThisMonth } from "@/utils/date"
 import { Colors } from "@/constants/colors"
-import { CATEGORY_ICONS } from "@/constants/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
+import { useCategoryIcons } from "@/hooks/useCategories"
+import { useNetWorth } from "@/hooks/useAccounts"
 import { useCallback, useState } from "react"
 
 function SummaryCardContent({ totalSpent, totalIncome, net }: { totalSpent: number; totalIncome: number; net: number }) {
@@ -50,6 +51,8 @@ export default function DashboardScreen() {
   const { transactions, setTransactions } = useTransactionStore()
   const [refreshing, setRefreshing] = useState(false)
   const tabBarClearance = useTabBarClearance()
+  const CATEGORY_ICONS = useCategoryIcons()
+  const { data: netWorth } = useNetWorth()
   const { colorScheme } = useColorScheme()
   const isDark = colorScheme === "dark"
 
@@ -122,6 +125,27 @@ export default function DashboardScreen() {
           >
             <Text className="text-white text-xl font-bold">+</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Net Worth */}
+        <View className="px-6 mb-6">
+          <GlassCard onPress={() => router.push("/(modals)/accounts")} className="p-4 flex-row items-center justify-between">
+            <View>
+              <Text className="text-xs text-muted dark:text-neutral-400 uppercase tracking-wider mb-1">
+                Net Worth
+              </Text>
+              {netWorth && netWorth.accounts.length > 0 ? (
+                <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+                  {formatCurrency(netWorth.net_worth)}
+                </Text>
+              ) : (
+                <Text className="text-sm font-medium text-primary-600 dark:text-accent-400">
+                  Add an account to track it
+                </Text>
+              )}
+            </View>
+            <Text className="text-muted dark:text-neutral-500 text-lg">›</Text>
+          </GlassCard>
         </View>
 
         {/* Summary Card */}

@@ -8,6 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context"
 import { useUserStore } from "@/store/useUserStore"
 import { useThemeStore } from "@/store/useThemeStore"
 import { authApi } from "@/api/endpoints/auth"
+import { useBillReminders } from "@/hooks/useBillReminders"
 import "../src/constants/global.css"
 
 SplashScreen.preventAutoHideAsync()
@@ -29,6 +30,8 @@ function RootLayoutNav() {
     Promise.all([checkAuth(), hydrateTheme()])
   }, [])
 
+  useBillReminders(isAuthenticated)
+
   useEffect(() => {
     if (!isLoading) {
       SplashScreen.hideAsync()
@@ -43,7 +46,11 @@ function RootLayoutNav() {
         router.replace("/(auth)/login")
       }
     }
-  }, [isLoading])
+    // isAuthenticated is a dep (not just isLoading) so a mid-session logout
+    // (manual sign-out, or the api client force-logging-out on a 401) sends
+    // the user back to the login screen instead of leaving them stranded on
+    // a now-broken authenticated screen.
+  }, [isLoading, isAuthenticated])
 
   const checkAuth = async () => {
     try {
@@ -89,6 +96,14 @@ function RootLayoutNav() {
       />
       <Stack.Screen
         name="(modals)/export"
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="(modals)/categories"
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="(modals)/accounts"
         options={{ presentation: "modal" }}
       />
       <Stack.Screen

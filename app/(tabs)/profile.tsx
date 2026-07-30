@@ -230,9 +230,17 @@ export default function ProfileScreen() {
 
         <View className="px-6 mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Data</Text>
-          <GlassCard onPress={() => router.push("/(modals)/export")} className="items-center justify-center py-4">
-            <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Export Transactions (CSV)</Text>
-          </GlassCard>
+          <View className="gap-3">
+            <GlassCard onPress={() => router.push("/(modals)/export")} className="items-center justify-center py-4">
+              <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Export Transactions (CSV)</Text>
+            </GlassCard>
+            <GlassCard onPress={() => router.push("/(modals)/categories")} className="items-center justify-center py-4">
+              <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Manage Categories</Text>
+            </GlassCard>
+            <GlassCard onPress={() => router.push("/(modals)/accounts")} className="items-center justify-center py-4">
+              <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Manage Accounts</Text>
+            </GlassCard>
+          </View>
         </View>
 
         <View className="px-6 mt-auto gap-3" style={{ paddingBottom: tabBarClearance }}>

@@ -1,20 +1,21 @@
 export type TransactionType = "debit" | "credit"
 
-export type TransactionCategory =
-  | "food"
-  | "transport"
-  | "shopping"
-  | "entertainment"
-  | "health"
-  | "utilities"
-  | "rent"
-  | "subscriptions"
-  | "transfer"
-  | "other"
+// Categories are dynamic (defaults + per-user custom ones, see Category below),
+// so this is just a string alias for readability at call sites.
+export type TransactionCategory = string
+
+export interface Category {
+  id: string
+  name: string
+  icon: string
+  is_default: boolean
+  created_at: string
+}
 
 export interface Transaction {
   id: string
   user_id: string
+  account_id?: string | null
   amount: number
   currency: string
   type: TransactionType
@@ -25,6 +26,33 @@ export interface Transaction {
   source: "gmail" | "manual" | "sms" | "aa"
   is_recurring: boolean
   created_at: string
+}
+
+export type AccountType = "bank" | "cash" | "credit_card" | "wallet" | "investment"
+
+export interface Account {
+  id: string
+  name: string
+  type: AccountType
+  currency: string
+  opening_balance: number
+  balance: number
+  is_archived: boolean
+  created_at: string
+}
+
+export interface NetWorthAccountItem {
+  id: string
+  name: string
+  type: AccountType
+  balance: number
+}
+
+export interface NetWorthSummary {
+  net_worth: number
+  total_assets: number
+  total_liabilities: number
+  accounts: NetWorthAccountItem[]
 }
 
 export interface Budget {

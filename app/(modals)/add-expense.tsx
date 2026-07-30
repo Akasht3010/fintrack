@@ -4,6 +4,8 @@ import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
 import { useCreateTransaction } from "@/hooks/useCreateTransaction"
+import { useCategories } from "@/hooks/useCategories"
+import { useAccounts } from "@/hooks/useAccounts"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { Budget } from "@/types/domain"
@@ -11,16 +13,13 @@ import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { useState, useEffect } from "react"
 
-const CATEGORIES = [
-  "food", "transport", "shopping", "entertainment",
-  "health", "utilities", "rent", "subscriptions", "transfer", "other"
-]
-
 export default function AddExpenseScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
   const isEditMode = !!id
   const { user } = useUserStore()
   const { mutate: createTransaction, isPending: isCreating } = useCreateTransaction()
+  const { data: categories } = useCategories()
+  const { data: accounts } = useAccounts()
   const queryClient = useQueryClient()
   const [isSaving, setIsSaving] = useState(false)
 
@@ -35,6 +34,7 @@ export default function AddExpenseScreen() {
   const [description, setDescription] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("food")
   const [transactionType, setTransactionType] = useState<"debit" | "credit">("debit")
+  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     if (existing) {
@@ -43,6 +43,7 @@ export default function AddExpenseScreen() {
       setDescription(existing.description === existing.merchant ? "" : existing.description)
       setSelectedCategory(existing.category)
       setTransactionType(existing.type)
+      setSelectedAccountId(existing.account_id ?? undefined)
     }
   }, [existing])
 
@@ -67,11 +68,13 @@ export default function AddExpenseScreen() {
           type: transactionType,
           category: transactionType === "credit" ? "other" : selectedCategory,
           merchant,
-          description: description || merchant
+          description: description || merchant,
+          account_id: selectedAccountId ?? null
         })
         queryClient.invalidateQueries({ queryKey: ["transactions"] })
         queryClient.invalidateQueries({ queryKey: ["transaction", id] })
         queryClient.invalidateQueries({ queryKey: ["budgets"] })
+        queryClient.invalidateQueries({ queryKey: ["net-worth"] })
         router.back()
       } catch (error: any) {
         Alert.alert("Error", "Failed to update transaction")
@@ -104,9 +107,11 @@ export default function AddExpenseScreen() {
       description: description || merchant,
       date: new Date().toISOString(),
       source: "manual",
-      is_recurring: false
+      is_recurring: false,
+      account_id: selectedAccountId ?? null
     }, {
       onSuccess: async () => {
+        queryClient.invalidateQueries({ queryKey: ["net-worth"] })
         if (transactionType === "debit") {
           try {
             const budgetsAfter = await budgetApi.list()
@@ -204,29 +209,65 @@ export default function AddExpenseScreen() {
           />
         </View>
 
+        {/* Account */}
+        {!!accounts?.length && (
+          <View className="mb-6">
+            <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Account (optional)</Text>
+            <View className="flex-row flex-wrap gap-2">
+              <TouchableOpacity
+                onPress={() => setSelectedAccountId(undefined)}
+                className={`px-4 py-2 rounded-full ${
+                  !selectedAccountId ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
+                }`}
+              >
+                <Text className={`text-sm font-medium ${
+                  !selectedAccountId ? "text-white" : "text-neutral-700 dark:text-neutral-300"
+                }`}>
+                  None
+                </Text>
+              </TouchableOpacity>
+              {accounts.map((acc) => (
+                <TouchableOpacity
+                  key={acc.id}
+                  onPress={() => setSelectedAccountId(acc.id)}
+                  className={`px-4 py-2 rounded-full ${
+                    selectedAccountId === acc.id ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
+                  }`}
+                >
+                  <Text className={`text-sm font-medium ${
+                    selectedAccountId === acc.id ? "text-white" : "text-neutral-700 dark:text-neutral-300"
+                  }`}>
+                    {acc.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Category */}
         {transactionType === "debit" && (
           <View className="mb-6">
             <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
             <View className="flex-row flex-wrap gap-2">
-              {CATEGORIES.map((cat) => (
+              {categories?.map((cat) => (
                 <TouchableOpacity
-                  key={cat}
-                  onPress={() => setSelectedCategory(cat)}
+                  key={cat.id}
+                  onPress={() => setSelectedCategory(cat.name)}
                   className={`px-4 py-2 rounded-full ${
-                    selectedCategory === cat
+                    selectedCategory === cat.name
                       ? "bg-primary-600 dark:bg-accent-600"
                       : "bg-neutral-100 dark:bg-white/10"
                   }`}
                 >
                   <Text
                     className={`text-sm font-medium capitalize ${
-                      selectedCategory === cat
+                      selectedCategory === cat.name
                         ? "text-white"
                         : "text-neutral-700 dark:text-neutral-300"
                     }`}
                   >
-                    {cat}
+                    {cat.icon} {cat.name}
                   </Text>
                 </TouchableOpacity>
               ))}

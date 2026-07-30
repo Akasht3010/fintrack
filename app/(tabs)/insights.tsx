@@ -9,7 +9,7 @@ import { insightsApi } from "@/api/endpoints/insights"
 import { recurringApi } from "@/api/endpoints/recurring"
 import { formatCurrency, formatCompactCurrency } from "@/utils/currency"
 import { Colors } from "@/constants/colors"
-import { CATEGORY_ICONS } from "@/constants/categories"
+import { useCategoryIcons } from "@/hooks/useCategories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
@@ -17,6 +17,7 @@ import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 
 export default function InsightsScreen() {
+  const CATEGORY_ICONS = useCategoryIcons()
   const tabBarClearance = useTabBarClearance()
 
   const { data, isLoading, error, refetch } = useQuery({

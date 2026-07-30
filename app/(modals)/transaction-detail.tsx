@@ -6,7 +6,8 @@ import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency } from "@/utils/currency"
 import { formatDateTime } from "@/utils/date"
 import { Colors } from "@/constants/colors"
-import { CATEGORY_ICONS } from "@/constants/categories"
+import { useCategoryIcons } from "@/hooks/useCategories"
+import { useAccounts } from "@/hooks/useAccounts"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { useState } from "react"
@@ -19,6 +20,8 @@ const SOURCE_LABELS: Record<string, string> = {
 }
 
 export default function TransactionDetailScreen() {
+  const CATEGORY_ICONS = useCategoryIcons()
+  const { data: accounts } = useAccounts(true)
   const { id } = useLocalSearchParams<{ id: string }>()
   const queryClient = useQueryClient()
   const [isDeleting, setIsDeleting] = useState(false)
@@ -118,6 +121,15 @@ export default function TransactionDetailScreen() {
                   {SOURCE_LABELS[transaction.source] || transaction.source}
                 </Text>
               </View>
+
+              {!!transaction.account_id && (
+                <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
+                  <Text className="text-sm text-muted dark:text-neutral-400">Account</Text>
+                  <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                    {accounts?.find(a => a.id === transaction.account_id)?.name || "—"}
+                  </Text>
+                </View>
+              )}
 
               {transaction.is_recurring && (
                 <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">

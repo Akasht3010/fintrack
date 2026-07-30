@@ -12,6 +12,7 @@ export interface TransactionCreatePayload {
   source: "gmail" | "manual" | "sms" | "aa"
   is_recurring?: boolean
   raw_text?: string
+  account_id?: string | null
 }
 
 export interface TransactionUpdatePayload {
@@ -20,6 +21,7 @@ export interface TransactionUpdatePayload {
   category?: string
   merchant?: string
   description?: string
+  account_id?: string | null
 }
 
 export interface TransactionListResponse {

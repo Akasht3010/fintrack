@@ -9,7 +9,7 @@ import { useCallback, useState } from "react"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { formatCurrency } from "@/utils/currency"
 import { Colors } from "@/constants/colors"
-import { CATEGORY_ICONS } from "@/constants/categories"
+import { useCategoryIcons } from "@/hooks/useCategories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
@@ -17,6 +17,7 @@ import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 
 export default function BudgetScreen() {
+  const CATEGORY_ICONS = useCategoryIcons()
   const queryClient = useQueryClient()
   const [refreshing, setRefreshing] = useState(false)
   const { colorScheme } = useColorScheme()

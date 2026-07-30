@@ -3,14 +3,10 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { useState } from "react"
 import { useExportTransactions } from "@/hooks/useExportTransactions"
+import { useCategories } from "@/hooks/useCategories"
 import { DateRange, DATE_RANGES, dateFromForRange } from "@/utils/dateRanges"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
-
-const CATEGORIES = [
-  "all", "food", "transport", "shopping", "entertainment",
-  "health", "utilities", "rent", "subscriptions", "transfer", "other"
-]
 
 const TYPES: { key: string; label: string }[] = [
   { key: "all", label: "All" },
@@ -60,6 +56,8 @@ function ChipRow<T extends string>({
 
 export default function ExportScreen() {
   const { exportCsv, isExporting } = useExportTransactions()
+  const { data: categories } = useCategories()
+  const categoryFilters = ["all", ...(categories?.map(c => c.name) ?? [])]
   const [dateRange, setDateRange] = useState<DateRange>("all")
   const [type, setType] = useState("all")
   const [source, setSource] = useState("all")
@@ -108,7 +106,7 @@ export default function ExportScreen() {
         <View className="mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
           <View className="flex-row flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
+            {categoryFilters.map((cat) => (
               <TouchableOpacity
                 key={cat}
                 onPress={() => setCategory(cat)}
