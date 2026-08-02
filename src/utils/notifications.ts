@@ -1,14 +1,25 @@
 import * as Notifications from "expo-notifications"
 import { Platform } from "react-native"
+import Constants, { ExecutionEnvironment } from "expo-constants"
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false
+// SDK 53 dropped Android push-notification support from Expo Go itself
+// (a real dev/production build still works fine) — touching the
+// expo-notifications API at all on that combination logs a console.error
+// that pops a blocking red LogBox screen on every app launch. Skip
+// notification setup entirely there rather than let it clobber the UI.
+const notificationsUnsupported =
+  Platform.OS === "android" && Constants.executionEnvironment === ExecutionEnvironment.StoreClient
+
+if (!notificationsUnsupported) {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false
+    })
   })
-})
+}
 
 let channelReady = false
 let billChannelReady = false
@@ -32,6 +43,8 @@ async function ensureBillReminderChannel() {
 }
 
 async function ensurePermission(): Promise<boolean> {
+  if (notificationsUnsupported) return false
+
   const current = await Notifications.getPermissionsAsync()
   if (current.granted) return true
 
