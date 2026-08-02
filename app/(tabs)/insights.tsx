@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useCallback } from "react"
 import { insightsApi } from "@/api/endpoints/insights"
 import { recurringApi } from "@/api/endpoints/recurring"
-import { formatCurrency, formatCompactCurrency } from "@/utils/currency"
+import { formatCurrency } from "@/utils/currency"
 import { Colors } from "@/constants/colors"
 import { useCategoryIcons } from "@/hooks/useCategories"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -89,14 +89,14 @@ export default function InsightsScreen() {
                 <View className="flex-1">
                   <Text className="text-xs text-muted dark:text-neutral-400">Income</Text>
                   <Text className="text-xl font-bold text-green-600 dark:text-emerald-400 mt-1">
-                    {formatCompactCurrency(currentMonthIncome)}
+                    {formatCurrency(currentMonthIncome)}
                   </Text>
                 </View>
                 <View className="w-px h-10 bg-border dark:bg-white/10" />
                 <View className="flex-1 items-end">
                   <Text className="text-xs text-muted dark:text-neutral-400">Expenses</Text>
                   <Text className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
-                    {formatCompactCurrency(currentMonthExpense)}
+                    {formatCurrency(currentMonthExpense)}
                   </Text>
                 </View>
               </View>
@@ -105,7 +105,7 @@ export default function InsightsScreen() {
                   {currentMonthIncome > 0 ? `Saved ${savingsRate}% of income` : "Net this month"}
                 </Text>
                 <Text className={`text-sm font-bold ${savings >= 0 ? "text-neutral-900 dark:text-white" : "text-red-600 dark:text-red-400"}`}>
-                  {savings >= 0 ? "+" : "−"}{formatCompactCurrency(Math.abs(savings))}
+                  {savings >= 0 ? "+" : "−"}{formatCurrency(Math.abs(savings))}
                 </Text>
               </View>
             </GlassCard>
@@ -251,7 +251,7 @@ export default function InsightsScreen() {
                       </Text>
                     </View>
                     <Text className="text-sm font-bold text-primary-600 dark:text-accent-400">
-                      {formatCompactCurrency(merchant.total)}
+                      {formatCurrency(merchant.total)}
                     </Text>
                   </View>
                 ))}

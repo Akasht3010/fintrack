@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { transactionApi } from "@/api/endpoints/transactions"
-import { formatCurrency, formatCompactCurrency } from "@/utils/currency"
+import { formatCurrency } from "@/utils/currency"
 import { formatDateShort, isThisMonth } from "@/utils/date"
 import { Colors } from "@/constants/colors"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -27,18 +27,18 @@ function SummaryCardContent({ totalSpent, totalIncome, net }: { totalSpent: numb
       <View className="flex-row items-center mt-3">
         <View className="flex-1">
           <Text className="text-white text-xs opacity-70">Expenses</Text>
-          <Text className="text-white text-2xl font-bold mt-1">{formatCompactCurrency(totalSpent)}</Text>
+          <Text className="text-white text-2xl font-bold mt-1">{formatCurrency(totalSpent)}</Text>
         </View>
         <View className="w-px h-10 bg-white/25" />
         <View className="flex-1 items-end">
           <Text className="text-white text-xs opacity-70">Income</Text>
-          <Text className="text-white text-2xl font-bold mt-1">{formatCompactCurrency(totalIncome)}</Text>
+          <Text className="text-white text-2xl font-bold mt-1">{formatCurrency(totalIncome)}</Text>
         </View>
       </View>
       <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-white/20">
         <Text className="text-white text-xs opacity-70">Net</Text>
         <Text className="text-white text-sm font-bold">
-          {net >= 0 ? "+" : "−"}{formatCompactCurrency(Math.abs(net))}
+          {net >= 0 ? "+" : "−"}{formatCurrency(Math.abs(net))}
         </Text>
       </View>
     </>
