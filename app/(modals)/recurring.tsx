@@ -78,7 +78,7 @@ export default function RecurringScreen() {
                       </View>
                     </View>
                     <Text className="text-sm font-bold text-neutral-900 dark:text-white">
-                      {formatCurrency(item.average_amount)}
+                      {formatCurrency(item.average_amount, item.currency)}
                     </Text>
                   </View>
 

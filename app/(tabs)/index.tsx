@@ -238,7 +238,7 @@ export default function DashboardScreen() {
                       : "text-green-600 dark:text-emerald-400"
                   }`}>
                     {transaction.type === "debit" ? "−" : "+"}
-                    {formatCurrency(transaction.amount)}
+                    {formatCurrency(transaction.amount, transaction.currency)}
                   </Text>
                 </GlassCard>
               ))}

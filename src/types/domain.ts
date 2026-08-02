@@ -116,6 +116,7 @@ export interface RecurringItem {
   merchant: string
   category: TransactionCategory
   average_amount: number
+  currency: string
   cadence: RecurringCadence
   occurrences: number
   last_date: string

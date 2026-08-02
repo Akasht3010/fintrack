@@ -17,6 +17,7 @@ export interface TransactionCreatePayload {
 
 export interface TransactionUpdatePayload {
   amount?: number
+  currency?: string
   type?: "debit" | "credit"
   category?: string
   merchant?: string

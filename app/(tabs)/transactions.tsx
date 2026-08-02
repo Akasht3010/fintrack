@@ -90,12 +90,16 @@ export default function TransactionsScreen() {
     return acc
   }, {} as Record<string, typeof allTransactions>)
 
-  const stats = allTransactions
-    .filter(t => t.type === "debit")
-    .reduce((acc, t) => ({
-      count: acc.count + 1,
-      total: acc.total + t.amount
-    }), { count: 0, total: 0 })
+  // Summing raw amounts across currencies would be meaningless (₹100 + $100
+  // isn't "₹200"), so the total is only shown when every debit in view is
+  // in the same currency — otherwise just the count is shown.
+  const debits = allTransactions.filter(t => t.type === "debit")
+  const debitCurrencies = new Set(debits.map(t => t.currency))
+  const stats = {
+    count: debits.length,
+    total: debits.reduce((sum, t) => sum + t.amount, 0),
+    currency: debitCurrencies.size === 1 ? debits[0]?.currency : null
+  }
 
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
@@ -105,7 +109,8 @@ export default function TransactionsScreen() {
         <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Transactions</Text>
         {hasActiveFilters && (
           <Text className="text-sm text-muted dark:text-neutral-400 mt-2">
-            {stats.count} transactions • {formatCurrency(stats.total)}
+            {stats.count} transactions
+            {stats.currency ? ` • ${formatCurrency(stats.total, stats.currency)}` : ""}
           </Text>
         )}
       </View>
@@ -288,7 +293,7 @@ export default function TransactionsScreen() {
                         }`}
                       >
                         {transaction.type === "debit" ? "−" : "+"}
-                        {formatCurrency(transaction.amount)}
+                        {formatCurrency(transaction.amount, transaction.currency)}
                       </Text>
                     </GlassCard>
                   ))}
