@@ -105,6 +105,17 @@ export default function ProfileScreen() {
       )
     } catch (error: any) {
       Alert.alert("Sync failed", error.response?.data?.detail || "Something went wrong")
+      // A sync failure can mean the backend just cleared a stale/expired
+      // Gmail connection (e.g. Google's 7-day testing-token expiry) —
+      // refresh the cached user so Profile shows "Connect Gmail" again
+      // instead of Sync/Disconnect for a connection that no longer exists.
+      try {
+        const refreshed = await authApi.getMe()
+        await SecureStore.setItemAsync("user", JSON.stringify(refreshed))
+        setUser(refreshed)
+      } catch {
+        // Best-effort — worst case the user reopens the app and it self-corrects
+      }
     } finally {
       setIsSyncing(false)
     }
