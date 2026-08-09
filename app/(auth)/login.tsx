@@ -1,9 +1,9 @@
 import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
+import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
 import { storage as SecureStore } from "@/utils/storage"
-import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { useState, useEffect } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
@@ -12,8 +12,9 @@ import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 export default function LoginScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
   const [identifierInput, setIdentifierInput] = useState(params.identifier ?? "")
+  const [password, setPassword] = useState("")
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { setUser } = useUserStore()
   const { signIn: signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth()
 
   useEffect(() => {
@@ -56,16 +57,20 @@ export default function LoginScreen() {
       return
     }
 
+    if (!password) {
+      Alert.alert("Error", "Please enter your password")
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      const response = await authApi.login({ identifier: value })
+      const response = await authApi.login({ identifier: value, password })
 
-      await SecureStore.setItemAsync("access_token", response.access_token)
-      await SecureStore.setItemAsync("user", JSON.stringify(response.user))
-
-      setUser(response.user)
-      router.replace("/(tabs)")
+      router.push({
+        pathname: "/(auth)/verify-otp",
+        params: { pendingToken: response.pending_token, emailHint: response.email_hint }
+      })
     } catch (error: any) {
       if (error.response?.status === 404) {
         Alert.alert(
@@ -135,15 +140,45 @@ export default function LoginScreen() {
                 )}
               </View>
 
+              <View className="relative">
+                <TextInput
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!isPasswordVisible}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!isLoading}
+                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 pr-12 text-base text-neutral-900 dark:text-white"
+                  placeholderTextColor="#9ca3af"
+                />
+                <TouchableOpacity
+                  onPress={() => setIsPasswordVisible(v => !v)}
+                  className="absolute right-4 top-0 bottom-0 items-center justify-center"
+                >
+                  <Ionicons name={isPasswordVisible ? "eye-off" : "eye"} size={20} color="#9ca3af" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: "/(auth)/forgot-password", params: { identifier: identifierInput } })}
+                disabled={isLoading}
+                className="items-end"
+              >
+                <Text className="text-sm text-primary-600 dark:text-primary-400 font-semibold">
+                  Forgot password?
+                </Text>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={handleLogin}
-                disabled={isLoading || !isValid}
-                className={`w-full flex-row items-center justify-center ${isLoading || !isValid ? 'bg-neutral-200' : 'bg-primary-600'} rounded-2xl py-4`}
+                disabled={isLoading || !isValid || !password}
+                className={`w-full flex-row items-center justify-center ${isLoading || !isValid || !password ? 'bg-neutral-200' : 'bg-primary-600'} rounded-2xl py-4`}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text className={`text-base font-semibold ${isLoading || !isValid ? 'text-neutral-400' : 'text-white'}`}>
+                  <Text className={`text-base font-semibold ${isLoading || !isValid || !password ? 'text-neutral-400' : 'text-white'}`}>
                     Log In
                   </Text>
                 )}

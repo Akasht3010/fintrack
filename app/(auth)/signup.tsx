@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
+import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
@@ -9,6 +10,8 @@ import { useState } from "react"
 import { classifyIdentifier, isValidEmail, isValidPhone } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 
+const MIN_PASSWORD_LENGTH = 8
+
 export default function SignupScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
   const prefill = classifyIdentifier(params.identifier ?? "")
@@ -16,6 +19,9 @@ export default function SignupScreen() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState(prefill.kind === "email" ? prefill.value : "")
   const [phone, setPhone] = useState(prefill.kind === "phone" ? prefill.value : "")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { setUser } = useUserStore()
   const { signIn: signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth()
@@ -23,7 +29,9 @@ export default function SignupScreen() {
   const isNameValid = name.trim().length > 0
   const isEmailValid = isValidEmail(email)
   const isPhoneValid = isValidPhone(phone)
-  const canSubmit = isNameValid && isEmailValid && isPhoneValid
+  const isPasswordValid = password.length >= MIN_PASSWORD_LENGTH
+  const doPasswordsMatch = password.length > 0 && password === confirmPassword
+  const canSubmit = isNameValid && isEmailValid && isPhoneValid && isPasswordValid && doPasswordsMatch
 
   const handleGoogleSignIn = async () => {
     const result = await signInWithGoogle()
@@ -50,13 +58,25 @@ export default function SignupScreen() {
       return
     }
 
+    if (!isPasswordValid) {
+      Alert.alert("Weak password", `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+      return
+    }
+
+    if (!doPasswordsMatch) {
+      Alert.alert("Passwords don't match", "Make sure both password fields are the same")
+      return
+    }
+
     setIsLoading(true)
 
     try {
       const response = await authApi.signup({
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        phone: phone.replace(/\D/g, "")
+        phone: phone.replace(/\D/g, ""),
+        password,
+        confirmPassword
       })
 
       await SecureStore.setItemAsync("access_token", response.access_token)
@@ -155,6 +175,52 @@ export default function SignupScreen() {
                 {phone.trim().length > 0 && !isPhoneValid && (
                   <Text className="text-xs text-red-500 mt-2">
                     Please enter a valid 10-digit phone number
+                  </Text>
+                )}
+              </View>
+
+              <View>
+                <View className="relative">
+                  <TextInput
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!isPasswordVisible}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!isLoading}
+                    className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 pr-12 text-base text-neutral-900 dark:text-white"
+                    placeholderTextColor="#9ca3af"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setIsPasswordVisible(v => !v)}
+                    className="absolute right-4 top-0 bottom-0 items-center justify-center"
+                  >
+                    <Ionicons name={isPasswordVisible ? "eye-off" : "eye"} size={20} color="#9ca3af" />
+                  </TouchableOpacity>
+                </View>
+                {password.trim().length > 0 && !isPasswordValid && (
+                  <Text className="text-xs text-red-500 mt-2">
+                    Password must be at least {MIN_PASSWORD_LENGTH} characters
+                  </Text>
+                )}
+              </View>
+
+              <View>
+                <TextInput
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!isPasswordVisible}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!isLoading}
+                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
+                  placeholderTextColor="#9ca3af"
+                />
+                {confirmPassword.trim().length > 0 && !doPasswordsMatch && (
+                  <Text className="text-xs text-red-500 mt-2">
+                    Passwords don&apos;t match
                   </Text>
                 )}
               </View>
