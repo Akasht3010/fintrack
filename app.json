@@ -36,9 +36,19 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "https://zoology-unchanged-padding.ngrok-free.dev",
+      "apiUrl": "https://fintrack-backend-production-6688.up.railway.app",
       "googleClientIdWeb": "989422306373-vjomjm06cfj8p4efvm98qp4acd6bsagg.apps.googleusercontent.com",
-      "appEnv": "development"
+      "appEnv": "production",
+      "router": {},
+      "eas": {
+        "projectId": "5853c639-7a2d-4e22-99df-5aed7584de13"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5853c639-7a2d-4e22-99df-5aed7584de13"
     }
   }
 }

@@ -9,6 +9,7 @@ import { useUserStore } from "@/store/useUserStore"
 import { useThemeStore } from "@/store/useThemeStore"
 import { authApi } from "@/api/endpoints/auth"
 import { useBillReminders } from "@/hooks/useBillReminders"
+import { useGmailAutoSync } from "@/hooks/useGmailAutoSync"
 import "../src/constants/global.css"
 
 SplashScreen.preventAutoHideAsync()
@@ -31,6 +32,7 @@ function RootLayoutNav() {
   }, [])
 
   useBillReminders(isAuthenticated)
+  useGmailAutoSync(isAuthenticated)
 
   useEffect(() => {
     if (!isLoading) {

@@ -2,18 +2,16 @@ import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicat
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useUserStore } from "@/store/useUserStore"
 import { useThemeStore, ThemeMode } from "@/store/useThemeStore"
 import { useGmailConnect } from "@/hooks/useGmailConnect"
+import { useGmailSync } from "@/hooks/useGmailSync"
 import { gmailApi } from "@/api/endpoints/gmail"
 import { authApi } from "@/api/endpoints/auth"
-import { budgetApi } from "@/api/endpoints/budgets"
 import { storage as SecureStore } from "@/utils/storage"
 import { formatDate } from "@/utils/date"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
-import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 
@@ -33,10 +31,9 @@ export default function ProfileScreen() {
   const { user, logout, setUser } = useUserStore()
   const { mode, setMode } = useThemeStore()
   const { connect: connectGmail, isLoading: isConnecting } = useGmailConnect()
+  const { sync: syncGmail, isSyncing } = useGmailSync()
   const tabBarClearance = useTabBarClearance()
-  const [isSyncing, setIsSyncing] = useState(false)
   const [isDisconnecting, setIsDisconnecting] = useState(false)
-  const queryClient = useQueryClient()
 
   const handleSignOut = () => {
     Alert.alert("Sign out", "Are you sure you want to sign out?", [
@@ -84,41 +81,6 @@ export default function ProfileScreen() {
         }
       ]
     )
-  }
-
-  const handleSyncGmail = async () => {
-    setIsSyncing(true)
-    try {
-      const budgetsBefore = await budgetApi.list().catch(() => [])
-      const result = await gmailApi.sync()
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
-      queryClient.invalidateQueries({ queryKey: ["budgets"] })
-
-      if (result.imported > 0) {
-        const budgetsAfter = await budgetApi.list().catch(() => [])
-        await notifyBudgetThresholdCrossings(budgetsBefore, budgetsAfter)
-      }
-
-      Alert.alert(
-        "Sync complete",
-        `Imported ${result.imported} new transaction${result.imported === 1 ? "" : "s"}.\n${result.skipped_duplicate} already imported, ${result.skipped_unparsed} couldn't be read.`
-      )
-    } catch (error: any) {
-      Alert.alert("Sync failed", error.response?.data?.detail || "Something went wrong")
-      // A sync failure can mean the backend just cleared a stale/expired
-      // Gmail connection (e.g. Google's 7-day testing-token expiry) —
-      // refresh the cached user so Profile shows "Connect Gmail" again
-      // instead of Sync/Disconnect for a connection that no longer exists.
-      try {
-        const refreshed = await authApi.getMe()
-        await SecureStore.setItemAsync("user", JSON.stringify(refreshed))
-        setUser(refreshed)
-      } catch {
-        // Best-effort — worst case the user reopens the app and it self-corrects
-      }
-    } finally {
-      setIsSyncing(false)
-    }
   }
 
   return (
@@ -209,7 +171,7 @@ export default function ProfileScreen() {
         <View className="px-6 mb-6 gap-3">
           {user?.gmail_connected ? (
             <>
-              <GlassCard onPress={isSyncing ? undefined : handleSyncGmail} className="items-center justify-center py-4">
+              <GlassCard onPress={isSyncing ? undefined : () => syncGmail()} className="items-center justify-center py-4">
                 {isSyncing ? (
                   <ActivityIndicator color="#16a34a" />
                 ) : (
