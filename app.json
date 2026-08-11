@@ -36,7 +36,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "https://fintrack-backend-production-6688.up.railway.app",
+      "apiUrl": "http://fintrack-backend-1.tail3e4bbb.ts.net:8080",
       "googleClientIdWeb": "989422306373-vjomjm06cfj8p4efvm98qp4acd6bsagg.apps.googleusercontent.com",
       "appEnv": "production",
       "router": {},
