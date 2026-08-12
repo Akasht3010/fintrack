@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native"
+import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -7,6 +7,7 @@ import { useUserStore } from "@/store/useUserStore"
 import { useThemeStore, ThemeMode } from "@/store/useThemeStore"
 import { useGmailConnect } from "@/hooks/useGmailConnect"
 import { useGmailSync } from "@/hooks/useGmailSync"
+import { useSmsSync } from "@/hooks/useSmsSync"
 import { gmailApi } from "@/api/endpoints/gmail"
 import { authApi } from "@/api/endpoints/auth"
 import { storage as SecureStore } from "@/utils/storage"
@@ -32,6 +33,7 @@ export default function ProfileScreen() {
   const { mode, setMode } = useThemeStore()
   const { connect: connectGmail, isLoading: isConnecting } = useGmailConnect()
   const { sync: syncGmail, isSyncing } = useGmailSync()
+  const { sync: syncSms, isSyncing: isSyncingSms } = useSmsSync()
   const tabBarClearance = useTabBarClearance()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
 
@@ -200,6 +202,18 @@ export default function ProfileScreen() {
             </GlassCard>
           )}
         </View>
+
+        {Platform.OS === "android" && (
+          <View className="px-6 mb-6">
+            <GlassCard onPress={isSyncingSms ? undefined : () => syncSms()} className="items-center justify-center py-4">
+              {isSyncingSms ? (
+                <ActivityIndicator color="#16a34a" />
+              ) : (
+                <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Sync SMS Now</Text>
+              )}
+            </GlassCard>
+          </View>
+        )}
 
         <View className="px-6 mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Data</Text>
