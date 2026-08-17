@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { View } from "react-native"
 import { Stack, router } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -77,46 +78,56 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen
-        name="(modals)/transaction-detail"
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="(modals)/add-expense"
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="(modals)/add-budget"
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="(modals)/recurring"
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="(modals)/export"
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="(modals)/categories"
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="(modals)/accounts"
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="(modals)/edit-profile"
-        options={{ presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="(modals)/delete-account"
-        options={{ presentation: "modal" }}
-      />
-    </Stack>
+    // The app is built mobile-first with no responsive layout of its own, so
+    // on a wide browser window every screen stretched full-bleed edge to
+    // edge — inputs spanning 1500px+, the floating tab bar spanning the
+    // whole window, etc. Below the `md` breakpoint (phones, and the native
+    // app itself) this is a no-op; at `md` and up it frames the app as a
+    // centered card instead of trying to reflow every individual screen.
+    <View className="flex-1 bg-white dark:bg-neutral-950 md:items-center md:bg-neutral-100 md:dark:bg-black md:py-10">
+      <View className="flex-1 w-full md:max-w-[480px] md:rounded-[32px] md:border md:border-neutral-200 md:dark:border-neutral-800 md:shadow-2xl md:overflow-hidden">
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="(modals)/transaction-detail"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="(modals)/add-expense"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="(modals)/add-budget"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="(modals)/recurring"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="(modals)/export"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="(modals)/categories"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="(modals)/accounts"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="(modals)/edit-profile"
+            options={{ presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="(modals)/delete-account"
+            options={{ presentation: "modal" }}
+          />
+        </Stack>
+      </View>
+    </View>
   )
 }
 
