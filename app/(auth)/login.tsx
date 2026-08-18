@@ -8,6 +8,7 @@ import { authApi } from "@/api/endpoints/auth"
 import { useState, useEffect } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
+import { confirm } from "@/utils/confirm"
 
 export default function LoginScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
@@ -73,17 +74,14 @@ export default function LoginScreen() {
       })
     } catch (error: any) {
       if (error.response?.status === 404) {
-        Alert.alert(
+        const goToSignup = await confirm(
           "No account found",
           `We couldn't find an account for that ${kind === "email" ? "email" : "phone number"}.`,
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Sign Up",
-              onPress: () => router.push({ pathname: "/(auth)/signup", params: { identifier: value } })
-            }
-          ]
+          { confirmLabel: "Sign Up" }
         )
+        if (goToSignup) {
+          router.push({ pathname: "/(auth)/signup", params: { identifier: value } })
+        }
       } else {
         Alert.alert(
           "Sign in failed",

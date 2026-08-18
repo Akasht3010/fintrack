@@ -15,6 +15,7 @@ import { formatDate } from "@/utils/date"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
+import { confirm } from "@/utils/confirm"
 
 function initialsFor(name?: string): string {
   if (!name) return "?"
@@ -37,18 +38,14 @@ export default function ProfileScreen() {
   const tabBarClearance = useTabBarClearance()
   const [isDisconnecting, setIsDisconnecting] = useState(false)
 
-  const handleSignOut = () => {
-    Alert.alert("Sign out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await logout()
-          router.replace("/(auth)/login")
-        }
-      }
-    ])
+  const handleSignOut = async () => {
+    const confirmed = await confirm("Sign out", "Are you sure you want to sign out?", {
+      confirmLabel: "Sign Out",
+      destructive: true
+    })
+    if (!confirmed) return
+    await logout()
+    router.replace("/(auth)/login")
   }
 
   const handleConnectGmail = async () => {
@@ -58,31 +55,25 @@ export default function ProfileScreen() {
     }
   }
 
-  const handleDisconnectGmail = () => {
-    Alert.alert(
+  const handleDisconnectGmail = async () => {
+    const confirmed = await confirm(
       "Disconnect Gmail",
       "Fintrack will stop syncing new transactions from Gmail. Transactions already imported won't be removed.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Disconnect",
-          style: "destructive",
-          onPress: async () => {
-            setIsDisconnecting(true)
-            try {
-              await gmailApi.disconnect()
-              const refreshed = await authApi.getMe()
-              await SecureStore.setItemAsync("user", JSON.stringify(refreshed))
-              setUser(refreshed)
-            } catch (error: any) {
-              Alert.alert("Error", error?.response?.data?.detail || "Failed to disconnect Gmail")
-            } finally {
-              setIsDisconnecting(false)
-            }
-          }
-        }
-      ]
+      { confirmLabel: "Disconnect", destructive: true }
     )
+    if (!confirmed) return
+
+    setIsDisconnecting(true)
+    try {
+      await gmailApi.disconnect()
+      const refreshed = await authApi.getMe()
+      await SecureStore.setItemAsync("user", JSON.stringify(refreshed))
+      setUser(refreshed)
+    } catch (error: any) {
+      Alert.alert("Error", error?.response?.data?.detail || "Failed to disconnect Gmail")
+    } finally {
+      setIsDisconnecting(false)
+    }
   }
 
   return (

@@ -12,6 +12,7 @@ import { ErrorState } from "@/components/shared/ErrorState"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
+import { confirm } from "@/utils/confirm"
 
 const ACCOUNT_TYPES: AccountType[] = ["bank", "cash", "credit_card", "wallet", "investment"]
 
@@ -70,15 +71,12 @@ function AccountRow({ account }: { account: Account }) {
     onError: (error: any) => Alert.alert("Couldn't delete", errorDetail(error, "Failed to delete account"))
   })
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete account",
-      `Delete "${account.name}"? This can't be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => remove() }
-      ]
-    )
+  const handleDelete = async () => {
+    const confirmed = await confirm("Delete account", `Delete "${account.name}"? This can't be undone.`, {
+      confirmLabel: "Delete",
+      destructive: true
+    })
+    if (confirmed) remove()
   }
 
   const isCreditCard = account.type === "credit_card"

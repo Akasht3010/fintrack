@@ -9,6 +9,7 @@ import { Category } from "@/types/domain"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
+import { confirm } from "@/utils/confirm"
 
 function errorDetail(error: any, fallback: string): string {
   return error?.response?.data?.detail || fallback
@@ -37,15 +38,12 @@ function CategoryRow({ category }: { category: Category }) {
     onError: (error: any) => Alert.alert("Couldn't delete", errorDetail(error, "Failed to delete category"))
   })
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete category",
-      `Delete "${category.name}"? This can't be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => remove() }
-      ]
-    )
+  const handleDelete = async () => {
+    const confirmed = await confirm("Delete category", `Delete "${category.name}"? This can't be undone.`, {
+      confirmLabel: "Delete",
+      destructive: true
+    })
+    if (confirmed) remove()
   }
 
   if (category.is_default) {

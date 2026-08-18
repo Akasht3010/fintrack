@@ -6,6 +6,7 @@ import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
+import { confirm } from "@/utils/confirm"
 
 const CONFIRM_WORD = "DELETE"
 
@@ -16,29 +17,23 @@ export default function DeleteAccountScreen() {
 
   const canDelete = confirmText.trim() === CONFIRM_WORD
 
-  const handleDelete = () => {
-    Alert.alert(
+  const handleDelete = async () => {
+    const confirmed = await confirm(
       "Delete account?",
       "This is your last chance to back out. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Forever",
-          style: "destructive",
-          onPress: async () => {
-            setIsDeleting(true)
-            try {
-              await authApi.deleteMe()
-              await logout()
-              router.replace("/(auth)/login")
-            } catch (error: any) {
-              Alert.alert("Error", error?.response?.data?.detail || "Failed to delete account")
-              setIsDeleting(false)
-            }
-          }
-        }
-      ]
+      { confirmLabel: "Delete Forever", destructive: true }
     )
+    if (!confirmed) return
+
+    setIsDeleting(true)
+    try {
+      await authApi.deleteMe()
+      await logout()
+      router.replace("/(auth)/login")
+    } catch (error: any) {
+      Alert.alert("Error", error?.response?.data?.detail || "Failed to delete account")
+      setIsDeleting(false)
+    }
   }
 
   return (

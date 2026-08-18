@@ -9,6 +9,7 @@ import { authApi } from "@/api/endpoints/auth"
 import { useState } from "react"
 import { classifyIdentifier, isValidEmail, isValidPhone } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
+import { confirm } from "@/utils/confirm"
 
 const MIN_PASSWORD_LENGTH = 8
 
@@ -86,17 +87,14 @@ export default function SignupScreen() {
       router.replace("/(tabs)")
     } catch (error: any) {
       if (error.response?.status === 409) {
-        Alert.alert(
+        const goToLogin = await confirm(
           "Account already exists",
           error.response?.data?.detail || "This email or phone number is already registered.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Log In",
-              onPress: () => router.replace({ pathname: "/(auth)/login", params: { identifier: email.trim() } })
-            }
-          ]
+          { confirmLabel: "Log In" }
         )
+        if (goToLogin) {
+          router.replace({ pathname: "/(auth)/login", params: { identifier: email.trim() } })
+        }
       } else {
         Alert.alert(
           "Sign up failed",

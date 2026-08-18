@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshCon
 import { SafeAreaView } from "react-native-safe-area-context"
 import { LinearGradient } from "expo-linear-gradient"
 import { useColorScheme } from "nativewind"
-import { useFocusEffect, useNavigation } from "@react-navigation/native"
+import { useFocusEffect } from "@react-navigation/native"
 import { router } from "expo-router"
 import { useQuery } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
@@ -48,7 +48,6 @@ function SummaryCardContent({ totalSpent, totalIncome, net }: { totalSpent: numb
 }
 
 export default function DashboardScreen() {
-  const navigation = useNavigation()
   const { user } = useUserStore()
   const { transactions, setTransactions } = useTransactionStore()
   const [refreshing, setRefreshing] = useState(false)
@@ -246,7 +245,7 @@ export default function DashboardScreen() {
             </Text>
           </View>
           <TouchableOpacity
-            onPress={() => navigation.navigate("(modals)/add-expense" as never)}
+            onPress={() => router.push("/(modals)/add-expense")}
             className="bg-primary-600 dark:bg-accent-600 rounded-full w-12 h-12 items-center justify-center"
           >
             <Text className="text-white text-xl font-bold">+</Text>

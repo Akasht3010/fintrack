@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useFocusEffect } from "@react-navigation/native"
 import { router } from "expo-router"
@@ -15,6 +15,7 @@ import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
+import { confirm } from "@/utils/confirm"
 
 export default function BudgetScreen() {
   const CATEGORY_ICONS = useCategoryIcons()
@@ -41,22 +42,14 @@ export default function BudgetScreen() {
     refetch().finally(() => setRefreshing(false))
   }, [refetch])
 
-  const handleDelete = (id: string, category: string) => {
-    Alert.alert(
-      "Delete budget",
-      `Remove the ${category} budget?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            await budgetApi.delete(id)
-            queryClient.invalidateQueries({ queryKey: ["budgets"] })
-          }
-        }
-      ]
-    )
+  const handleDelete = async (id: string, category: string) => {
+    const confirmed = await confirm("Delete budget", `Remove the ${category} budget?`, {
+      confirmLabel: "Delete",
+      destructive: true
+    })
+    if (!confirmed) return
+    await budgetApi.delete(id)
+    queryClient.invalidateQueries({ queryKey: ["budgets"] })
   }
 
   return (

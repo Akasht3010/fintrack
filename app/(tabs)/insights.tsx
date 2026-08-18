@@ -16,6 +16,10 @@ import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 
+// Must leave room below for the month label + gap within the chart row's
+// h-32 (128px) total height.
+const BAR_TRACK_HEIGHT = 100
+
 export default function InsightsScreen() {
   const CATEGORY_ICONS = useCategoryIcons()
   const tabBarClearance = useTabBarClearance()
@@ -171,17 +175,28 @@ export default function InsightsScreen() {
               <View className="flex-row items-end justify-between h-32">
                 {data.monthly_totals.map((m, i) => {
                   const income = data.monthly_income_totals[i]?.total ?? 0
-                  const expenseHeightPct = Math.max(4, (m.total / maxMonthly) * 100)
-                  const incomeHeightPct = Math.max(4, (income / maxMonthly) * 100)
+                  // Bar heights are computed in pixels against a fixed-height
+                  // track (BAR_TRACK_HEIGHT) rather than as a CSS `%` string.
+                  // A percentage height only resolves against an ancestor
+                  // with an explicit pixel height — here that ancestor is a
+                  // `flex-1` row nested a couple of levels inside another
+                  // flex-1 column, which Yoga (native) resolves fine but web
+                  // flexbox doesn't reliably treat as "definite," so the
+                  // bars silently rendered at 0 height in the browser.
+                  const expenseHeight = Math.max(4, (m.total / maxMonthly) * BAR_TRACK_HEIGHT)
+                  const incomeHeight = Math.max(4, (income / maxMonthly) * BAR_TRACK_HEIGHT)
                   return (
                     <View key={`${m.year}-${m.month}`} className="flex-1 items-center gap-2">
-                      <View className="flex-1 flex-row justify-center items-end gap-1 w-full">
+                      <View
+                        className="flex-row justify-center items-end gap-1 w-full"
+                        style={{ height: BAR_TRACK_HEIGHT }}
+                      >
                         <View
-                          style={{ height: `${incomeHeightPct}%` }}
+                          style={{ height: incomeHeight }}
                           className="w-2.5 rounded-full bg-green-500 dark:bg-emerald-400"
                         />
                         <View
-                          style={{ height: `${expenseHeightPct}%` }}
+                          style={{ height: expenseHeight }}
                           className="w-2.5 rounded-full bg-primary-600 dark:bg-accent-500"
                         />
                       </View>

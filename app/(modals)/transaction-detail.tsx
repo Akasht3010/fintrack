@@ -10,6 +10,7 @@ import { useCategoryIcons } from "@/hooks/useCategories"
 import { useAccounts } from "@/hooks/useAccounts"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
+import { confirm } from "@/utils/confirm"
 import { useState } from "react"
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -32,29 +33,22 @@ export default function TransactionDetailScreen() {
     enabled: !!id
   })
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete transaction",
-      "This can't be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setIsDeleting(true)
-            try {
-              await transactionApi.delete(id)
-              queryClient.invalidateQueries({ queryKey: ["transactions"] })
-              router.back()
-            } catch (err) {
-              setIsDeleting(false)
-              Alert.alert("Error", "Failed to delete transaction")
-            }
-          }
-        }
-      ]
-    )
+  const handleDelete = async () => {
+    const confirmed = await confirm("Delete transaction", "This can't be undone.", {
+      confirmLabel: "Delete",
+      destructive: true
+    })
+    if (!confirmed) return
+
+    setIsDeleting(true)
+    try {
+      await transactionApi.delete(id)
+      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      router.back()
+    } catch (err) {
+      setIsDeleting(false)
+      Alert.alert("Error", "Failed to delete transaction")
+    }
   }
 
   return (
