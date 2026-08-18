@@ -79,72 +79,76 @@ export default function InsightsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: tabBarClearance }}
         >
-          {/* This month: income vs expense */}
-          <View className="mb-6">
-            <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-              This month
-            </Text>
-            <GlassCard className="p-4">
-              <View className="flex-row items-center">
-                <View className="flex-1">
-                  <Text className="text-xs text-muted dark:text-neutral-400">Income</Text>
-                  <Text className="text-xl font-bold text-green-600 dark:text-emerald-400 mt-1">
-                    {formatCurrency(currentMonthIncome)}
-                  </Text>
-                </View>
-                <View className="w-px h-10 bg-border dark:bg-white/10" />
-                <View className="flex-1 items-end">
-                  <Text className="text-xs text-muted dark:text-neutral-400">Expenses</Text>
-                  <Text className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
-                    {formatCurrency(currentMonthExpense)}
-                  </Text>
-                </View>
-              </View>
-              <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-border dark:border-white/10">
-                <Text className="text-xs text-muted dark:text-neutral-400">
-                  {currentMonthIncome > 0 ? `Saved ${savingsRate}% of income` : "Net this month"}
-                </Text>
-                <Text className={`text-sm font-bold ${savings >= 0 ? "text-neutral-900 dark:text-white" : "text-red-600 dark:text-red-400"}`}>
-                  {savings >= 0 ? "+" : "−"}{formatCurrency(Math.abs(savings))}
-                </Text>
-              </View>
-            </GlassCard>
-          </View>
-
-          {/* Recurring subscriptions */}
-          {recurring && (
-            <View className="mb-6">
+          {/* This month + Subscriptions sit stacked on a phone, but side by
+              side at lg+ — two short summary cards stacked in a narrow
+              column just leaves the rest of the window empty. */}
+          <View className="lg:flex-row lg:gap-6 lg:items-start">
+            <View className="mb-6 lg:flex-1 lg:mb-0">
               <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-                Subscriptions
+                This month
               </Text>
-              <GlassCard
-                onPress={() => router.push("/(modals)/recurring")}
-                className="p-4 flex-row items-center justify-between"
-              >
-                {recurring.items.length > 0 ? (
-                  <View>
-                    <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-                      {formatCurrency(recurring.monthly_total)}
-                      <Text className="text-sm font-medium text-muted dark:text-neutral-400">/mo</Text>
-                    </Text>
-                    <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
-                      {recurring.items.length} recurring bill{recurring.items.length === 1 ? "" : "s"} detected
+              <GlassCard className="p-4">
+                <View className="flex-row items-center">
+                  <View className="flex-1">
+                    <Text className="text-xs text-muted dark:text-neutral-400">Income</Text>
+                    <Text className="text-xl font-bold text-green-600 dark:text-emerald-400 mt-1">
+                      {formatCurrency(currentMonthIncome)}
                     </Text>
                   </View>
-                ) : (
-                  <View className="flex-1 mr-3">
-                    <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                      Nothing detected yet
-                    </Text>
-                    <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
-                      We'll spot subscriptions once a merchant charges you a few times on a regular cadence
+                  <View className="w-px h-10 bg-border dark:bg-white/10" />
+                  <View className="flex-1 items-end">
+                    <Text className="text-xs text-muted dark:text-neutral-400">Expenses</Text>
+                    <Text className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
+                      {formatCurrency(currentMonthExpense)}
                     </Text>
                   </View>
-                )}
-                <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
+                </View>
+                <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-border dark:border-white/10">
+                  <Text className="text-xs text-muted dark:text-neutral-400">
+                    {currentMonthIncome > 0 ? `Saved ${savingsRate}% of income` : "Net this month"}
+                  </Text>
+                  <Text className={`text-sm font-bold ${savings >= 0 ? "text-neutral-900 dark:text-white" : "text-red-600 dark:text-red-400"}`}>
+                    {savings >= 0 ? "+" : "−"}{formatCurrency(Math.abs(savings))}
+                  </Text>
+                </View>
               </GlassCard>
             </View>
-          )}
+
+            {/* Recurring subscriptions */}
+            {recurring && (
+              <View className="mb-6 lg:flex-1 lg:mb-0">
+                <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
+                  Subscriptions
+                </Text>
+                <GlassCard
+                  onPress={() => router.push("/(modals)/recurring")}
+                  className="p-4 flex-row items-center justify-between"
+                >
+                  {recurring.items.length > 0 ? (
+                    <View>
+                      <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+                        {formatCurrency(recurring.monthly_total)}
+                        <Text className="text-sm font-medium text-muted dark:text-neutral-400">/mo</Text>
+                      </Text>
+                      <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                        {recurring.items.length} recurring bill{recurring.items.length === 1 ? "" : "s"} detected
+                      </Text>
+                    </View>
+                  ) : (
+                    <View className="flex-1 mr-3">
+                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                        Nothing detected yet
+                      </Text>
+                      <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                        We'll spot subscriptions once a merchant charges you a few times on a regular cadence
+                      </Text>
+                    </View>
+                  )}
+                  <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
+                </GlassCard>
+              </View>
+            )}
+          </View>
 
           {/* Monthly trend */}
           <View className="mb-6">
@@ -191,73 +195,76 @@ export default function InsightsScreen() {
             </GlassCard>
           </View>
 
-          {/* Category breakdown */}
-          {data.category_breakdown.length > 0 && (
-            <View className="mb-6">
-              <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-                This month by category
-              </Text>
-              <GlassCard className="p-4">
-                <View className="gap-4">
-                  {data.category_breakdown.map((c) => {
-                    const pct = categoryTotal > 0 ? (c.total / categoryTotal) * 100 : 0
-                    return (
-                      <View key={c.category}>
-                        <View className="flex-row items-center justify-between mb-2">
-                          <View className="flex-row items-center gap-2">
-                            <Text className="text-base">{CATEGORY_ICONS[c.category] || "📌"}</Text>
-                            <Text className="text-sm font-medium text-neutral-900 dark:text-white capitalize">
-                              {c.category}
+          {/* Category breakdown + Top merchants, same side-by-side treatment
+              as the summary row above once there's room for it. */}
+          <View className="lg:flex-row lg:gap-6 lg:items-start">
+            {data.category_breakdown.length > 0 && (
+              <View className="mb-6 lg:flex-1 lg:mb-0">
+                <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
+                  This month by category
+                </Text>
+                <GlassCard className="p-4">
+                  <View className="gap-4">
+                    {data.category_breakdown.map((c) => {
+                      const pct = categoryTotal > 0 ? (c.total / categoryTotal) * 100 : 0
+                      return (
+                        <View key={c.category}>
+                          <View className="flex-row items-center justify-between mb-2">
+                            <View className="flex-row items-center gap-2">
+                              <Text className="text-base">{CATEGORY_ICONS[c.category] || "📌"}</Text>
+                              <Text className="text-sm font-medium text-neutral-900 dark:text-white capitalize">
+                                {c.category}
+                              </Text>
+                            </View>
+                            <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                              {formatCurrency(c.total)}
                             </Text>
                           </View>
-                          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                            {formatCurrency(c.total)}
-                          </Text>
+                          <View className="h-2 rounded-full bg-neutral-100 dark:bg-white/10 overflow-hidden">
+                            <View
+                              style={{ width: `${pct}%` }}
+                              className="h-full rounded-full bg-primary-600 dark:bg-accent-500"
+                            />
+                          </View>
                         </View>
-                        <View className="h-2 rounded-full bg-neutral-100 dark:bg-white/10 overflow-hidden">
-                          <View
-                            style={{ width: `${pct}%` }}
-                            className="h-full rounded-full bg-primary-600 dark:bg-accent-500"
-                          />
-                        </View>
-                      </View>
-                    )
-                  })}
-                </View>
-              </GlassCard>
-            </View>
-          )}
+                      )
+                    })}
+                  </View>
+                </GlassCard>
+              </View>
+            )}
 
-          {/* Top merchants */}
-          {data.top_merchants.length > 0 && (
-            <View className="mb-6">
-              <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-                Top merchants
-              </Text>
-              <GlassCard>
-                {data.top_merchants.map((merchant, index) => (
-                  <View
-                    key={merchant.merchant}
-                    className={`flex-row items-center justify-between px-4 py-4 ${
-                      index < data.top_merchants.length - 1 ? "border-b border-border dark:border-white/10" : ""
-                    }`}
-                  >
-                    <View className="flex-1">
-                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                        {merchant.merchant}
-                      </Text>
-                      <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
-                        {merchant.count} transaction{merchant.count === 1 ? "" : "s"}
+            {/* Top merchants */}
+            {data.top_merchants.length > 0 && (
+              <View className="mb-6 lg:flex-1 lg:mb-0">
+                <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
+                  Top merchants
+                </Text>
+                <GlassCard>
+                  {data.top_merchants.map((merchant, index) => (
+                    <View
+                      key={merchant.merchant}
+                      className={`flex-row items-center justify-between px-4 py-4 ${
+                        index < data.top_merchants.length - 1 ? "border-b border-border dark:border-white/10" : ""
+                      }`}
+                    >
+                      <View className="flex-1">
+                        <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                          {merchant.merchant}
+                        </Text>
+                        <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                          {merchant.count} transaction{merchant.count === 1 ? "" : "s"}
+                        </Text>
+                      </View>
+                      <Text className="text-sm font-bold text-primary-600 dark:text-accent-400">
+                        {formatCurrency(merchant.total)}
                       </Text>
                     </View>
-                    <Text className="text-sm font-bold text-primary-600 dark:text-accent-400">
-                      {formatCurrency(merchant.total)}
-                    </Text>
-                  </View>
-                ))}
-              </GlassCard>
-            </View>
-          )}
+                  ))}
+                </GlassCard>
+              </View>
+            )}
+          </View>
         </ScrollView>
       )}
     </SafeAreaView>

@@ -92,15 +92,24 @@ export default function BudgetScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          <View className="gap-3">
+          {/* A single narrow column of cards reads fine on a phone, but just
+              leaves a wall of half-empty cards on a wide desktop window —
+              wrapping into a grid at lg+ uses the extra width instead of
+              just stretching the cards themselves. */}
+          <View className="gap-3 lg:flex-row lg:flex-wrap">
             {budgets.map((budget) => {
               const percent = Math.min(budget.spent_amount / budget.limit_amount, 1) * 100
               const isOver = budget.spent_amount > budget.limit_amount
               const remaining = budget.limit_amount - budget.spent_amount
 
               return (
+                // Width goes on this wrapper, not GlassCard's own className
+                // — in dark mode GlassCard nests its className'd content
+                // inside a BlurView with no width of its own, so a
+                // percentage/calc width placed there has nothing sized to
+                // resolve against and the card collapses to content width.
+                <View key={budget.id} className="lg:w-[calc(50%-6px)] xl:w-[calc(33.333%-8px)]">
                 <GlassCard
-                  key={budget.id}
                   onPress={() => router.push({ pathname: "/(modals)/add-budget", params: { id: budget.id } })}
                   className="p-4"
                 >
@@ -144,6 +153,7 @@ export default function BudgetScreen() {
                     {formatCurrency(budget.spent_amount)} of {formatCurrency(budget.limit_amount)}
                   </Text>
                 </GlassCard>
+                </View>
               )
             })}
           </View>

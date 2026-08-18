@@ -1,8 +1,7 @@
-import { View, StyleSheet, Dimensions } from "react-native"
+import { useState } from "react"
+import { View, StyleSheet, Dimensions, LayoutChangeEvent } from "react-native"
 import { BlurView } from "expo-blur"
 import { useColorScheme } from "nativewind"
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window")
 
 /**
  * The ambient glow behind the "liquid glass" dark theme — a few large,
@@ -15,31 +14,42 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window")
  */
 export function GlowBackground() {
   const { colorScheme } = useColorScheme()
+  // Blob geometry scales off this screen's own rendered width, not the
+  // window's — on desktop web this View sits inside a capped-width content
+  // column (see app/(tabs)/_layout.tsx), not the full browser window, so
+  // Dimensions.get("window") would size the blobs for a column several
+  // hundred px wider than they actually have to fill.
+  const [width, setWidth] = useState(() => Dimensions.get("window").width)
+  const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)
+
   if (colorScheme !== "dark") return null
 
+  const blobSize = width * 0.9
+
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" onLayout={onLayout}>
       <View style={styles.base} />
-      <View style={[styles.blob, { top: -SCREEN_WIDTH * 0.25, left: -SCREEN_WIDTH * 0.3, backgroundColor: "#4f46e5" }]} />
-      <View style={[styles.blob, { top: SCREEN_WIDTH * 0.5, right: -SCREEN_WIDTH * 0.35, backgroundColor: "#7c3aed" }]} />
-      <View style={[styles.blob, { bottom: -SCREEN_WIDTH * 0.3, left: -SCREEN_WIDTH * 0.1, backgroundColor: "#2563eb" }]} />
+      <View style={[blobStyle(blobSize), { top: -width * 0.25, left: -width * 0.3, backgroundColor: "#4f46e5" }]} />
+      <View style={[blobStyle(blobSize), { top: width * 0.5, right: -width * 0.35, backgroundColor: "#7c3aed" }]} />
+      <View style={[blobStyle(blobSize), { bottom: -width * 0.3, left: -width * 0.1, backgroundColor: "#2563eb" }]} />
       <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
     </View>
   )
 }
 
-const BLOB_SIZE = SCREEN_WIDTH * 0.9
+function blobStyle(size: number) {
+  return {
+    position: "absolute" as const,
+    width: size,
+    height: size,
+    borderRadius: size / 2,
+    opacity: 0.45
+  }
+}
 
 const styles = StyleSheet.create({
   base: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "#0a0a1f"
-  },
-  blob: {
-    position: "absolute",
-    width: BLOB_SIZE,
-    height: BLOB_SIZE,
-    borderRadius: BLOB_SIZE / 2,
-    opacity: 0.45
   }
 })

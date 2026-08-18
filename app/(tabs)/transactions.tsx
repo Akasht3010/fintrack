@@ -15,8 +15,10 @@ import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { useCategories, useCategoryIcons } from "@/hooks/useCategories"
+import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { DateRange, DATE_RANGES, dateFromForRange } from "@/utils/dateRanges"
 import { useState, useCallback, useEffect } from "react"
+import type { Transaction } from "@/types/domain"
 
 const PAGE_SIZE = 50
 
@@ -34,6 +36,7 @@ export default function TransactionsScreen() {
   const { data: categories } = useCategories()
   const CATEGORY_ICONS = useCategoryIcons()
   const categoryFilters = ["all", ...(categories?.map(c => c.name) ?? [])]
+  const isDesktop = useIsDesktop()
 
   useEffect(() => {
     const timeout = setTimeout(() => setDebouncedSearch(searchInput.trim()), 400)
@@ -201,36 +204,65 @@ export default function TransactionsScreen() {
         </View>
       )}
 
-      {/* Category Filter */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="px-6 mb-2"
-        style={{ flexGrow: 0, height: 40 }}
-        contentContainerStyle={{ gap: 8, alignItems: "center" }}
-      >
-        {categoryFilters.map((category) => (
-          <TouchableOpacity
-            key={category}
-            onPress={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-full ${
-              selectedCategory === category
-                ? "bg-primary-600 dark:bg-accent-600"
-                : "bg-white dark:bg-white/10 border border-border dark:border-white/15"
-            }`}
-          >
-            <Text
-              className={`text-sm font-medium capitalize ${
+      {/* Category Filter — a horizontally-scrolling chip row makes sense on
+          a phone, but on desktop there's usually enough width to just wrap
+          the chips onto a second line instead of hiding them behind a
+          scroll gesture mouse users won't think to try. */}
+      {isDesktop ? (
+        <View className="px-6 mb-2 flex-row flex-wrap gap-2">
+          {categoryFilters.map((category) => (
+            <TouchableOpacity
+              key={category}
+              onPress={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full ${
                 selectedCategory === category
-                  ? "text-white"
-                  : "text-neutral-700 dark:text-neutral-300"
+                  ? "bg-primary-600 dark:bg-accent-600"
+                  : "bg-white dark:bg-white/10 border border-border dark:border-white/15"
               }`}
             >
-              {category}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+              <Text
+                className={`text-sm font-medium capitalize ${
+                  selectedCategory === category
+                    ? "text-white"
+                    : "text-neutral-700 dark:text-neutral-300"
+                }`}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="px-6 mb-2"
+          style={{ flexGrow: 0, height: 40 }}
+          contentContainerStyle={{ gap: 8, alignItems: "center" }}
+        >
+          {categoryFilters.map((category) => (
+            <TouchableOpacity
+              key={category}
+              onPress={() => setSelectedCategory(category)}
+              className={`px-4 py-2 rounded-full ${
+                selectedCategory === category
+                  ? "bg-primary-600 dark:bg-accent-600"
+                  : "bg-white dark:bg-white/10 border border-border dark:border-white/15"
+              }`}
+            >
+              <Text
+                className={`text-sm font-medium capitalize ${
+                  selectedCategory === category
+                    ? "text-white"
+                    : "text-neutral-700 dark:text-neutral-300"
+                }`}
+              >
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       {/* Transactions List */}
       <View className="flex-1">
@@ -261,43 +293,85 @@ export default function TransactionsScreen() {
                   {date}
                 </Text>
 
-                {/* Transactions for this date */}
-                <View className="gap-2">
-                  {txns.map((transaction) => (
-                    <GlassCard
-                      key={transaction.id}
-                      onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                      className="p-4 flex-row items-center justify-between"
-                    >
-                      <View className="flex-row items-center gap-3 flex-1">
-                        <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
-                          <Text className="text-lg">
-                            {CATEGORY_ICONS[transaction.category] || "📌"}
-                          </Text>
-                        </View>
-                        <View className="flex-1">
-                          <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                            {transaction.merchant}
-                          </Text>
-                          <Text className="text-xs text-muted dark:text-neutral-400 capitalize">
-                            {transaction.category}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <Text
-                        className={`text-sm font-bold ${
-                          transaction.type === "debit"
-                            ? "text-red-600 dark:text-red-400"
-                            : "text-green-600 dark:text-emerald-400"
+                {/* Transactions for this date — a column of individually
+                    "floating" cards suits touch, but on desktop it's just
+                    repeated whitespace and shadow; grouping the day's rows
+                    into one bordered list (each row a plain divider-separated
+                    line) reads more like a real transaction table. */}
+                {isDesktop ? (
+                  <View className="rounded-2xl border border-border dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
+                    {txns.map((transaction: Transaction, index: number) => (
+                      <TouchableOpacity
+                        key={transaction.id}
+                        onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
+                        className={`px-4 py-3 flex-row items-center justify-between ${
+                          index < txns.length - 1 ? "border-b border-border dark:border-white/10" : ""
                         }`}
                       >
-                        {transaction.type === "debit" ? "−" : "+"}
-                        {formatCurrency(transaction.amount, transaction.currency)}
-                      </Text>
-                    </GlassCard>
-                  ))}
-                </View>
+                        <View className="flex-row items-center gap-3 flex-1">
+                          <View className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
+                            <Text className="text-base">
+                              {CATEGORY_ICONS[transaction.category] || "📌"}
+                            </Text>
+                          </View>
+                          <Text className="text-sm font-semibold text-neutral-900 dark:text-white flex-1">
+                            {transaction.merchant}
+                          </Text>
+                        </View>
+                        <Text className="text-xs text-muted dark:text-neutral-400 capitalize w-32">
+                          {transaction.category}
+                        </Text>
+                        <Text
+                          className={`text-sm font-bold w-32 text-right ${
+                            transaction.type === "debit"
+                              ? "text-red-600 dark:text-red-400"
+                              : "text-green-600 dark:text-emerald-400"
+                          }`}
+                        >
+                          {transaction.type === "debit" ? "−" : "+"}
+                          {formatCurrency(transaction.amount, transaction.currency)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : (
+                  <View className="gap-2">
+                    {txns.map((transaction: Transaction) => (
+                      <GlassCard
+                        key={transaction.id}
+                        onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
+                        className="p-4 flex-row items-center justify-between"
+                      >
+                        <View className="flex-row items-center gap-3 flex-1">
+                          <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
+                            <Text className="text-lg">
+                              {CATEGORY_ICONS[transaction.category] || "📌"}
+                            </Text>
+                          </View>
+                          <View className="flex-1">
+                            <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                              {transaction.merchant}
+                            </Text>
+                            <Text className="text-xs text-muted dark:text-neutral-400 capitalize">
+                              {transaction.category}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <Text
+                          className={`text-sm font-bold ${
+                            transaction.type === "debit"
+                              ? "text-red-600 dark:text-red-400"
+                              : "text-green-600 dark:text-emerald-400"
+                          }`}
+                        >
+                          {transaction.type === "debit" ? "−" : "+"}
+                          {formatCurrency(transaction.amount, transaction.currency)}
+                        </Text>
+                      </GlassCard>
+                    ))}
+                  </View>
+                )}
               </View>
             ))}
 

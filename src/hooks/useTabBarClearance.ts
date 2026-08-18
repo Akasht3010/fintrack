@@ -1,4 +1,5 @@
 import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { useIsDesktop } from "./useIsDesktop"
 
 // Must match the floating tab bar's own geometry in app/(tabs)/_layout.tsx
 // (bottom offset + height), plus a little breathing room, so scrollable
@@ -9,5 +10,8 @@ const BREATHING_ROOM = 24
 
 export function useTabBarClearance(): number {
   const insets = useSafeAreaInsets()
+  const isDesktop = useIsDesktop()
+  // Desktop nav is a sidebar, not a floating bottom bar — nothing to clear.
+  if (isDesktop) return BREATHING_ROOM
   return insets.bottom + TAB_BAR_BOTTOM_GAP + TAB_BAR_HEIGHT + BREATHING_ROOM
 }

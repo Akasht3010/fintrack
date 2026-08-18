@@ -12,6 +12,14 @@ module.exports = {
   darkMode: "class",
   theme: {
     extend: {
+      // Default Tailwind screens stop at 2xl (1536px) — on an actual large
+      // monitor or a browser projected to a TV, the desktop shell (see
+      // app/(tabs)/_layout.tsx) would otherwise freeze at its 2xl width and
+      // leave a growing dead void on either side instead of continuing to
+      // scale.
+      screens: {
+        "3xl": "1920px"
+      },
       colors: {
         primary: {
           50:  "#f0fdf4",

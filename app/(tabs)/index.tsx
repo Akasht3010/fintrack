@@ -18,7 +18,9 @@ import { GlassCard } from "@/components/shared/GlassCard"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
 import { useCategoryIcons } from "@/hooks/useCategories"
 import { useNetWorth } from "@/hooks/useAccounts"
+import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { useCallback, useState } from "react"
+import type { Transaction } from "@/types/domain"
 
 function SummaryCardContent({ totalSpent, totalIncome, net }: { totalSpent: number; totalIncome: number; net: number }) {
   return (
@@ -55,6 +57,7 @@ export default function DashboardScreen() {
   const { data: netWorth } = useNetWorth()
   const { colorScheme } = useColorScheme()
   const isDark = colorScheme === "dark"
+  const isDesktop = useIsDesktop()
 
   const { isLoading, error, refetch } = useQuery({
     queryKey: ["transactions", user?.id],
@@ -101,6 +104,129 @@ export default function DashboardScreen() {
 
   const topCategory = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]
 
+  const netWorthCard = (
+    <GlassCard onPress={() => router.push("/(modals)/accounts")} className="p-4 flex-row items-center justify-between">
+      <View>
+        <Text className="text-xs text-muted dark:text-neutral-400 uppercase tracking-wider mb-1">
+          Net Worth
+        </Text>
+        {netWorth && netWorth.accounts.length > 0 ? (
+          <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
+            {formatCurrency(netWorth.net_worth)}
+          </Text>
+        ) : (
+          <Text className="text-sm font-medium text-primary-600 dark:text-accent-400">
+            Add an account to track it
+          </Text>
+        )}
+      </View>
+      <Text className="text-muted dark:text-neutral-500 text-lg">›</Text>
+    </GlassCard>
+  )
+
+  const summaryCard = isDark ? (
+    <LinearGradient
+      colors={["#6366f1", "#7c3aed"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ borderRadius: 24, padding: 24 }}
+    >
+      <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} />
+    </LinearGradient>
+  ) : (
+    <View className="bg-primary-600 rounded-3xl p-6">
+      <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} />
+    </View>
+  )
+
+  const topCategoryCard = topCategory && (
+    <GlassCard className="p-4">
+      <Text className="text-xs text-muted dark:text-neutral-400 uppercase tracking-wider mb-2">
+        Top Category
+      </Text>
+      <View className="flex-row items-center justify-between">
+        <Text className="text-lg font-semibold text-neutral-900 dark:text-white capitalize">
+          {topCategory[0]}
+        </Text>
+        <Text className="text-lg font-bold text-primary-600 dark:text-accent-400">
+          {formatCurrency(topCategory[1])}
+        </Text>
+      </View>
+    </GlassCard>
+  )
+
+  const recentTransactionsSection = (
+    <View>
+      <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
+        Recent
+      </Text>
+
+      {isLoading && (
+        <View className="py-8 items-center justify-center">
+          <ActivityIndicator size="large" color={Colors.primary[600]} />
+        </View>
+      )}
+
+      {!isLoading && error && (
+        <ErrorState message="Failed to load transactions" onRetry={refetch} />
+      )}
+
+      {!isLoading && !error && transactions.length === 0 && (
+        <EmptyState
+          icon="💸"
+          title="No transactions yet"
+          subtitle="Add your first expense to get started."
+        />
+      )}
+
+      {!isLoading && !error && transactions.length > 0 && (
+        <View className="gap-3 lg:flex-row lg:flex-wrap">
+          {transactions.slice(0, 10).map((transaction: Transaction) => (
+            // The width lives on this wrapper, not on GlassCard's own
+            // className — in dark mode GlassCard puts className on an inner
+            // View nested inside a BlurView that has no width of its own, so
+            // a percentage/calc width placed there has no sized parent to
+            // resolve against and just collapses to content width (each row
+            // shrinking to a sliver and wrapping text one word per line).
+            // Sizing this wrapper instead and leaving GlassCard's own
+            // className to default RN's stretch-to-fill-parent behavior
+            // works in both themes.
+            <View key={transaction.id} className="lg:w-full xl:w-[calc(50%-6px)]">
+              <GlassCard
+                onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
+                className="p-4 flex-row items-center justify-between"
+              >
+              <View className="flex-row items-center gap-3 flex-1">
+                <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
+                  <Text className="text-lg">
+                    {CATEGORY_ICONS[transaction.category] || "📌"}
+                  </Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                    {transaction.merchant}
+                  </Text>
+                  <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                    {formatDateShort(transaction.date)}
+                  </Text>
+                </View>
+              </View>
+              <Text className={`text-sm font-bold ${
+                transaction.type === "debit"
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-green-600 dark:text-emerald-400"
+              }`}>
+                {transaction.type === "debit" ? "−" : "+"}
+                {formatCurrency(transaction.amount, transaction.currency)}
+              </Text>
+              </GlassCard>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  )
+
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
       <GlowBackground />
@@ -127,124 +253,29 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Net Worth */}
-        <View className="px-6 mb-6">
-          <GlassCard onPress={() => router.push("/(modals)/accounts")} className="p-4 flex-row items-center justify-between">
-            <View>
-              <Text className="text-xs text-muted dark:text-neutral-400 uppercase tracking-wider mb-1">
-                Net Worth
-              </Text>
-              {netWorth && netWorth.accounts.length > 0 ? (
-                <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-                  {formatCurrency(netWorth.net_worth)}
-                </Text>
-              ) : (
-                <Text className="text-sm font-medium text-primary-600 dark:text-accent-400">
-                  Add an account to track it
-                </Text>
-              )}
+        {isDesktop ? (
+          // Desktop: a real two-column dashboard — spending front and center
+          // on the left, at-a-glance figures (net worth, top category) in a
+          // narrower right rail — instead of one narrow mobile column
+          // stretched out with the same stacked cards.
+          <View className="px-6 flex-row items-start gap-6">
+            <View className="flex-1 gap-6">
+              {summaryCard}
+              {recentTransactionsSection}
             </View>
-            <Text className="text-muted dark:text-neutral-500 text-lg">›</Text>
-          </GlassCard>
-        </View>
-
-        {/* Summary Card */}
-        <View className="px-6 mb-6">
-          {isDark ? (
-            <LinearGradient
-              colors={["#6366f1", "#7c3aed"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ borderRadius: 24, padding: 24 }}
-            >
-              <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} />
-            </LinearGradient>
-          ) : (
-            <View className="bg-primary-600 rounded-3xl p-6">
-              <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} />
+            <View className="w-[300px] shrink-0 gap-6">
+              {netWorthCard}
+              {topCategoryCard}
             </View>
-          )}
-        </View>
-
-        {/* Top Category */}
-        {topCategory && (
-          <View className="px-6 mb-6">
-            <GlassCard className="p-4">
-              <Text className="text-xs text-muted dark:text-neutral-400 uppercase tracking-wider mb-2">
-                Top Category
-              </Text>
-              <View className="flex-row items-center justify-between">
-                <Text className="text-lg font-semibold text-neutral-900 dark:text-white capitalize">
-                  {topCategory[0]}
-                </Text>
-                <Text className="text-lg font-bold text-primary-600 dark:text-accent-400">
-                  {formatCurrency(topCategory[1])}
-                </Text>
-              </View>
-            </GlassCard>
           </View>
+        ) : (
+          <>
+            <View className="px-6 mb-6">{netWorthCard}</View>
+            <View className="px-6 mb-6">{summaryCard}</View>
+            {topCategoryCard && <View className="px-6 mb-6">{topCategoryCard}</View>}
+            <View className="px-6 mb-6">{recentTransactionsSection}</View>
+          </>
         )}
-
-        {/* Recent Transactions */}
-        <View className="px-6 mb-6">
-          <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-            Recent
-          </Text>
-
-          {isLoading && (
-            <View className="py-8 items-center justify-center">
-              <ActivityIndicator size="large" color={Colors.primary[600]} />
-            </View>
-          )}
-
-          {!isLoading && error && (
-            <ErrorState message="Failed to load transactions" onRetry={refetch} />
-          )}
-
-          {!isLoading && !error && transactions.length === 0 && (
-            <EmptyState
-              icon="💸"
-              title="No transactions yet"
-              subtitle="Add your first expense to get started."
-            />
-          )}
-
-          {!isLoading && !error && transactions.length > 0 && (
-            <View className="gap-3">
-              {transactions.slice(0, 10).map((transaction) => (
-                <GlassCard
-                  key={transaction.id}
-                  onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                  className="p-4 flex-row items-center justify-between"
-                >
-                  <View className="flex-row items-center gap-3 flex-1">
-                    <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
-                      <Text className="text-lg">
-                        {CATEGORY_ICONS[transaction.category] || "📌"}
-                      </Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                        {transaction.merchant}
-                      </Text>
-                      <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
-                        {formatDateShort(transaction.date)}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text className={`text-sm font-bold ${
-                    transaction.type === "debit"
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-green-600 dark:text-emerald-400"
-                  }`}>
-                    {transaction.type === "debit" ? "−" : "+"}
-                    {formatCurrency(transaction.amount, transaction.currency)}
-                  </Text>
-                </GlassCard>
-              ))}
-            </View>
-          )}
-        </View>
       </ScrollView>
     </SafeAreaView>
   )

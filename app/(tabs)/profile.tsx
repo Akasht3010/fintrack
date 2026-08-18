@@ -118,119 +118,137 @@ export default function ProfileScreen() {
           <Text className="text-sm text-muted dark:text-neutral-400 mt-1">{user?.email}</Text>
         </View>
 
-        <View className="px-6 mb-6">
-          <GlassCard>
-            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-              <Text className="text-sm text-muted dark:text-neutral-400">Phone</Text>
-              <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                {user?.phone || "Not added"}
-              </Text>
-            </View>
-
-            <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-              <Text className="text-sm text-muted dark:text-neutral-400">Gmail</Text>
-              <View className={`px-3 py-1 rounded-full ${user?.gmail_connected ? "bg-primary-100 dark:bg-accent-900" : "bg-neutral-100 dark:bg-white/10"}`}>
-                <Text className={`text-xs font-medium ${user?.gmail_connected ? "text-primary-600 dark:text-accent-400" : "text-neutral-500 dark:text-neutral-400"}`}>
-                  {user?.gmail_connected ? "Connected" : "Not connected"}
+        {/* Account info + appearance in a narrower left rail, sync/data
+            actions in a wider right column at lg+ — a proper two-column
+            settings page instead of one long single-file list stretched
+            across the window. Grouping keeps the same top-to-bottom order
+            as the mobile single column: account info, appearance, then
+            sync, then data. */}
+        <View className="px-6 gap-6 lg:flex-row lg:items-start">
+          <View className="gap-6 lg:w-[340px] lg:shrink-0">
+            <GlassCard>
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
+                <Text className="text-sm text-muted dark:text-neutral-400">Phone</Text>
+                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                  {user?.phone || "Not added"}
                 </Text>
               </View>
-            </View>
 
-            <View className="flex-row items-center justify-between px-4 py-4">
-              <Text className="text-sm text-muted dark:text-neutral-400">Member since</Text>
-              <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                {user?.created_at ? formatDate(user.created_at) : "—"}
-              </Text>
-            </View>
-          </GlassCard>
-        </View>
+              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
+                <Text className="text-sm text-muted dark:text-neutral-400">Gmail</Text>
+                <View className={`px-3 py-1 rounded-full ${user?.gmail_connected ? "bg-primary-100 dark:bg-accent-900" : "bg-neutral-100 dark:bg-white/10"}`}>
+                  <Text className={`text-xs font-medium ${user?.gmail_connected ? "text-primary-600 dark:text-accent-400" : "text-neutral-500 dark:text-neutral-400"}`}>
+                    {user?.gmail_connected ? "Connected" : "Not connected"}
+                  </Text>
+                </View>
+              </View>
 
-        <View className="px-6 mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Appearance</Text>
-          <View className="flex-row bg-neutral-100 dark:bg-white/10 rounded-2xl p-1">
-            {THEME_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option}
-                onPress={() => setMode(option)}
-                className={`flex-1 items-center py-2 rounded-xl ${
-                  mode === option ? "bg-white dark:bg-white/20" : ""
-                }`}
-              >
-                <Text
-                  className={`text-sm font-medium capitalize ${
-                    mode === option
-                      ? "text-neutral-900 dark:text-white"
-                      : "text-muted dark:text-neutral-400"
-                  }`}
-                >
-                  {option}
+              <View className="flex-row items-center justify-between px-4 py-4">
+                <Text className="text-sm text-muted dark:text-neutral-400">Member since</Text>
+                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
+                  {user?.created_at ? formatDate(user.created_at) : "—"}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+              </View>
+            </GlassCard>
 
-        <View className="px-6 mb-6 gap-3">
-          {user?.gmail_connected ? (
-            <>
-              <GlassCard onPress={isSyncing ? undefined : () => syncGmail()} className="items-center justify-center py-4">
-                {isSyncing ? (
-                  <ActivityIndicator color="#16a34a" />
-                ) : (
-                  <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Sync Gmail Now</Text>
-                )}
-              </GlassCard>
-              <TouchableOpacity
-                onPress={isDisconnecting ? undefined : handleDisconnectGmail}
-                disabled={isDisconnecting}
-                className="items-center justify-center py-2"
-              >
-                {isDisconnecting ? (
-                  <ActivityIndicator color="#dc2626" />
-                ) : (
-                  <Text className="text-sm font-medium text-red-600 dark:text-red-400">Disconnect Gmail</Text>
-                )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <GlassCard onPress={isConnecting ? undefined : handleConnectGmail} className="items-center justify-center py-4">
-              {isConnecting ? (
-                <ActivityIndicator color="#16a34a" />
+            <View>
+              <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Appearance</Text>
+              <View className="flex-row bg-neutral-100 dark:bg-white/10 rounded-2xl p-1">
+                {THEME_OPTIONS.map((option) => (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() => setMode(option)}
+                    className={`flex-1 items-center py-2 rounded-xl ${
+                      mode === option ? "bg-white dark:bg-white/20" : ""
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-medium capitalize ${
+                        mode === option
+                          ? "text-neutral-900 dark:text-white"
+                          : "text-muted dark:text-neutral-400"
+                      }`}
+                    >
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <View className="gap-6 flex-1">
+            <View className="gap-3">
+              {user?.gmail_connected ? (
+                <>
+                  <GlassCard onPress={isSyncing ? undefined : () => syncGmail()} className="items-center justify-center py-4">
+                    {isSyncing ? (
+                      <ActivityIndicator color="#16a34a" />
+                    ) : (
+                      <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Sync Gmail Now</Text>
+                    )}
+                  </GlassCard>
+                  <TouchableOpacity
+                    onPress={isDisconnecting ? undefined : handleDisconnectGmail}
+                    disabled={isDisconnecting}
+                    className="items-center justify-center py-2"
+                  >
+                    {isDisconnecting ? (
+                      <ActivityIndicator color="#dc2626" />
+                    ) : (
+                      <Text className="text-sm font-medium text-red-600 dark:text-red-400">Disconnect Gmail</Text>
+                    )}
+                  </TouchableOpacity>
+                </>
               ) : (
-                <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Connect Gmail</Text>
+                <GlassCard onPress={isConnecting ? undefined : handleConnectGmail} className="items-center justify-center py-4">
+                  {isConnecting ? (
+                    <ActivityIndicator color="#16a34a" />
+                  ) : (
+                    <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Connect Gmail</Text>
+                  )}
+                </GlassCard>
               )}
-            </GlassCard>
-          )}
+
+              {Platform.OS === "android" && (
+                <GlassCard onPress={isSyncingSms ? undefined : () => syncSms()} className="items-center justify-center py-4">
+                  {isSyncingSms ? (
+                    <ActivityIndicator color="#16a34a" />
+                  ) : (
+                    <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Sync SMS Now</Text>
+                  )}
+                </GlassCard>
+              )}
+            </View>
+
+            <View>
+              <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Data</Text>
+              <View className="gap-3 lg:flex-row lg:flex-wrap">
+                {/* flex/min-width live on these wrappers, not GlassCard's own
+                    className — see the note on the Budget grid for why:
+                    in dark mode that className lands on an inner View, not
+                    the actual flex item, so it has no effect there. */}
+                <View className="lg:flex-1 lg:min-w-[200px]">
+                  <GlassCard onPress={() => router.push("/(modals)/export")} className="items-center justify-center py-4">
+                    <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Export Transactions (CSV)</Text>
+                  </GlassCard>
+                </View>
+                <View className="lg:flex-1 lg:min-w-[200px]">
+                  <GlassCard onPress={() => router.push("/(modals)/categories")} className="items-center justify-center py-4">
+                    <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Manage Categories</Text>
+                  </GlassCard>
+                </View>
+                <View className="lg:flex-1 lg:min-w-[200px]">
+                  <GlassCard onPress={() => router.push("/(modals)/accounts")} className="items-center justify-center py-4">
+                    <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Manage Accounts</Text>
+                  </GlassCard>
+                </View>
+              </View>
+            </View>
+          </View>
         </View>
 
-        {Platform.OS === "android" && (
-          <View className="px-6 mb-6">
-            <GlassCard onPress={isSyncingSms ? undefined : () => syncSms()} className="items-center justify-center py-4">
-              {isSyncingSms ? (
-                <ActivityIndicator color="#16a34a" />
-              ) : (
-                <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Sync SMS Now</Text>
-              )}
-            </GlassCard>
-          </View>
-        )}
-
-        <View className="px-6 mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Data</Text>
-          <View className="gap-3">
-            <GlassCard onPress={() => router.push("/(modals)/export")} className="items-center justify-center py-4">
-              <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Export Transactions (CSV)</Text>
-            </GlassCard>
-            <GlassCard onPress={() => router.push("/(modals)/categories")} className="items-center justify-center py-4">
-              <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Manage Categories</Text>
-            </GlassCard>
-            <GlassCard onPress={() => router.push("/(modals)/accounts")} className="items-center justify-center py-4">
-              <Text className="text-base font-semibold text-primary-600 dark:text-accent-400">Manage Accounts</Text>
-            </GlassCard>
-          </View>
-        </View>
-
-        <View className="px-6 mt-auto gap-3" style={{ paddingBottom: tabBarClearance }}>
+        <View className="px-6 mt-auto gap-3 pt-6" style={{ paddingBottom: tabBarClearance }}>
           <TouchableOpacity
             onPress={handleSignOut}
             className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4"
