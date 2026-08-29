@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { Stack, router } from "expo-router"
+import { Stack, router, usePathname } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { storage as SecureStore } from "@/utils/storage"
@@ -26,6 +26,16 @@ const queryClient = new QueryClient({
 function RootLayoutNav() {
   const { isAuthenticated, isLoading, setUser, setLoading } = useUserStore()
   const hydrateTheme = useThemeStore((state) => state.hydrate)
+  const pathname = usePathname()
+  // auth-callback and gmail-callback own their own navigation once they've
+  // finished establishing (or failing to establish) the session — they run
+  // an async write-token-then-fetch-user sequence that takes a beat. If this
+  // effect force-redirects to /login the instant it sees isAuthenticated
+  // still false (which is always true right after landing here, before
+  // those screens have had a chance to run), login's own clearOldTokens()
+  // wipes the token those screens just wrote out from under their in-flight
+  // getMe() call, turning a valid sign-in into a spurious 401.
+  const isOAuthCallbackRoute = pathname === "/auth-callback" || pathname === "/gmail-callback"
 
   useEffect(() => {
     Promise.all([checkAuth(), hydrateTheme()])
@@ -41,7 +51,7 @@ function RootLayoutNav() {
   }, [isLoading])
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && !isOAuthCallbackRoute) {
       if (isAuthenticated) {
         router.replace("/(tabs)")
       } else {
@@ -52,7 +62,7 @@ function RootLayoutNav() {
     // (manual sign-out, or the api client force-logging-out on a 401) sends
     // the user back to the login screen instead of leaving them stranded on
     // a now-broken authenticated screen.
-  }, [isLoading, isAuthenticated])
+  }, [isLoading, isAuthenticated, isOAuthCallbackRoute])
 
   const checkAuth = async () => {
     try {

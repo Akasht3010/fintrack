@@ -42,7 +42,7 @@ export default function BudgetScreen() {
     refetch().finally(() => setRefreshing(false))
   }, [refetch])
 
-  const handleDelete = async (id: string, category: string) => {
+  const handleDelete = async (id: number, category: string) => {
     const confirmed = await confirm("Delete budget", `Remove the ${category} budget?`, {
       confirmLabel: "Delete",
       destructive: true

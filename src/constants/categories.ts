@@ -8,5 +8,10 @@ export const CATEGORY_ICONS: Record<string, string> = {
   rent: "🏠",
   subscriptions: "🔄",
   transfer: "💸",
-  other: "📌"
+  other: "📌",
+  salary: "💰",
+  freelance: "💼",
+  gift: "🎁",
+  refund: "↩️",
+  interest: "📈"
 }

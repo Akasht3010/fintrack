@@ -42,3 +42,9 @@ yarn-error.*
 
 # local Expo module build cache
 modules/**/android/.gradle/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example

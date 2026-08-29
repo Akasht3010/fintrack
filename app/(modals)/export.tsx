@@ -11,7 +11,7 @@ import { GlassCard } from "@/components/shared/GlassCard"
 const TYPES: { key: string; label: string }[] = [
   { key: "all", label: "All" },
   { key: "debit", label: "Expenses" },
-  { key: "credit", label: "Income" }
+  { key: "credit", label: "Credit" }
 ]
 
 const SOURCES: { key: string; label: string }[] = [

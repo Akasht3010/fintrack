@@ -24,12 +24,13 @@ export default function TransactionDetailScreen() {
   const CATEGORY_ICONS = useCategoryIcons()
   const { data: accounts } = useAccounts(true)
   const { id } = useLocalSearchParams<{ id: string }>()
+  const transactionId = Number(id)
   const queryClient = useQueryClient()
   const [isDeleting, setIsDeleting] = useState(false)
 
   const { data: transaction, isLoading, error } = useQuery({
     queryKey: ["transaction", id],
-    queryFn: () => transactionApi.getById(id),
+    queryFn: () => transactionApi.getById(transactionId),
     enabled: !!id
   })
 
@@ -42,7 +43,7 @@ export default function TransactionDetailScreen() {
 
     setIsDeleting(true)
     try {
-      await transactionApi.delete(id)
+      await transactionApi.delete(transactionId)
       queryClient.invalidateQueries({ queryKey: ["transactions"] })
       router.back()
     } catch (err) {

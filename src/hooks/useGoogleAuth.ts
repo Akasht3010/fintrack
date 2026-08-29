@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Platform } from "react-native"
 import * as WebBrowser from "expo-web-browser"
 import * as AuthSession from "expo-auth-session"
 import * as Linking from "expo-linking"
@@ -33,6 +34,17 @@ export function useGoogleAuth() {
     try {
       const appRedirectUri = AuthSession.makeRedirectUri({ path: "auth-callback" })
       const authorizeUrl = `${ENV.API_URL}/api/auth/google/authorize?app_redirect_uri=${encodeURIComponent(appRedirectUri)}`
+
+      if (Platform.OS === "web") {
+        // Popups are unreliable on web (blocked by popup blockers/extensions,
+        // and window.opener can get severed across the cross-origin redirect
+        // chain through Google and back). A full-page redirect sidesteps all
+        // of that — auth-callback.tsx already handles landing here as a
+        // normal navigation, since it's the same fallback route the native
+        // flow uses when WebBrowser's popup-intercept doesn't fire.
+        window.location.href = authorizeUrl
+        return new Promise<GoogleSignInResult>(() => {}) // page is navigating away
+      }
 
       const result = await WebBrowser.openAuthSessionAsync(authorizeUrl, appRedirectUri)
 

@@ -33,7 +33,7 @@ function SummaryCardContent({ totalSpent, totalIncome, net }: { totalSpent: numb
         </View>
         <View className="w-px h-10 bg-white/25" />
         <View className="flex-1 items-end">
-          <Text className="text-white text-xs opacity-70">Income</Text>
+          <Text className="text-white text-xs opacity-70">Credit</Text>
           <Text className="text-white text-2xl font-bold mt-1">{formatCurrency(totalIncome)}</Text>
         </View>
       </View>

@@ -9,15 +9,18 @@ dayjs.extend(localizedFormat)
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
-// The backend always stores and returns timestamps as UTC wall-clock
-// digits with no offset suffix (e.g. "2026-08-02T14:48:09"). Every
-// transaction here is India-specific, so always render in IST regardless
-// of the viewing device's own timezone — plain `dayjs(date)` would instead
-// treat that naive string as if it were already local time and never
-// actually convert it, silently showing the raw UTC clock instead.
+// The backend stores and returns every timestamp as naive IST wall-clock
+// digits with no offset suffix (e.g. "2026-08-02T14:48:09") — deliberately,
+// so the raw DB rows themselves read as real IST, not UTC. Every
+// transaction here is India-specific, so `dayjs.tz(date, IST_TIMEZONE)`
+// parses those digits as IST directly, and "now" is likewise converted to
+// IST before comparing — both needed so isToday/isThisMonth still land on
+// the right calendar day even when the viewing device's own clock is set
+// to some other timezone.
 export const IST_TIMEZONE = "Asia/Kolkata"
 
-const toIST = (date: string) => dayjs.utc(date).tz(IST_TIMEZONE)
+const toIST = (date: string) => dayjs.tz(date, IST_TIMEZONE)
+const nowIST = () => dayjs().tz(IST_TIMEZONE)
 
 export const formatDate = (date: string): string =>
   toIST(date).format("DD/MM/YYYY")
@@ -32,10 +35,10 @@ export const formatRelative = (date: string): string =>
   toIST(date).fromNow()
 
 export const getCurrentMonth = (): string =>
-  dayjs().tz(IST_TIMEZONE).format("MMMM YYYY")
+  nowIST().format("MMMM YYYY")
 
 export const isToday = (date: string): boolean =>
-  toIST(date).isSame(dayjs().tz(IST_TIMEZONE), "day")
+  toIST(date).isSame(nowIST(), "day")
 
 export const isThisMonth = (date: string): boolean =>
-  toIST(date).isSame(dayjs().tz(IST_TIMEZONE), "month")
+  toIST(date).isSame(nowIST(), "month")

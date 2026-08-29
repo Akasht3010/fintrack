@@ -16,11 +16,11 @@ export const accountsApi = {
     const response = await apiClient.post<Account>("/api/accounts", data)
     return response.data
   },
-  async update(id: string, data: { name?: string; opening_balance?: number; is_archived?: boolean }): Promise<Account> {
+  async update(id: number, data: { name?: string; opening_balance?: number; is_archived?: boolean }): Promise<Account> {
     const response = await apiClient.patch<Account>(`/api/accounts/${id}`, data)
     return response.data
   },
-  async remove(id: string): Promise<void> {
+  async remove(id: number): Promise<void> {
     await apiClient.delete(`/api/accounts/${id}`)
   }
 }

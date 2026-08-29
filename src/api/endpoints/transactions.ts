@@ -12,7 +12,7 @@ export interface TransactionCreatePayload {
   source: "gmail" | "manual" | "sms" | "aa"
   is_recurring?: boolean
   raw_text?: string
-  account_id?: string | null
+  account_id?: number | null
 }
 
 export interface TransactionUpdatePayload {
@@ -22,7 +22,7 @@ export interface TransactionUpdatePayload {
   category?: string
   merchant?: string
   description?: string
-  account_id?: string | null
+  account_id?: number | null
 }
 
 export interface TransactionListResponse {
@@ -62,7 +62,7 @@ export const transactionApi = {
     return response.data
   },
 
-  async update(transactionId: string, data: TransactionUpdatePayload): Promise<Transaction> {
+  async update(transactionId: number, data: TransactionUpdatePayload): Promise<Transaction> {
     const response = await apiClient.patch<Transaction>(
       `/api/transactions/${transactionId}`,
       data
@@ -79,14 +79,14 @@ export const transactionApi = {
     return response.data
   },
 
-  async getById(transactionId: string): Promise<Transaction> {
+  async getById(transactionId: number): Promise<Transaction> {
     const response = await apiClient.get<Transaction>(
       `/api/transactions/${transactionId}`
     )
     return response.data
   },
 
-  async delete(transactionId: string) {
+  async delete(transactionId: number) {
     return await apiClient.delete(`/api/transactions/${transactionId}`)
   },
 

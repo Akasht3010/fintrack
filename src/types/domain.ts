@@ -4,18 +4,21 @@ export type TransactionType = "debit" | "credit"
 // so this is just a string alias for readability at call sites.
 export type TransactionCategory = string
 
+export type CategoryType = "expense" | "income" | "both"
+
 export interface Category {
-  id: string
+  id: number
   name: string
   icon: string
+  type: CategoryType
   is_default: boolean
   created_at: string
 }
 
 export interface Transaction {
-  id: string
-  user_id: string
-  account_id?: string | null
+  id: number
+  user_id: number
+  account_id?: number | null
   amount: number
   currency: string
   type: TransactionType
@@ -31,7 +34,7 @@ export interface Transaction {
 export type AccountType = "bank" | "cash" | "credit_card" | "wallet" | "investment"
 
 export interface Account {
-  id: string
+  id: number
   name: string
   type: AccountType
   currency: string
@@ -42,7 +45,7 @@ export interface Account {
 }
 
 export interface NetWorthAccountItem {
-  id: string
+  id: number
   name: string
   type: AccountType
   balance: number
@@ -56,8 +59,8 @@ export interface NetWorthSummary {
 }
 
 export interface Budget {
-  id: string
-  user_id: string
+  id: number
+  user_id: number
   category: TransactionCategory
   limit_amount: number
   spent_amount: number
@@ -67,7 +70,7 @@ export interface Budget {
 }
 
 export interface User {
-  id: string
+  id: number
   name: string
   email: string
   phone?: string

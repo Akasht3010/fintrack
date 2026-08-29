@@ -94,7 +94,7 @@ export default function InsightsScreen() {
               <GlassCard className="p-4">
                 <View className="flex-row items-center">
                   <View className="flex-1">
-                    <Text className="text-xs text-muted dark:text-neutral-400">Income</Text>
+                    <Text className="text-xs text-muted dark:text-neutral-400">Credit</Text>
                     <Text className="text-xl font-bold text-green-600 dark:text-emerald-400 mt-1">
                       {formatCurrency(currentMonthIncome)}
                     </Text>
@@ -109,7 +109,7 @@ export default function InsightsScreen() {
                 </View>
                 <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-border dark:border-white/10">
                   <Text className="text-xs text-muted dark:text-neutral-400">
-                    {currentMonthIncome > 0 ? `Saved ${savingsRate}% of income` : "Net this month"}
+                    {currentMonthIncome > 0 ? `Saved ${savingsRate}% of credit` : "Net this month"}
                   </Text>
                   <Text className={`text-sm font-bold ${savings >= 0 ? "text-neutral-900 dark:text-white" : "text-red-600 dark:text-red-400"}`}>
                     {savings >= 0 ? "+" : "−"}{formatCurrency(Math.abs(savings))}
@@ -163,7 +163,7 @@ export default function InsightsScreen() {
               <View className="flex-row items-center gap-3">
                 <View className="flex-row items-center gap-1.5">
                   <View className="w-2 h-2 rounded-full bg-green-500 dark:bg-emerald-400" />
-                  <Text className="text-[11px] text-muted dark:text-neutral-400">Income</Text>
+                  <Text className="text-[11px] text-muted dark:text-neutral-400">Credit</Text>
                 </View>
                 <View className="flex-row items-center gap-1.5">
                   <View className="w-2 h-2 rounded-full bg-primary-600 dark:bg-accent-500" />

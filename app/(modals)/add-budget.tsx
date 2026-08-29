@@ -10,6 +10,7 @@ import { GlowBackground } from "@/components/shared/GlowBackground"
 
 export default function AddBudgetScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
+  const budgetId = id ? Number(id) : undefined
   const isEditMode = !!id
   const queryClient = useQueryClient()
   const { data: categories } = useCategories()
@@ -21,8 +22,8 @@ export default function AddBudgetScreen() {
   })
 
   const existing = useMemo(
-    () => budgets?.find(b => b.id === id),
-    [budgets, id]
+    () => budgets?.find(b => b.id === budgetId),
+    [budgets, budgetId]
   )
 
   const [category, setCategory] = useState<TransactionCategory>("food")
@@ -48,8 +49,8 @@ export default function AddBudgetScreen() {
     setIsSubmitting(true)
 
     try {
-      if (isEditMode && id) {
-        await budgetApi.updateLimit(id, amount)
+      if (isEditMode && budgetId) {
+        await budgetApi.updateLimit(budgetId, amount)
       } else {
         await budgetApi.create({ category, limit_amount: amount, period })
       }

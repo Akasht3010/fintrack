@@ -2,12 +2,13 @@ import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { categoriesApi } from "@/api/endpoints/categories"
 import { CATEGORY_ICONS } from "@/constants/categories"
-import { Category } from "@/types/domain"
+import { Category, CategoryType } from "@/types/domain"
 
-export function useCategories() {
+/** Pass "expense"/"income" to scope the list to that transaction type (plus "both"); omit for everything. */
+export function useCategories(type?: CategoryType) {
   return useQuery<Category[]>({
-    queryKey: ["categories"],
-    queryFn: () => categoriesApi.list()
+    queryKey: ["categories", type ?? "all"],
+    queryFn: () => categoriesApi.list(type)
   })
 }
 

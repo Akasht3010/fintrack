@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Platform } from "react-native"
 import * as WebBrowser from "expo-web-browser"
 import * as AuthSession from "expo-auth-session"
 import * as Linking from "expo-linking"
@@ -37,6 +38,15 @@ export function useGmailConnect() {
 
       const appRedirectUri = AuthSession.makeRedirectUri({ path: "gmail-callback" })
       const authorizeUrl = `${ENV.API_URL}/api/gmail/authorize?token=${encodeURIComponent(accessToken)}&app_redirect_uri=${encodeURIComponent(appRedirectUri)}`
+
+      if (Platform.OS === "web") {
+        // Same reasoning as useGoogleAuth: popups are unreliable on web
+        // (blocked by popup blockers/extensions, window.opener severed
+        // across the cross-origin redirect chain), so use a full-page
+        // redirect instead. gmail-callback.tsx handles landing back here.
+        window.location.href = authorizeUrl
+        return new Promise<GmailConnectResult>(() => {}) // page is navigating away
+      }
 
       const result = await WebBrowser.openAuthSessionAsync(authorizeUrl, appRedirectUri)
 

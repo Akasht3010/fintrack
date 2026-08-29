@@ -16,17 +16,22 @@ import { useState, useEffect } from "react"
 
 export default function AddExpenseScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
+  const transactionId = id ? Number(id) : undefined
   const isEditMode = !!id
   const { user } = useUserStore()
   const { mutate: createTransaction, isPending: isCreating } = useCreateTransaction()
-  const { data: categories } = useCategories()
+  const [transactionType, setTransactionType] = useState<"debit" | "credit">("debit")
+  // Credit gets every category (same expense list plus the income-only
+  // ones) — a credit isn't always pure income (e.g. a refund logically
+  // belongs under the same category the original expense used).
+  const { data: categories } = useCategories(transactionType === "credit" ? undefined : "expense")
   const { data: accounts } = useAccounts()
   const queryClient = useQueryClient()
   const [isSaving, setIsSaving] = useState(false)
 
   const { data: existing, isLoading: isLoadingExisting } = useQuery({
     queryKey: ["transaction", id],
-    queryFn: () => transactionApi.getById(id!),
+    queryFn: () => transactionApi.getById(transactionId!),
     enabled: isEditMode
   })
 
@@ -34,8 +39,17 @@ export default function AddExpenseScreen() {
   const [merchant, setMerchant] = useState("")
   const [description, setDescription] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("food")
-  const [transactionType, setTransactionType] = useState<"debit" | "credit">("debit")
-  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(undefined)
+  const [selectedAccountId, setSelectedAccountId] = useState<number | undefined>(undefined)
+
+  // The category list is scoped to the current type (expense vs income), so
+  // switching the toggle can leave selectedCategory pointing at a name from
+  // the other list — fall back to the first category the new list actually has.
+  useEffect(() => {
+    if (categories?.length && !categories.some(c => c.name === selectedCategory)) {
+      setSelectedCategory(categories[0].name)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories])
 
   // A transaction's currency follows whichever account it's attached to
   // (accounts each have their own currency, e.g. a USD credit card) —
@@ -69,11 +83,11 @@ export default function AddExpenseScreen() {
     if (isEditMode) {
       setIsSaving(true)
       try {
-        await transactionApi.update(id!, {
+        await transactionApi.update(transactionId!, {
           amount: parseFloat(amount),
           currency,
           type: transactionType,
-          category: transactionType === "credit" ? "other" : selectedCategory,
+          category: selectedCategory,
           merchant,
           description: description || merchant,
           account_id: selectedAccountId ?? null
@@ -109,7 +123,7 @@ export default function AddExpenseScreen() {
       amount: parseFloat(amount),
       currency,
       type: transactionType,
-      category: transactionType === "credit" ? "other" : selectedCategory,
+      category: selectedCategory,
       merchant,
       description: description || merchant,
       date: new Date().toISOString(),
@@ -135,7 +149,7 @@ export default function AddExpenseScreen() {
         const detail = error?.response?.data?.detail
         Alert.alert(
           "Error",
-          detail || `Failed to add ${transactionType === "credit" ? "income" : "expense"} (${error?.message || "unknown error"})`
+          detail || `Failed to add ${transactionType === "credit" ? "credit" : "expense"} (${error?.message || "unknown error"})`
         )
       }
     })
@@ -155,7 +169,7 @@ export default function AddExpenseScreen() {
       <GlowBackground />
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
-          {isEditMode ? "Edit Transaction" : transactionType === "credit" ? "Add Income" : "Add Expense"}
+          {isEditMode ? "Edit Transaction" : transactionType === "credit" ? "Add Credit" : "Add Expense"}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
@@ -180,7 +194,7 @@ export default function AddExpenseScreen() {
                     : "text-muted dark:text-neutral-400"
                 }`}
               >
-                {t === "debit" ? "Expense" : "Income"}
+                {t === "debit" ? "Expense" : "Credit"}
               </Text>
             </TouchableOpacity>
           ))}
@@ -253,34 +267,34 @@ export default function AddExpenseScreen() {
         )}
 
         {/* Category */}
-        {transactionType === "debit" && (
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {categories?.map((cat) => (
-                <TouchableOpacity
-                  key={cat.id}
-                  onPress={() => setSelectedCategory(cat.name)}
-                  className={`px-4 py-2 rounded-full ${
+        <View className="mb-6">
+          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">
+            {transactionType === "credit" ? "Received as" : "Category"}
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {categories?.map((cat) => (
+              <TouchableOpacity
+                key={cat.id}
+                onPress={() => setSelectedCategory(cat.name)}
+                className={`px-4 py-2 rounded-full ${
+                  selectedCategory === cat.name
+                    ? "bg-primary-600 dark:bg-accent-600"
+                    : "bg-neutral-100 dark:bg-white/10"
+                }`}
+              >
+                <Text
+                  className={`text-sm font-medium capitalize ${
                     selectedCategory === cat.name
-                      ? "bg-primary-600 dark:bg-accent-600"
-                      : "bg-neutral-100 dark:bg-white/10"
+                      ? "text-white"
+                      : "text-neutral-700 dark:text-neutral-300"
                   }`}
                 >
-                  <Text
-                    className={`text-sm font-medium capitalize ${
-                      selectedCategory === cat.name
-                        ? "text-white"
-                        : "text-neutral-700 dark:text-neutral-300"
-                    }`}
-                  >
-                    {cat.icon} {cat.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {cat.icon} {cat.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
+        </View>
 
         {/* Description */}
         <View className="mb-6">
@@ -312,7 +326,7 @@ export default function AddExpenseScreen() {
               ? "Saving..."
               : isEditMode
                 ? "Save Changes"
-                : transactionType === "credit" ? "Add Income" : "Add Expense"}
+                : transactionType === "credit" ? "Add Credit" : "Add Expense"}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity

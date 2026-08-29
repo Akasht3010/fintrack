@@ -18,14 +18,14 @@ export const budgetApi = {
     return response.data
   },
 
-  async updateLimit(budgetId: string, limitAmount: number): Promise<Budget> {
+  async updateLimit(budgetId: number, limitAmount: number): Promise<Budget> {
     const response = await apiClient.patch<Budget>(`/api/budgets/${budgetId}`, {
       limit_amount: limitAmount
     })
     return response.data
   },
 
-  async delete(budgetId: string) {
+  async delete(budgetId: number) {
     return await apiClient.delete(`/api/budgets/${budgetId}`)
   }
 }
