@@ -277,6 +277,8 @@ export default function TransactionsScreen() {
             icon="🔍"
             title="No transactions"
             subtitle={hasActiveFilters ? "No transactions match these filters." : "Add your first expense to get started."}
+            actionLabel={hasActiveFilters ? undefined : "Add Expense"}
+            onAction={hasActiveFilters ? undefined : () => router.push("/(modals)/add-expense")}
           />
         ) : (
           <ScrollView
@@ -304,7 +306,7 @@ export default function TransactionsScreen() {
                       <TouchableOpacity
                         key={transaction.id}
                         onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                        className={`px-4 py-3 flex-row items-center justify-between ${
+                        className={`px-4 py-3 flex-row items-center justify-between cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5 ${
                           index < txns.length - 1 ? "border-b border-border dark:border-white/10" : ""
                         }`}
                       >

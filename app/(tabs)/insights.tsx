@@ -76,6 +76,8 @@ export default function InsightsScreen() {
           icon="📊"
           title="No spending yet"
           subtitle="Add or import some transactions to see your trends here."
+          actionLabel="Add Expense"
+          onAction={() => router.push("/(modals)/add-expense")}
         />
       ) : (
         <ScrollView

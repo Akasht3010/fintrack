@@ -175,6 +175,8 @@ export default function DashboardScreen() {
           icon="💸"
           title="No transactions yet"
           subtitle="Add your first expense to get started."
+          actionLabel="Add Expense"
+          onAction={() => router.push("/(modals)/add-expense")}
         />
       )}
 

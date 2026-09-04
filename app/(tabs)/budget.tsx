@@ -76,6 +76,8 @@ export default function BudgetScreen() {
           icon="🎯"
           title="No budgets yet"
           subtitle="Set a limit for a category to start tracking."
+          actionLabel="Add Budget"
+          onAction={() => router.push("/(modals)/add-budget")}
         />
       ) : (
         <ScrollView
