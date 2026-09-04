@@ -57,7 +57,7 @@ export default function TransactionDetailScreen() {
       <GlowBackground />
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Transaction</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
@@ -148,7 +148,7 @@ export default function TransactionDetailScreen() {
             <TouchableOpacity
               onPress={() => router.push({ pathname: "/(modals)/add-expense", params: { id: transaction.id } })}
               disabled={isDeleting}
-              className="w-full items-center justify-center bg-primary-600 dark:bg-accent-600 rounded-2xl py-4"
+              className="w-full items-center justify-center bg-primary-600 dark:bg-accent-600 rounded-2xl py-4 cursor-pointer hover:opacity-90 transition-opacity duration-150"
             >
               <Text className="text-base font-semibold text-white">Edit Transaction</Text>
             </TouchableOpacity>
@@ -156,7 +156,7 @@ export default function TransactionDetailScreen() {
             <TouchableOpacity
               onPress={handleDelete}
               disabled={isDeleting}
-              className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4"
+              className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/20"
             >
               {isDeleting ? (
                 <ActivityIndicator color="#dc2626" />

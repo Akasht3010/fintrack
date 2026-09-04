@@ -84,7 +84,7 @@ export default function ProfileScreen() {
           <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Profile</Text>
           <TouchableOpacity
             onPress={() => router.push("/(modals)/edit-profile")}
-            className="w-11 h-11 items-center justify-center rounded-full bg-neutral-100 dark:bg-white/10"
+            className="w-11 h-11 items-center justify-center rounded-full bg-neutral-100 dark:bg-white/10 cursor-pointer transition-colors duration-150 hover:bg-neutral-200 dark:hover:bg-white/20"
           >
             <Ionicons name="pencil" size={18} color="#6b7280" />
           </TouchableOpacity>
@@ -149,8 +149,8 @@ export default function ProfileScreen() {
                   <TouchableOpacity
                     key={option}
                     onPress={() => setMode(option)}
-                    className={`flex-1 items-center py-2 rounded-xl ${
-                      mode === option ? "bg-white dark:bg-white/20" : ""
+                    className={`flex-1 items-center py-2 rounded-xl cursor-pointer transition-colors duration-150 ${
+                      mode === option ? "bg-white dark:bg-white/20" : "hover:bg-white/60 dark:hover:bg-white/10"
                     }`}
                   >
                     <Text
@@ -182,7 +182,7 @@ export default function ProfileScreen() {
                   <TouchableOpacity
                     onPress={isDisconnecting ? undefined : handleDisconnectGmail}
                     disabled={isDisconnecting}
-                    className="items-center justify-center py-2"
+                    className="items-center justify-center py-2 cursor-pointer hover:opacity-70 transition-opacity duration-150"
                   >
                     {isDisconnecting ? (
                       <ActivityIndicator color="#dc2626" />
@@ -242,13 +242,13 @@ export default function ProfileScreen() {
         <View className="px-6 mt-auto gap-3 pt-6" style={{ paddingBottom: tabBarClearance }}>
           <TouchableOpacity
             onPress={handleSignOut}
-            className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4"
+            className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/20"
           >
             <Text className="text-base font-semibold text-red-600 dark:text-red-400">Sign Out</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push("/(modals)/delete-account")}
-            className="w-full items-center justify-center py-2"
+            className="w-full items-center justify-center py-2 cursor-pointer hover:opacity-70 transition-opacity duration-150"
           >
             <Text className="text-sm font-medium text-muted dark:text-neutral-500">Delete Account</Text>
           </TouchableOpacity>

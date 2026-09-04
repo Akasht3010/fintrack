@@ -7,6 +7,7 @@ import { budgetApi } from "@/api/endpoints/budgets"
 import { useCategories } from "@/hooks/useCategories"
 import { TransactionCategory } from "@/types/domain"
 import { GlowBackground } from "@/components/shared/GlowBackground"
+import { Chip } from "@/components/shared/Chip"
 
 export default function AddBudgetScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
@@ -83,7 +84,7 @@ export default function AddBudgetScreen() {
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
           {isEditMode ? "Edit Budget" : "New Budget"}
         </Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
@@ -99,21 +100,12 @@ export default function AddBudgetScreen() {
           ) : (
             <View className="flex-row flex-wrap gap-2">
               {categories?.map((cat) => (
-                <TouchableOpacity
+                <Chip
                   key={cat.id}
+                  label={`${cat.icon} ${cat.name}`}
+                  selected={category === cat.name}
                   onPress={() => setCategory(cat.name)}
-                  className={`px-4 py-2 rounded-full ${
-                    category === cat.name ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-medium capitalize ${
-                      category === cat.name ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-                    }`}
-                  >
-                    {cat.icon} {cat.name}
-                  </Text>
-                </TouchableOpacity>
+                />
               ))}
             </View>
           )}
@@ -129,21 +121,15 @@ export default function AddBudgetScreen() {
           ) : (
             <View className="flex-row gap-2">
               {(["weekly", "monthly"] as const).map((p) => (
-                <TouchableOpacity
+                <Chip
                   key={p}
+                  label={p}
+                  selected={period === p}
                   onPress={() => setPeriod(p)}
-                  className={`flex-1 items-center py-3 rounded-2xl ${
-                    period === p ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-medium capitalize ${
-                      period === p ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-                    }`}
-                  >
-                    {p}
-                  </Text>
-                </TouchableOpacity>
+                  className="flex-1"
+                  padding="py-3"
+                  rounded="rounded-2xl"
+                />
               ))}
             </View>
           )}
@@ -171,7 +157,9 @@ export default function AddBudgetScreen() {
           onPress={handleSubmit}
           disabled={isSubmitting}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isSubmitting ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600 dark:bg-accent-600"
+            isSubmitting
+              ? "bg-neutral-200 dark:bg-neutral-800"
+              : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
           }`}
         >
           <Text className={`text-base font-semibold ${isSubmitting ? "text-neutral-400" : "text-white"}`}>
@@ -181,7 +169,7 @@ export default function AddBudgetScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           disabled={isSubmitting}
-          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4"
+          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
         >
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
         </TouchableOpacity>

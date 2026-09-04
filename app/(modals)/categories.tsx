@@ -79,7 +79,7 @@ function CategoryRow({ category }: { category: Category }) {
           <TouchableOpacity
             onPress={() => update()}
             disabled={isUpdating || !name.trim()}
-            className="flex-1 items-center py-2 rounded-xl bg-primary-600 dark:bg-accent-600"
+            className="flex-1 items-center py-2 rounded-xl bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
           >
             {isUpdating ? <ActivityIndicator color="#fff" size="small" /> : (
               <Text className="text-sm font-semibold text-white">Save</Text>
@@ -92,7 +92,7 @@ function CategoryRow({ category }: { category: Category }) {
               setIsEditing(false)
             }}
             disabled={isUpdating}
-            className="flex-1 items-center py-2 rounded-xl border border-border dark:border-white/15"
+            className="flex-1 items-center py-2 rounded-xl border border-border dark:border-white/15 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
           >
             <Text className="text-sm font-semibold text-neutral-900 dark:text-white">Cancel</Text>
           </TouchableOpacity>
@@ -103,11 +103,11 @@ function CategoryRow({ category }: { category: Category }) {
 
   return (
     <View className="flex-row items-center justify-between px-4 py-3 border-b border-border dark:border-white/10">
-      <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-row items-center gap-3 flex-1">
+      <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-row items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity duration-150">
         <Text className="text-lg">{category.icon}</Text>
         <Text className="text-sm font-medium text-neutral-900 dark:text-white capitalize">{category.name}</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={handleDelete} disabled={isDeleting} className="px-2 py-1">
+      <TouchableOpacity onPress={handleDelete} disabled={isDeleting} className="px-2 py-1 cursor-pointer hover:opacity-70 transition-opacity duration-150">
         {isDeleting ? (
           <ActivityIndicator size="small" color="#dc2626" />
         ) : (
@@ -142,7 +142,7 @@ export default function CategoriesScreen() {
       <GlowBackground />
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Categories</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
@@ -176,7 +176,9 @@ export default function CategoriesScreen() {
                 onPress={() => create()}
                 disabled={isCreating || !newName.trim()}
                 className={`items-center justify-center px-4 py-3 rounded-xl ${
-                  isCreating || !newName.trim() ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600 dark:bg-accent-600"
+                  isCreating || !newName.trim()
+                    ? "bg-neutral-200 dark:bg-neutral-800"
+                    : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
                 }`}
               >
                 {isCreating ? <ActivityIndicator color="#fff" size="small" /> : (

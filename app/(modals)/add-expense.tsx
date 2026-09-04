@@ -12,6 +12,7 @@ import { Budget } from "@/types/domain"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { currencySymbol } from "@/constants/currencies"
 import { GlowBackground } from "@/components/shared/GlowBackground"
+import { Chip } from "@/components/shared/Chip"
 import { useState, useEffect } from "react"
 
 export default function AddExpenseScreen() {
@@ -171,7 +172,7 @@ export default function AddExpenseScreen() {
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
           {isEditMode ? "Edit Transaction" : transactionType === "credit" ? "Add Credit" : "Add Expense"}
         </Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
@@ -183,8 +184,8 @@ export default function AddExpenseScreen() {
             <TouchableOpacity
               key={t}
               onPress={() => setTransactionType(t)}
-              className={`flex-1 items-center py-2 rounded-xl ${
-                transactionType === t ? "bg-white dark:bg-white/20" : ""
+              className={`flex-1 items-center py-2 rounded-xl cursor-pointer transition-colors duration-150 ${
+                transactionType === t ? "bg-white dark:bg-white/20" : "hover:bg-white/50 dark:hover:bg-white/10"
               }`}
             >
               <Text
@@ -235,32 +236,15 @@ export default function AddExpenseScreen() {
           <View className="mb-6">
             <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Account (optional)</Text>
             <View className="flex-row flex-wrap gap-2">
-              <TouchableOpacity
-                onPress={() => setSelectedAccountId(undefined)}
-                className={`px-4 py-2 rounded-full ${
-                  !selectedAccountId ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-                }`}
-              >
-                <Text className={`text-sm font-medium ${
-                  !selectedAccountId ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-                }`}>
-                  None
-                </Text>
-              </TouchableOpacity>
+              <Chip label="None" selected={!selectedAccountId} onPress={() => setSelectedAccountId(undefined)} capitalize={false} />
               {accounts.map((acc) => (
-                <TouchableOpacity
+                <Chip
                   key={acc.id}
+                  label={acc.name}
+                  selected={selectedAccountId === acc.id}
                   onPress={() => setSelectedAccountId(acc.id)}
-                  className={`px-4 py-2 rounded-full ${
-                    selectedAccountId === acc.id ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-                  }`}
-                >
-                  <Text className={`text-sm font-medium ${
-                    selectedAccountId === acc.id ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-                  }`}>
-                    {acc.name}
-                  </Text>
-                </TouchableOpacity>
+                  capitalize={false}
+                />
               ))}
             </View>
           </View>
@@ -273,25 +257,12 @@ export default function AddExpenseScreen() {
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {categories?.map((cat) => (
-              <TouchableOpacity
+              <Chip
                 key={cat.id}
+                label={`${cat.icon} ${cat.name}`}
+                selected={selectedCategory === cat.name}
                 onPress={() => setSelectedCategory(cat.name)}
-                className={`px-4 py-2 rounded-full ${
-                  selectedCategory === cat.name
-                    ? "bg-primary-600 dark:bg-accent-600"
-                    : "bg-neutral-100 dark:bg-white/10"
-                }`}
-              >
-                <Text
-                  className={`text-sm font-medium capitalize ${
-                    selectedCategory === cat.name
-                      ? "text-white"
-                      : "text-neutral-700 dark:text-neutral-300"
-                  }`}
-                >
-                  {cat.icon} {cat.name}
-                </Text>
-              </TouchableOpacity>
+              />
             ))}
           </View>
         </View>
@@ -316,7 +287,9 @@ export default function AddExpenseScreen() {
           onPress={handleSubmit}
           disabled={isPending}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isPending ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600 dark:bg-accent-600"
+            isPending
+              ? "bg-neutral-200 dark:bg-neutral-800"
+              : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
           }`}
         >
           <Text className={`text-base font-semibold ${
@@ -332,7 +305,7 @@ export default function AddExpenseScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           disabled={isPending}
-          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4"
+          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
         >
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
         </TouchableOpacity>

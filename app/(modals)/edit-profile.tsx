@@ -51,7 +51,7 @@ export default function EditProfileScreen() {
       <GlowBackground />
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Edit Profile</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
@@ -99,7 +99,9 @@ export default function EditProfileScreen() {
           onPress={handleSave}
           disabled={isSaving}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isSaving ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600 dark:bg-accent-600"
+            isSaving
+              ? "bg-neutral-200 dark:bg-neutral-800"
+              : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
           }`}
         >
           {isSaving ? (
@@ -111,7 +113,7 @@ export default function EditProfileScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           disabled={isSaving}
-          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4"
+          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
         >
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
         </TouchableOpacity>

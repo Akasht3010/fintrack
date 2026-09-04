@@ -12,6 +12,7 @@ import { ErrorState } from "@/components/shared/ErrorState"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
+import { Chip } from "@/components/shared/Chip"
 import { confirm } from "@/utils/confirm"
 
 const ACCOUNT_TYPES: AccountType[] = ["bank", "cash", "credit_card", "wallet", "investment"]
@@ -104,7 +105,7 @@ function AccountRow({ account }: { account: Account }) {
           <TouchableOpacity
             onPress={() => update()}
             disabled={isUpdating || !name.trim()}
-            className="flex-1 items-center py-2 rounded-xl bg-primary-600 dark:bg-accent-600"
+            className="flex-1 items-center py-2 rounded-xl bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
           >
             {isUpdating ? <ActivityIndicator color="#fff" size="small" /> : (
               <Text className="text-sm font-semibold text-white">Save</Text>
@@ -117,7 +118,7 @@ function AccountRow({ account }: { account: Account }) {
               setIsEditing(false)
             }}
             disabled={isUpdating}
-            className="flex-1 items-center py-2 rounded-xl border border-border dark:border-white/15"
+            className="flex-1 items-center py-2 rounded-xl border border-border dark:border-white/15 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
           >
             <Text className="text-sm font-semibold text-neutral-900 dark:text-white">Cancel</Text>
           </TouchableOpacity>
@@ -129,7 +130,7 @@ function AccountRow({ account }: { account: Account }) {
   return (
     <View className="px-4 py-3 border-b border-border dark:border-white/10">
       <View className="flex-row items-center justify-between">
-        <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-row items-center gap-3 flex-1">
+        <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-row items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity duration-150">
           <Text className="text-lg">{ACCOUNT_TYPE_ICONS[account.type]}</Text>
           <View>
             <Text className={`text-sm font-medium text-neutral-900 dark:text-white ${account.is_archived ? "opacity-50" : ""}`}>
@@ -147,12 +148,12 @@ function AccountRow({ account }: { account: Account }) {
         </Text>
       </View>
       <View className="flex-row justify-end gap-4 mt-2">
-        <TouchableOpacity onPress={() => archive()} disabled={isArchiving}>
+        <TouchableOpacity onPress={() => archive()} disabled={isArchiving} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-xs font-medium text-primary-600 dark:text-accent-400">
             {isArchiving ? "..." : account.is_archived ? "Unarchive" : "Archive"}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleDelete} disabled={isDeleting}>
+        <TouchableOpacity onPress={handleDelete} disabled={isDeleting} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           {isDeleting ? (
             <ActivityIndicator size="small" color="#dc2626" />
           ) : (
@@ -193,7 +194,7 @@ export default function AccountsScreen() {
       <GlowBackground />
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Accounts</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
@@ -210,19 +211,15 @@ export default function AccountsScreen() {
             <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Add an account</Text>
             <View className="flex-row flex-wrap gap-2 mb-2">
               {ACCOUNT_TYPES.map((type) => (
-                <TouchableOpacity
+                <Chip
                   key={type}
+                  label={`${ACCOUNT_TYPE_ICONS[type]} ${ACCOUNT_TYPE_LABELS[type]}`}
+                  selected={newType === type}
                   onPress={() => setNewType(type)}
-                  className={`px-3 py-2 rounded-full ${
-                    newType === type ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-                  }`}
-                >
-                  <Text className={`text-xs font-medium ${
-                    newType === type ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-                  }`}>
-                    {ACCOUNT_TYPE_ICONS[type]} {ACCOUNT_TYPE_LABELS[type]}
-                  </Text>
-                </TouchableOpacity>
+                  padding="px-3 py-2"
+                  capitalize={false}
+                  textSize="text-xs"
+                />
               ))}
             </View>
             <TextInput
@@ -234,19 +231,15 @@ export default function AccountsScreen() {
             />
             <View className="flex-row flex-wrap gap-2 mb-2">
               {CURRENCIES.map((c) => (
-                <TouchableOpacity
+                <Chip
                   key={c.code}
+                  label={`${c.symbol} ${c.code}`}
+                  selected={newCurrency === c.code}
                   onPress={() => setNewCurrency(c.code)}
-                  className={`px-3 py-2 rounded-full ${
-                    newCurrency === c.code ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-                  }`}
-                >
-                  <Text className={`text-xs font-medium ${
-                    newCurrency === c.code ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-                  }`}>
-                    {c.symbol} {c.code}
-                  </Text>
-                </TouchableOpacity>
+                  padding="px-3 py-2"
+                  capitalize={false}
+                  textSize="text-xs"
+                />
               ))}
             </View>
             <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 mb-2">
@@ -266,7 +259,9 @@ export default function AccountsScreen() {
               onPress={() => create()}
               disabled={isCreating || !newName.trim()}
               className={`items-center justify-center py-3 rounded-xl ${
-                isCreating || !newName.trim() ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600 dark:bg-accent-600"
+                isCreating || !newName.trim()
+                  ? "bg-neutral-200 dark:bg-neutral-800"
+                  : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
               }`}
             >
               {isCreating ? <ActivityIndicator color="#fff" size="small" /> : (

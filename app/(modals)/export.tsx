@@ -7,6 +7,7 @@ import { useCategories } from "@/hooks/useCategories"
 import { DateRange, DATE_RANGES, dateFromForRange } from "@/utils/dateRanges"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
+import { Chip } from "@/components/shared/Chip"
 
 const TYPES: { key: string; label: string }[] = [
   { key: "all", label: "All" },
@@ -34,21 +35,7 @@ function ChipRow<T extends string>({
   return (
     <View className="flex-row flex-wrap gap-2">
       {options.map((option) => (
-        <TouchableOpacity
-          key={option.key}
-          onPress={() => onChange(option.key)}
-          className={`px-4 py-2 rounded-full ${
-            value === option.key ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-          }`}
-        >
-          <Text
-            className={`text-sm font-medium capitalize ${
-              value === option.key ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-            }`}
-          >
-            {option.label}
-          </Text>
-        </TouchableOpacity>
+        <Chip key={option.key} label={option.label} selected={value === option.key} onPress={() => onChange(option.key)} />
       ))}
     </View>
   )
@@ -82,7 +69,7 @@ export default function ExportScreen() {
       <GlowBackground />
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Export Transactions</Text>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
@@ -107,21 +94,7 @@ export default function ExportScreen() {
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
           <View className="flex-row flex-wrap gap-2">
             {categoryFilters.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                onPress={() => setCategory(cat)}
-                className={`px-4 py-2 rounded-full ${
-                  category === cat ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-                }`}
-              >
-                <Text
-                  className={`text-sm font-medium capitalize ${
-                    category === cat ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-                  }`}
-                >
-                  {cat}
-                </Text>
-              </TouchableOpacity>
+              <Chip key={cat} label={cat} selected={category === cat} onPress={() => setCategory(cat)} />
             ))}
           </View>
         </View>
@@ -138,7 +111,9 @@ export default function ExportScreen() {
           onPress={handleExport}
           disabled={isExporting}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isExporting ? "bg-neutral-200 dark:bg-neutral-800" : "bg-primary-600 dark:bg-accent-600"
+            isExporting
+              ? "bg-neutral-200 dark:bg-neutral-800"
+              : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
           }`}
         >
           {isExporting ? (

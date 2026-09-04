@@ -41,7 +41,7 @@ export default function DeleteAccountScreen() {
       <GlowBackground />
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
         <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Delete Account</Text>
-        <TouchableOpacity onPress={() => router.back()} disabled={isDeleting}>
+        <TouchableOpacity onPress={() => router.back()} disabled={isDeleting} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
           <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
         </TouchableOpacity>
       </View>
@@ -78,7 +78,9 @@ export default function DeleteAccountScreen() {
           onPress={handleDelete}
           disabled={!canDelete || isDeleting}
           className={`w-full items-center justify-center rounded-2xl py-4 ${
-            canDelete && !isDeleting ? "bg-red-600" : "bg-neutral-200 dark:bg-neutral-800"
+            canDelete && !isDeleting
+              ? "bg-red-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
+              : "bg-neutral-200 dark:bg-neutral-800"
           }`}
         >
           {isDeleting ? (
@@ -92,7 +94,7 @@ export default function DeleteAccountScreen() {
         <TouchableOpacity
           onPress={() => router.back()}
           disabled={isDeleting}
-          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4"
+          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
         >
           <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
         </TouchableOpacity>
