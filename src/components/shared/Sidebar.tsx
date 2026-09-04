@@ -3,6 +3,7 @@ import { router, usePathname } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useColorScheme } from "nativewind"
 import { useUserStore } from "@/store/useUserStore"
+import { BrandMark } from "./BrandMark"
 
 type NavItem = {
   href: "/" | "/transactions" | "/budget" | "/insights" | "/profile"
@@ -46,9 +47,7 @@ export function Sidebar() {
           onPress={() => router.push("/")}
           className="flex-row items-center gap-3 px-3 py-2 mb-6 rounded-full transition-colors duration-150 hover:bg-neutral-100 dark:hover:bg-white/5"
         >
-          <View className="w-9 h-9 rounded-xl bg-primary-500 items-center justify-center">
-            <Text className="text-lg">₹</Text>
-          </View>
+          <BrandMark size={36} />
           <Text className="text-xl font-bold text-neutral-900 dark:text-white">Fintrack</Text>
         </TouchableOpacity>
 

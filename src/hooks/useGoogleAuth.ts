@@ -3,6 +3,7 @@ import { Platform } from "react-native"
 import * as WebBrowser from "expo-web-browser"
 import * as AuthSession from "expo-auth-session"
 import * as Linking from "expo-linking"
+import Constants from "expo-constants"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { ENV } from "@/config/env"
@@ -32,7 +33,17 @@ export function useGoogleAuth() {
     setIsLoading(true)
 
     try {
-      const appRedirectUri = AuthSession.makeRedirectUri({ path: "auth-callback" })
+      // In a real build (dev client / preview / production) pin our own custom
+      // scheme so the redirect back into the app is `fintrack://auth-callback`
+      // — resolvable on any network. In Expo Go the `fintrack://` scheme isn't
+      // registered, so let makeRedirectUri pick the Expo Go form instead:
+      // `exp://<metro-lan-ip>:8081/...` when loaded from a local dev server
+      // (only works on that Wi-Fi), or `exp://u.expo.dev/<project>/...` when
+      // loaded from a published EAS Update (public, works on cellular).
+      const inExpoGo = Constants.appOwnership === "expo"
+      const appRedirectUri = AuthSession.makeRedirectUri(
+        inExpoGo ? { path: "auth-callback" } : { scheme: "fintrack", path: "auth-callback" }
+      )
       const authorizeUrl = `${ENV.API_URL}/api/auth/google/authorize?app_redirect_uri=${encodeURIComponent(appRedirectUri)}`
 
       if (Platform.OS === "web") {

@@ -3,6 +3,7 @@ import { Platform } from "react-native"
 import * as WebBrowser from "expo-web-browser"
 import * as AuthSession from "expo-auth-session"
 import * as Linking from "expo-linking"
+import Constants from "expo-constants"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { ENV } from "@/config/env"
@@ -36,7 +37,14 @@ export function useGmailConnect() {
         return { success: false, error: "You need to be logged in to connect Gmail" }
       }
 
-      const appRedirectUri = AuthSession.makeRedirectUri({ path: "gmail-callback" })
+      // Pin our custom scheme in a real build (`fintrack://gmail-callback`,
+      // resolvable anywhere); in Expo Go fall back to the Expo Go redirect
+      // form, since `fintrack://` isn't registered there. See useGoogleAuth
+      // for the full rationale.
+      const inExpoGo = Constants.appOwnership === "expo"
+      const appRedirectUri = AuthSession.makeRedirectUri(
+        inExpoGo ? { path: "gmail-callback" } : { scheme: "fintrack", path: "gmail-callback" }
+      )
       const authorizeUrl = `${ENV.API_URL}/api/gmail/authorize?token=${encodeURIComponent(accessToken)}&app_redirect_uri=${encodeURIComponent(appRedirectUri)}`
 
       if (Platform.OS === "web") {

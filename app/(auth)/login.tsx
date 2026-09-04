@@ -9,6 +9,8 @@ import { useState, useEffect } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 import { confirm } from "@/utils/confirm"
+import { useIsDesktop } from "@/hooks/useIsDesktop"
+import { BrandMark } from "@/components/shared/BrandMark"
 
 export default function LoginScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
@@ -17,6 +19,7 @@ export default function LoginScreen() {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { signIn: signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth()
+  const isDesktop = useIsDesktop()
 
   useEffect(() => {
     clearOldTokens()
@@ -106,15 +109,28 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="flex-1 items-center justify-center px-6">
-            <View className="w-20 h-20 rounded-3xl bg-primary-500 items-center justify-center mb-8">
-              <Text className="text-4xl">₹</Text>
-            </View>
-            <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
-              Fintrack
-            </Text>
-            <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
-              All your expenses across every app,{"\n"}in one clear view.
-            </Text>
+            {isDesktop ? (
+              // The (auth) layout's AuthBrandPanel already carries the mark,
+              // "Fintrack", and the tagline on desktop — repeating all three
+              // here too would just be the same branding twice above one
+              // form. A plain "Welcome back" keeps the card oriented without
+              // that redundancy.
+              <Text className="text-2xl font-bold text-neutral-900 dark:text-white text-center mb-8">
+                Welcome back
+              </Text>
+            ) : (
+              <>
+                <View className="mb-8">
+                  <BrandMark size={80} />
+                </View>
+                <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
+                  Fintrack
+                </Text>
+                <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
+                  All your expenses across every app,{"\n"}in one clear view.
+                </Text>
+              </>
+            )}
 
             <View className="w-full gap-4">
               <View>

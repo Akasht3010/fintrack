@@ -10,12 +10,15 @@ import { useState } from "react"
 import { classifyIdentifier, isValidEmail, isValidPhone } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 import { confirm } from "@/utils/confirm"
+import { useIsDesktop } from "@/hooks/useIsDesktop"
+import { BrandMark } from "@/components/shared/BrandMark"
 
 const MIN_PASSWORD_LENGTH = 8
 
 export default function SignupScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
   const prefill = classifyIdentifier(params.identifier ?? "")
+  const isDesktop = useIsDesktop()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState(prefill.kind === "email" ? prefill.value : "")
@@ -119,15 +122,26 @@ export default function SignupScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="flex-1 items-center justify-center px-6">
-            <View className="w-20 h-20 rounded-3xl bg-primary-500 items-center justify-center mb-8">
-              <Text className="text-4xl">₹</Text>
-            </View>
-            <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
-              Create account
-            </Text>
-            <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
-              All your expenses across every app,{"\n"}in one clear view.
-            </Text>
+            {isDesktop ? (
+              // See login.tsx — AuthBrandPanel already carries the full
+              // mark/wordmark/tagline on desktop, so this stays a plain
+              // heading rather than repeating all three.
+              <Text className="text-2xl font-bold text-neutral-900 dark:text-white text-center mb-8">
+                Create your account
+              </Text>
+            ) : (
+              <>
+                <View className="mb-8">
+                  <BrandMark size={80} />
+                </View>
+                <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
+                  Create account
+                </Text>
+                <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
+                  All your expenses across every app,{"\n"}in one clear view.
+                </Text>
+              </>
+            )}
 
             <View className="w-full gap-4">
               <TextInput

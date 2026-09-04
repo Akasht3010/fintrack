@@ -5,6 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { storage as SecureStore } from "@/utils/storage"
 import * as SplashScreen from "expo-splash-screen"
 import { SafeAreaProvider } from "react-native-safe-area-context"
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold
+} from "@expo-google-fonts/inter"
 import { useUserStore } from "@/store/useUserStore"
 import { useThemeStore } from "@/store/useThemeStore"
 import { authApi } from "@/api/endpoints/auth"
@@ -25,6 +32,18 @@ const queryClient = new QueryClient({
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading, setUser, setLoading } = useUserStore()
+  // tailwind.config.js maps font-bold/-semibold/-medium to these exact family
+  // names, but nothing ever registered them until now — native silently fell
+  // back to the platform system sans (San Francisco/Roboto, close enough to
+  // pass unnoticed), while react-native-web's fallback for an unrecognized
+  // family lands on the browser's serif default, which is why every bold
+  // heading and button rendered in Times-style serif on web.
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold
+  })
   const hydrateTheme = useThemeStore((state) => state.hydrate)
   const pathname = usePathname()
   // auth-callback and gmail-callback own their own navigation once they've
@@ -45,10 +64,10 @@ function RootLayoutNav() {
   useGmailAutoSync(isAuthenticated)
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && fontsLoaded) {
       SplashScreen.hideAsync()
     }
-  }, [isLoading])
+  }, [isLoading, fontsLoaded])
 
   useEffect(() => {
     if (!isLoading && !isOAuthCallbackRoute) {
