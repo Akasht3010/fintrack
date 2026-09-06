@@ -9,7 +9,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "deploy": "npx expo export -p web && wrangler deploy",
-    "preview": "npx expo export -p web && wrangler dev"
+    "preview": "npx expo export -p web && wrangler dev",
+    "update:preview": "eas update --branch preview --environment preview",
+    "update:production": "eas update --branch production --environment production"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
