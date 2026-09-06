@@ -19,8 +19,14 @@ interface ThemeState {
 // (they see "dark" as expected) but silently breaks every Tailwind `dark:`
 // class, since those depend on the DOM class actually being present. Always
 // resolving to a concrete value before calling set() sidesteps it.
+// RN 0.86 widened the OS scheme to "light" | "dark" | "unspecified" | null.
+// Everything that isn't an explicit "dark" collapses to "light" — same intent
+// as the old `?? "light"`, just also covering the new "unspecified" case.
+const osScheme = (): "light" | "dark" =>
+  Appearance.getColorScheme() === "dark" ? "dark" : "light"
+
 const resolveScheme = (mode: ThemeMode): "light" | "dark" =>
-  mode === "system" ? (Appearance.getColorScheme() ?? "light") : mode
+  mode === "system" ? osScheme() : mode
 
 export const useThemeStore = create<ThemeState>((set) => ({
   mode: "system",
@@ -45,6 +51,6 @@ export const useThemeStore = create<ThemeState>((set) => ({
 // never follow a live OS theme change until the next manual toggle.
 Appearance.addChangeListener(({ colorScheme: scheme }) => {
   if (useThemeStore.getState().mode === "system") {
-    colorScheme.set(scheme ?? "light")
+    colorScheme.set(scheme === "dark" ? "dark" : "light")
   }
 })

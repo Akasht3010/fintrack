@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fintrack.app"
@@ -21,7 +16,9 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.fintrack.app",
-      "permissions": ["android.permission.READ_SMS"]
+      "permissions": [
+        "android.permission.READ_SMS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -30,7 +27,19 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font",
+      "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "scheme": "fintrack",
     "experiments": {

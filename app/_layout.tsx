@@ -124,7 +124,9 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <StatusBar style="auto" translucent backgroundColor="transparent" hidden={false} />
+        {/* `translucent` / `backgroundColor` dropped in SDK 55 — edge-to-edge
+            is mandatory on Android now, so both are no-ops. */}
+        <StatusBar style="auto" hidden={false} />
         <RootLayoutNav />
       </SafeAreaProvider>
     </QueryClientProvider>

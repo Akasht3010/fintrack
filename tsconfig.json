@@ -3,6 +3,11 @@
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
+    // TS 6 deprecates `baseUrl` (removed in TS 7). The `paths` above are all
+    // relative, so they'll keep resolving off this file's dir once baseUrl
+    // is dropped — silence the deprecation for now, remove baseUrl on the
+    // next tsconfig cleanup.
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": [
         "src/*"

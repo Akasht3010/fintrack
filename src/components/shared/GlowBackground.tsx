@@ -49,7 +49,9 @@ function blobStyle(size: number) {
 
 const styles = StyleSheet.create({
   base: {
-    ...StyleSheet.absoluteFillObject,
+    // RN 0.86 removed StyleSheet.absoluteFillObject; absoluteFill is now the
+    // plain object it used to be.
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#0a0a1f"
   }
 })

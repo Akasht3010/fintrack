@@ -52,7 +52,9 @@ export default function TabsLayout() {
                 {isDark && (
                   <View
                     style={{
-                      ...StyleSheet.absoluteFillObject,
+                      // RN 0.86 removed StyleSheet.absoluteFillObject; absoluteFill
+                      // is now the plain object it used to be.
+                      ...StyleSheet.absoluteFill,
                       backgroundColor: "rgba(99,102,241,0.12)"
                     }}
                   />
