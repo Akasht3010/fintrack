@@ -10,7 +10,6 @@ import { transactionApi } from "@/api/endpoints/transactions"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { Budget } from "@/types/domain"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
-import { currencySymbol } from "@/constants/currencies"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { Chip } from "@/components/shared/Chip"
 import { useState, useEffect } from "react"
@@ -52,11 +51,6 @@ export default function AddExpenseScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories])
 
-  // A transaction's currency follows whichever account it's attached to
-  // (accounts each have their own currency, e.g. a USD credit card) —
-  // falls back to INR when no account is selected.
-  const currency = accounts?.find(a => a.id === selectedAccountId)?.currency ?? "INR"
-
   useEffect(() => {
     if (existing) {
       setAmount(String(existing.amount))
@@ -86,7 +80,6 @@ export default function AddExpenseScreen() {
       try {
         await transactionApi.update(transactionId!, {
           amount: parseFloat(amount),
-          currency,
           type: transactionType,
           category: selectedCategory,
           merchant,
@@ -122,7 +115,6 @@ export default function AddExpenseScreen() {
 
     createTransaction({
       amount: parseFloat(amount),
-      currency,
       type: transactionType,
       category: selectedCategory,
       merchant,
@@ -205,7 +197,7 @@ export default function AddExpenseScreen() {
         <View className="mb-6">
           <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Amount</Text>
           <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4">
-            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">{currencySymbol(currency)}</Text>
+            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">₹</Text>
             <TextInput
               placeholder="0.00"
               value={amount}

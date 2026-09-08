@@ -1,11 +1,8 @@
-export const formatCurrency = (
-  amount: number,
-  currency: string = "INR"
-): string => {
-  return new Intl.NumberFormat("en-IN", {
+// The app is INR-only.
+export const formatCurrency = (amount: number): string =>
+  new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency,
+    currency: "INR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   }).format(amount)
-}

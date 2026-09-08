@@ -5,10 +5,10 @@ import { useColorScheme } from "nativewind"
 import { router, useFocusEffect } from "expo-router"
 import { useQuery } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
-import { useTransactionStore } from "@/store/useTransactionStore"
 import { transactionApi } from "@/api/endpoints/transactions"
+import { insightsApi } from "@/api/endpoints/insights"
 import { formatCurrency } from "@/utils/currency"
-import { formatDateShort, isThisMonth } from "@/utils/date"
+import { formatDateShort } from "@/utils/date"
 import { Colors } from "@/constants/colors"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
@@ -48,7 +48,6 @@ function SummaryCardContent({ totalSpent, totalIncome, net }: { totalSpent: numb
 
 export default function DashboardScreen() {
   const { user } = useUserStore()
-  const { transactions, setTransactions } = useTransactionStore()
   const [refreshing, setRefreshing] = useState(false)
   const tabBarClearance = useTabBarClearance()
   const CATEGORY_ICONS = useCategoryIcons()
@@ -57,50 +56,44 @@ export default function DashboardScreen() {
   const isDark = colorScheme === "dark"
   const isDesktop = useIsDesktop()
 
-  const { isLoading, error, refetch } = useQuery({
+  const { data: transactions = [], isLoading, error, refetch } = useQuery({
     queryKey: ["transactions", user?.id],
     queryFn: async () => {
-      if (!user?.id) return null
-      const response = await transactionApi.list({ page: 1, limit: 50 })
-      setTransactions(response.transactions)
+      const response = await transactionApi.list({ page: 1, limit: 20 })
       return response.transactions
     },
+    enabled: !!user?.id
+  })
+
+  // The "This month" summary comes from /api/insights, not a client-side
+  // sum of the recent-transactions list — that only saw the newest page and
+  // couldn't match the Insights tab.
+  const { data: insights, refetch: refetchInsights } = useQuery({
+    queryKey: ["insights"],
+    queryFn: () => insightsApi.summary(1),
     enabled: !!user?.id
   })
 
   useFocusEffect(
     useCallback(() => {
       refetch()
-    }, [refetch])
+      refetchInsights()
+    }, [refetch, refetchInsights])
   )
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
-    refetch().finally(() => setRefreshing(false))
-  }, [refetch])
+    Promise.all([refetch(), refetchInsights()]).finally(() => setRefreshing(false))
+  }, [refetch, refetchInsights])
 
-  // "This month" should mean this month — scope the summary to it rather
-  // than whatever happens to be in the last 50 fetched transactions.
-  const thisMonthTransactions = transactions.filter(t => isThisMonth(t.date))
-
-  const totalSpent = thisMonthTransactions
-    .filter(t => t.type === "debit")
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const totalIncome = thisMonthTransactions
-    .filter(t => t.type === "credit")
-    .reduce((sum, t) => sum + t.amount, 0)
-
+  const totalSpent = insights?.monthly_totals.at(-1)?.total ?? 0
+  const totalIncome = insights?.monthly_income_totals.at(-1)?.total ?? 0
   const net = totalIncome - totalSpent
 
-  const categoryTotals = thisMonthTransactions
-    .filter(t => t.type === "debit")
-    .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + t.amount
-      return acc
-    }, {} as Record<string, number>)
-
-  const topCategory = Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]
+  const topCategoryItem = insights?.category_breakdown[0]
+  const topCategory: [string, number] | undefined = topCategoryItem
+    ? [topCategoryItem.category, topCategoryItem.total]
+    : undefined
 
   const netWorthCard = (
     <GlassCard onPress={() => router.push("/(modals)/accounts")} className="p-4 flex-row items-center justify-between">
@@ -217,7 +210,7 @@ export default function DashboardScreen() {
                   : "text-green-600 dark:text-emerald-400"
               }`}>
                 {transaction.type === "debit" ? "−" : "+"}
-                {formatCurrency(transaction.amount, transaction.currency)}
+                {formatCurrency(transaction.amount)}
               </Text>
               </GlassCard>
             </View>

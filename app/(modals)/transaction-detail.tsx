@@ -83,7 +83,7 @@ export default function TransactionDetailScreen() {
               }`}
             >
               {transaction.type === "debit" ? "−" : "+"}
-              {formatCurrency(transaction.amount, transaction.currency)}
+              {formatCurrency(transaction.amount)}
             </Text>
           </View>
 

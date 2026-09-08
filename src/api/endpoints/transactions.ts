@@ -3,7 +3,6 @@ import { Transaction } from "@/types/domain"
 
 export interface TransactionCreatePayload {
   amount: number
-  currency: string
   type: "debit" | "credit"
   category: string
   merchant: string
@@ -17,7 +16,6 @@ export interface TransactionCreatePayload {
 
 export interface TransactionUpdatePayload {
   amount?: number
-  currency?: string
   type?: "debit" | "credit"
   category?: string
   merchant?: string

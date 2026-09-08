@@ -92,15 +92,10 @@ export default function TransactionsScreen() {
     return acc
   }, {} as Record<string, typeof allTransactions>)
 
-  // Summing raw amounts across currencies would be meaningless (₹100 + $100
-  // isn't "₹200"), so the total is only shown when every debit in view is
-  // in the same currency — otherwise just the count is shown.
   const debits = allTransactions.filter(t => t.type === "debit")
-  const debitCurrencies = new Set(debits.map(t => t.currency))
   const stats = {
     count: debits.length,
-    total: debits.reduce((sum, t) => sum + t.amount, 0),
-    currency: debitCurrencies.size === 1 ? debits[0]?.currency : null
+    total: debits.reduce((sum, t) => sum + t.amount, 0)
   }
 
   return (
@@ -111,8 +106,7 @@ export default function TransactionsScreen() {
         <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Transactions</Text>
         {hasActiveFilters && (
           <Text className="text-sm text-muted dark:text-neutral-400 mt-2">
-            {stats.count} transactions
-            {stats.currency ? ` • ${formatCurrency(stats.total, stats.currency)}` : ""}
+            {stats.count} transactions • {formatCurrency(stats.total)}
           </Text>
         )}
       </View>
@@ -330,7 +324,7 @@ export default function TransactionsScreen() {
                           }`}
                         >
                           {transaction.type === "debit" ? "−" : "+"}
-                          {formatCurrency(transaction.amount, transaction.currency)}
+                          {formatCurrency(transaction.amount)}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -367,7 +361,7 @@ export default function TransactionsScreen() {
                           }`}
                         >
                           {transaction.type === "debit" ? "−" : "+"}
-                          {formatCurrency(transaction.amount, transaction.currency)}
+                          {formatCurrency(transaction.amount)}
                         </Text>
                       </GlassCard>
                     ))}

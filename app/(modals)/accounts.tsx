@@ -6,7 +6,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { accountsApi } from "@/api/endpoints/accounts"
 import { useAccounts } from "@/hooks/useAccounts"
 import { formatCurrency } from "@/utils/currency"
-import { CURRENCIES } from "@/constants/currencies"
 import { Account, AccountType } from "@/types/domain"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -144,7 +143,7 @@ function AccountRow({ account }: { account: Account }) {
         <Text className={`text-sm font-bold ${
           isCreditCard || isNegative ? "text-red-600 dark:text-red-400" : "text-neutral-900 dark:text-white"
         }`}>
-          {isCreditCard && account.balance > 0 ? "Owes " : ""}{formatCurrency(Math.abs(account.balance), account.currency)}
+          {isCreditCard && account.balance > 0 ? "Owes " : ""}{formatCurrency(Math.abs(account.balance))}
         </Text>
       </View>
       <View className="flex-row justify-end gap-4 mt-2">
@@ -170,20 +169,17 @@ export default function AccountsScreen() {
   const queryClient = useQueryClient()
   const [newName, setNewName] = useState("")
   const [newType, setNewType] = useState<AccountType>("bank")
-  const [newCurrency, setNewCurrency] = useState("INR")
   const [newOpeningBalance, setNewOpeningBalance] = useState("")
 
   const { mutate: create, isPending: isCreating } = useMutation({
     mutationFn: () => accountsApi.create({
       name: newName.trim(),
       type: newType,
-      currency: newCurrency,
       opening_balance: parseFloat(newOpeningBalance) || 0
     }),
     onSuccess: () => {
       invalidateAccountQueries(queryClient)
       setNewName("")
-      setNewCurrency("INR")
       setNewOpeningBalance("")
     },
     onError: (error: any) => Alert.alert("Couldn't add account", errorDetail(error, "Failed to create account"))
@@ -229,19 +225,6 @@ export default function AccountsScreen() {
               className="border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-3 text-sm text-neutral-900 dark:text-white mb-2"
               placeholderTextColor="#9ca3af"
             />
-            <View className="flex-row flex-wrap gap-2 mb-2">
-              {CURRENCIES.map((c) => (
-                <Chip
-                  key={c.code}
-                  label={`${c.symbol} ${c.code}`}
-                  selected={newCurrency === c.code}
-                  onPress={() => setNewCurrency(c.code)}
-                  padding="px-3 py-2"
-                  capitalize={false}
-                  textSize="text-xs"
-                />
-              ))}
-            </View>
             <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 mb-2">
               <Text className="text-sm text-muted dark:text-neutral-400 mr-2">
                 {newType === "credit_card" ? "Amount currently owed" : "Opening balance"}

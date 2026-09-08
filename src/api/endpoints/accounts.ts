@@ -12,7 +12,7 @@ export const accountsApi = {
     const response = await apiClient.get<NetWorthSummary>("/api/accounts/net-worth")
     return response.data
   },
-  async create(data: { name: string; type: AccountType; currency?: string; opening_balance?: number }): Promise<Account> {
+  async create(data: { name: string; type: AccountType; opening_balance?: number }): Promise<Account> {
     const response = await apiClient.post<Account>("/api/accounts", data)
     return response.data
   },

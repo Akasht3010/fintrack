@@ -48,7 +48,7 @@ src/
                      #   budgets, categories, accounts, insights, recurring,
                      #   gmail, sms)
   config/            # env.ts — reads app.json `extra`
-  constants/         # categories, colors, currencies, global.css
+  constants/         # categories, colors, global.css
   store/             # Zustand stores — user, transactions, theme
   hooks/             # data fetching, Google/Gmail auth, Gmail auto-sync,
                      #   SMS sync, bill reminders, CSV export, filters
@@ -81,7 +81,7 @@ The access token is kept in `expo-secure-store` and attached as `Authorization: 
 - **Recurring** — detected subscriptions/bills with a next-due date, plus local bill reminders via `expo-notifications`
 - **Gmail import** — connect Gmail and auto-sync bank-alert emails into transactions on app foreground (`useGmailAutoSync`)
 - **SMS import** — Android only; reads bank-alert SMS from the inbox and posts them to the backend (`useSmsSync`)
-- **Multi-currency** — transactions carry their own currency; cross-currency totals are converted server-side
+- **INR only** — every amount is ₹; the summary card and Insights tab both read `/api/insights` so they always agree
 - **CSV export** — filtered transactions to a shareable file (`(modals)/export`)
 - **Light / dark theme** — follows system by default, toggleable, persisted (`useThemeStore`)
 - **Desktop web layout** — sidebar nav and centered content above the `md` breakpoint

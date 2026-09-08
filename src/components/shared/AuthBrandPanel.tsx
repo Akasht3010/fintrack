@@ -5,7 +5,7 @@ import { BrandMark } from "./BrandMark"
 const POINTS = [
   { icon: "layers-outline" as const, text: "Manual, Gmail, and SMS transactions in one ledger" },
   { icon: "shield-checkmark-outline" as const, text: "Gmail tokens encrypted at rest, two-factor login" },
-  { icon: "trending-up-outline" as const, text: "Budgets and multi-currency insights that stay current" }
+  { icon: "trending-up-outline" as const, text: "Budgets and spending insights that stay current" }
 ]
 
 /**
