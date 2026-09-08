@@ -47,6 +47,7 @@ export default function TabsLayout() {
               <BlurView
                 intensity={isDark ? 40 : 14}
                 tint={isDark ? "dark" : "light"}
+                experimentalBlurMethod="dimezisBlurView"
                 style={{ flex: 1, borderRadius: TAB_BAR_RADIUS, overflow: "hidden" }}
               >
                 {isDark && (

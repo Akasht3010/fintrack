@@ -32,7 +32,17 @@ export function GlowBackground() {
       <View style={[blobStyle(blobSize), { top: -width * 0.25, left: -width * 0.3, backgroundColor: "#4f46e5" }]} />
       <View style={[blobStyle(blobSize), { top: width * 0.5, right: -width * 0.35, backgroundColor: "#7c3aed" }]} />
       <View style={[blobStyle(blobSize), { bottom: -width * 0.3, left: -width * 0.1, backgroundColor: "#2563eb" }]} />
-      <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
+      {/* dimezisBlurView keeps this full-screen blur inside the RN view
+          hierarchy on Android — the default method is a system overlay that
+          ignores the parent's pointerEvents="none" and intermittently
+          floats above the whole app, blocking every touch. */}
+      <BlurView
+        intensity={90}
+        tint="dark"
+        experimentalBlurMethod="dimezisBlurView"
+        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+      />
     </View>
   )
 }

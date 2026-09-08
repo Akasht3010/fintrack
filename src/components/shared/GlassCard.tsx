@@ -54,7 +54,17 @@ export function GlassCard({ children, className = "", onPress, onLongPress, radi
       style={{ borderRadius: radius, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.14)" }}
       className={`${isPressable ? "hover:bg-white/[0.06]" : ""} ${interactiveClasses} ${className}`}
     >
-      <BlurView intensity={40} tint="dark" pointerEvents="none" style={styles.fill} />
+      {/* dimezisBlurView renders the blur as a real view inside the RN
+          hierarchy on Android — the default method is a system overlay that
+          ignores sibling order and pointerEvents, so it randomly floats
+          above the card and eats the tap. */}
+      <BlurView
+        intensity={40}
+        tint="dark"
+        experimentalBlurMethod="dimezisBlurView"
+        pointerEvents="none"
+        style={styles.fill}
+      />
       <View pointerEvents="none" style={[styles.fill, styles.tint]} />
       {children}
     </Wrapper>
