@@ -42,29 +42,30 @@ export function GlassCard({ children, className = "", onPress, onLongPress, radi
     )
   }
 
+  // Dark mode: the blur + tint are absolutely-positioned BACKGROUND layers
+  // with pointerEvents "none", and `children` sit above them inside the
+  // touchable itself. The BlurView must never be an ancestor of the press
+  // target — on native it swallows the touch before it reaches the wrapping
+  // TouchableOpacity, which silently kills every pressable GlassCard.
   return (
-    <Wrapper onPress={onPress} onLongPress={onLongPress} className={interactiveClasses}>
-      <BlurView
-        intensity={40}
-        tint="dark"
-        style={[styles.blur, { borderRadius: radius }]}
-      >
-        <View
-          className={`${isPressable ? "hover:bg-white/[0.06]" : ""} ${interactiveClasses} ${className}`}
-          style={styles.tint}
-        >
-          {children}
-        </View>
-      </BlurView>
+    <Wrapper
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={{ borderRadius: radius, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.14)" }}
+      className={`${isPressable ? "hover:bg-white/[0.06]" : ""} ${interactiveClasses} ${className}`}
+    >
+      <BlurView intensity={40} tint="dark" pointerEvents="none" style={styles.fill} />
+      <View pointerEvents="none" style={[styles.fill, styles.tint]} />
+      {children}
     </Wrapper>
   )
 }
 
 const styles = StyleSheet.create({
-  blur: {
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)"
+  fill: {
+    // RN 0.86 removed StyleSheet.absoluteFillObject; absoluteFill is now the
+    // plain object it used to be.
+    ...StyleSheet.absoluteFill
   },
   tint: {
     backgroundColor: "rgba(99,102,241,0.10)"
