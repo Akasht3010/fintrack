@@ -79,10 +79,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
       <GlowBackground />
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: tabBarClearance }}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
         <View className="px-6 pt-4 pb-6 flex-row items-center justify-between">
           <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Profile</Text>
           <TouchableOpacity
@@ -242,7 +239,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View className="px-6 mt-auto gap-3 pt-6">
+        <View className="px-6 mt-auto gap-3 pt-6" style={{ paddingBottom: tabBarClearance }}>
           <TouchableOpacity
             onPress={handleSignOut}
             className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/20"
