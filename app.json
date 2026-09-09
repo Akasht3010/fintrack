@@ -49,7 +49,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "https://fintrack-api-proxy.fintrack-proxy.workers.dev",
+      "apiUrl": "https://fintrack-989422306373.asia-south1.run.app",
       "googleClientIdWeb": "989422306373-vjomjm06cfj8p4efvm98qp4acd6bsagg.apps.googleusercontent.com",
       "appEnv": "production",
       "router": {},
