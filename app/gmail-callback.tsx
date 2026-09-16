@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react"
-import { View, Text, ActivityIndicator, Alert } from "react-native"
+import { View, Text, ActivityIndicator } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { Colors } from "@/constants/colors"
+import { showAlert } from "@/utils/alert"
 
 /**
  * Landing screen for the Gmail OAuth redirect
@@ -39,7 +40,7 @@ export default function GmailCallback() {
           // Best-effort — Profile will reflect the real state next time it fetches the user.
         }
       } else {
-        Alert.alert("Couldn't connect Gmail", typeof error === "string" ? error : "Gmail connect failed")
+        showAlert("Couldn't connect Gmail", typeof error === "string" ? error : "Gmail connect failed")
       }
       router.replace("/(tabs)/profile")
     }

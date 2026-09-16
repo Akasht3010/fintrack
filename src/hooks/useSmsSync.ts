@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react"
-import { Alert, Platform, PermissionsAndroid } from "react-native"
+import { Platform, PermissionsAndroid } from "react-native"
 import { useQueryClient } from "@tanstack/react-query"
 import SmsReader from "../../modules/sms-reader"
 import { smsApi } from "@/api/endpoints/sms"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { extractErrorMessage } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 
 // Reading the whole inbox and shipping it to the backend would mean every
 // personal text leaves the device just to find the handful of bank alerts —
@@ -29,7 +30,7 @@ export function useSmsSync() {
   const sync = useCallback(async ({ silent = false }: SmsSyncOptions = {}) => {
     if (Platform.OS !== "android") {
       if (!silent) {
-        Alert.alert("Not available", "SMS import is only available on Android.")
+        showAlert("Not available", "SMS import is only available on Android.")
       }
       return
     }
@@ -49,7 +50,7 @@ export function useSmsSync() {
 
       if (!hasPermission) {
         if (!silent) {
-          Alert.alert("Permission needed", "SMS import needs permission to read your messages. You can allow it from your phone's app settings.")
+          showAlert("Permission needed", "SMS import needs permission to read your messages. You can allow it from your phone's app settings.")
         }
         return
       }
@@ -61,7 +62,7 @@ export function useSmsSync() {
 
       if (candidates.length === 0) {
         if (!silent) {
-          Alert.alert("Sync complete", "No bank transaction messages found in your SMS inbox.")
+          showAlert("Sync complete", "No bank transaction messages found in your SMS inbox.")
         }
         return
       }
@@ -77,14 +78,14 @@ export function useSmsSync() {
       }
 
       if (!silent) {
-        Alert.alert(
+        showAlert(
           "Sync complete",
           `Imported ${result.imported} new transaction${result.imported === 1 ? "" : "s"}.\n${result.skipped_duplicate} already imported, ${result.skipped_unparsed} couldn't be read.`
         )
       }
     } catch (error: any) {
       if (!silent) {
-        Alert.alert("Sync failed", extractErrorMessage(error))
+        showAlert("Sync failed", extractErrorMessage(error))
       }
     } finally {
       setIsSyncing(false)

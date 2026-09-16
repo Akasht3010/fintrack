@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { useState } from "react"
@@ -7,6 +7,7 @@ import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
 import { storage as SecureStore } from "@/utils/storage"
 import { isValidEmail, isValidPhone } from "@/utils/identifier"
+import { showAlert } from "@/utils/alert"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 
 export default function EditProfileScreen() {
@@ -18,15 +19,15 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert("Error", "Please enter your name")
+      showAlert("Error", "Please enter your name")
       return
     }
     if (!isValidEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email address")
+      showAlert("Error", "Please enter a valid email address")
       return
     }
     if (phone.trim() && !isValidPhone(phone)) {
-      Alert.alert("Error", "Phone number must be 10 digits")
+      showAlert("Error", "Phone number must be 10 digits")
       return
     }
 
@@ -41,7 +42,7 @@ export default function EditProfileScreen() {
       setUser(updated)
       router.back()
     } catch (error: any) {
-      Alert.alert("Error", extractErrorMessage(error, "Failed to update profile"))
+      showAlert("Error", extractErrorMessage(error, "Failed to update profile"))
     } finally {
       setIsSaving(false)
     }

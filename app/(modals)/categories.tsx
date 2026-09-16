@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -11,6 +11,7 @@ import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { confirm } from "@/utils/confirm"
 import { extractErrorMessage as errorDetail } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 
 function CategoryRow({ category }: { category: Category }) {
   const queryClient = useQueryClient()
@@ -26,13 +27,13 @@ function CategoryRow({ category }: { category: Category }) {
       queryClient.invalidateQueries({ queryKey: ["budgets"] })
       setIsEditing(false)
     },
-    onError: (error: any) => Alert.alert("Couldn't save", errorDetail(error, "Failed to update category"))
+    onError: (error: any) => showAlert("Couldn't save", errorDetail(error, "Failed to update category"))
   })
 
   const { mutate: remove, isPending: isDeleting } = useMutation({
     mutationFn: () => categoriesApi.remove(category.id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["categories"] }),
-    onError: (error: any) => Alert.alert("Couldn't delete", errorDetail(error, "Failed to delete category"))
+    onError: (error: any) => showAlert("Couldn't delete", errorDetail(error, "Failed to delete category"))
   })
 
   const handleDelete = async () => {
@@ -128,7 +129,7 @@ export default function CategoriesScreen() {
       setNewName("")
       setNewIcon("")
     },
-    onError: (error: any) => Alert.alert("Couldn't add category", errorDetail(error, "Failed to create category"))
+    onError: (error: any) => showAlert("Couldn't add category", errorDetail(error, "Failed to create category"))
   })
 
   const defaults = categories?.filter(c => c.is_default) ?? []

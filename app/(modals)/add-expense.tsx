@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -12,6 +12,7 @@ import { extractErrorMessage } from "@/api/client"
 import { Budget } from "@/types/domain"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { generateIdempotencyKey } from "@/utils/idempotencyKey"
+import { showAlert } from "@/utils/alert"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { Chip } from "@/components/shared/Chip"
 import { useState, useEffect, useRef } from "react"
@@ -75,12 +76,12 @@ export default function AddExpenseScreen() {
 
   const handleSubmit = async () => {
     if (!amount.trim()) {
-      Alert.alert("Error", "Please enter an amount")
+      showAlert("Error", "Please enter an amount")
       return
     }
 
     if (!merchant.trim()) {
-      Alert.alert("Error", "Please enter merchant name")
+      showAlert("Error", "Please enter merchant name")
       return
     }
 
@@ -101,7 +102,7 @@ export default function AddExpenseScreen() {
         queryClient.invalidateQueries({ queryKey: ["net-worth"] })
         router.back()
       } catch (error: any) {
-        Alert.alert("Error", "Failed to update transaction")
+        showAlert("Error", extractErrorMessage(error, "Failed to update transaction"))
       } finally {
         setIsSaving(false)
       }
@@ -109,7 +110,7 @@ export default function AddExpenseScreen() {
     }
 
     if (!user?.id) {
-      Alert.alert("Error", "User not found")
+      showAlert("Error", "User not found")
       return
     }
 
@@ -149,7 +150,7 @@ export default function AddExpenseScreen() {
       },
       onError: (error: any) => {
         console.log("Add transaction failed:", error?.response?.status, error?.response?.data, error?.message)
-        Alert.alert(
+        showAlert(
           "Error",
           extractErrorMessage(error, `Failed to add ${transactionType === "credit" ? "credit" : "expense"}`)
         )

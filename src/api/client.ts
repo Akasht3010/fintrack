@@ -1,8 +1,8 @@
 import axios from "axios"
-import { Alert } from "react-native"
 import { storage as SecureStore } from "@/utils/storage"
 import { ENV } from "@/config/env"
 import { useUserStore } from "@/store/useUserStore"
+import { showAlert } from "@/utils/alert"
 
 export const apiClient = axios.create({
   baseURL: ENV.API_URL,
@@ -131,7 +131,7 @@ apiClient.interceptors.response.use(
       // with an already-expired stored token has isAuthenticated false the
       // whole time, and should just quietly land on the login screen.
       if (wasAuthenticated) {
-        Alert.alert("Session expired", "Please log in again.")
+        showAlert("Session expired", "Please log in again.")
       }
       isHandlingSessionExpiry = false
     }

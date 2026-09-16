@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from "expo-router"
 import { storage as SecureStore } from "@/utils/storage"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 import { useState, useEffect } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
@@ -41,18 +42,18 @@ export default function LoginScreen() {
     if (result.success) {
       router.replace("/(tabs)")
     } else if (result.error) {
-      Alert.alert("Google sign-in failed", result.error)
+      showAlert("Google sign-in failed", result.error)
     }
   }
 
   const handleLogin = async () => {
     if (!identifierInput.trim()) {
-      Alert.alert("Error", "Please enter a phone number or email")
+      showAlert("Error", "Please enter a phone number or email")
       return
     }
 
     if (!isValid) {
-      Alert.alert(
+      showAlert(
         "Invalid input",
         kind === "email"
           ? "Please enter a valid email address"
@@ -62,7 +63,7 @@ export default function LoginScreen() {
     }
 
     if (!password) {
-      Alert.alert("Error", "Please enter your password")
+      showAlert("Error", "Please enter your password")
       return
     }
 
@@ -80,7 +81,7 @@ export default function LoginScreen() {
       // identifier is unknown or the password is wrong (avoids leaking
       // whether a phone/email owns an account) — so there's no "offer to
       // sign up" branch here anymore; just show the generic failure.
-      Alert.alert("Sign in failed", extractErrorMessage(error))
+      showAlert("Sign in failed", extractErrorMessage(error))
     } finally {
       setIsLoading(false)
     }

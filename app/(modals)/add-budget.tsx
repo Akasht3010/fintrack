@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useMemo, useEffect } from "react"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { extractErrorMessage } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 import { useCategories } from "@/hooks/useCategories"
 import { TransactionCategory } from "@/types/domain"
 import { GlowBackground } from "@/components/shared/GlowBackground"
@@ -46,7 +47,7 @@ export default function AddBudgetScreen() {
   const handleSubmit = async () => {
     const amount = parseFloat(limitAmount)
     if (!limitAmount.trim() || isNaN(amount) || amount <= 0) {
-      Alert.alert("Error", "Please enter a valid limit amount")
+      showAlert("Error", "Please enter a valid limit amount")
       return
     }
 
@@ -62,9 +63,9 @@ export default function AddBudgetScreen() {
       router.back()
     } catch (error: any) {
       if (error.response?.status === 409) {
-        Alert.alert("Budget already exists", extractErrorMessage(error, "This category already has a budget for the current period."))
+        showAlert("Budget already exists", extractErrorMessage(error, "This category already has a budget for the current period."))
       } else {
-        Alert.alert("Error", `Failed to ${isEditMode ? "update" : "create"} budget`)
+        showAlert("Error", extractErrorMessage(error, `Failed to ${isEditMode ? "update" : "create"} budget`))
       }
     } finally {
       setIsSubmitting(false)

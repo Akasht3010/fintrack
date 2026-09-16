@@ -1,8 +1,9 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { useState } from "react"
 import { useExportTransactions } from "@/hooks/useExportTransactions"
+import { showAlert } from "@/utils/alert"
 import { useCategories } from "@/hooks/useCategories"
 import { DateRange, DATE_RANGES, dateFromForRange } from "@/utils/dateRanges"
 import { GlowBackground } from "@/components/shared/GlowBackground"
@@ -60,7 +61,7 @@ export default function ExportScreen() {
     if (result.success) {
       router.back()
     } else if (result.error) {
-      Alert.alert("Export failed", result.error)
+      showAlert("Export failed", result.error)
     }
   }
 

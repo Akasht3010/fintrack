@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react"
-import { Alert } from "react-native"
 import { useQueryClient } from "@tanstack/react-query"
 import { gmailApi } from "@/api/endpoints/gmail"
 import { authApi } from "@/api/endpoints/auth"
@@ -8,6 +7,7 @@ import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { extractErrorMessage } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 
 export interface GmailSyncOptions {
   // Suppresses the result/error alerts — used for automatic sync-on-open so
@@ -35,14 +35,14 @@ export function useGmailSync() {
       }
 
       if (!silent) {
-        Alert.alert(
+        showAlert(
           "Sync complete",
           `Imported ${result.imported} new transaction${result.imported === 1 ? "" : "s"}.\n${result.skipped_duplicate} already imported, ${result.skipped_unparsed} couldn't be read.`
         )
       }
     } catch (error: any) {
       if (!silent) {
-        Alert.alert("Sync failed", extractErrorMessage(error))
+        showAlert("Sync failed", extractErrorMessage(error))
       }
       // A sync failure can mean the backend just cleared a stale/expired
       // Gmail connection (e.g. Google's 7-day testing-token expiry) —

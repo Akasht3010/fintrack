@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { useState } from "react"
@@ -8,6 +8,7 @@ import { extractErrorMessage } from "@/api/client"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { confirm } from "@/utils/confirm"
+import { showAlert } from "@/utils/alert"
 
 const CONFIRM_WORD = "DELETE"
 
@@ -32,7 +33,7 @@ export default function DeleteAccountScreen() {
       await logout()
       router.replace("/(auth)/login")
     } catch (error: any) {
-      Alert.alert("Error", extractErrorMessage(error, "Failed to delete account"))
+      showAlert("Error", extractErrorMessage(error, "Failed to delete account"))
       setIsDeleting(false)
     }
   }

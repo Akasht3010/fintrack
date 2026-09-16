@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
@@ -7,6 +7,7 @@ import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 import { useState, useEffect, useRef } from "react"
 
 const OTP_LENGTH = 6
@@ -41,24 +42,22 @@ export default function ResetPasswordScreen() {
   const canSubmit = isCodeValid && isPasswordValid && doPasswordsMatch
 
   const handleExpiredSession = () => {
-    Alert.alert("Session expired", "Please start over.", [
-      { text: "OK", onPress: () => router.replace("/(auth)/login") }
-    ])
+    showAlert("Session expired", "Please start over.", () => router.replace("/(auth)/login"))
   }
 
   const handleSubmit = async () => {
     if (!isCodeValid) {
-      Alert.alert("Error", `Enter the ${OTP_LENGTH}-digit code we emailed you`)
+      showAlert("Error", `Enter the ${OTP_LENGTH}-digit code we emailed you`)
       return
     }
 
     if (!isPasswordValid) {
-      Alert.alert("Weak password", `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+      showAlert("Weak password", `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
       return
     }
 
     if (!doPasswordsMatch) {
-      Alert.alert("Passwords don't match", "Make sure both password fields are the same")
+      showAlert("Passwords don't match", "Make sure both password fields are the same")
       return
     }
 
@@ -82,7 +81,7 @@ export default function ResetPasswordScreen() {
         handleExpiredSession()
       } else {
         setCode("")
-        Alert.alert("Couldn't reset password", extractErrorMessage(error))
+        showAlert("Couldn't reset password", extractErrorMessage(error))
       }
     } finally {
       setIsLoading(false)
@@ -95,12 +94,12 @@ export default function ResetPasswordScreen() {
     try {
       await authApi.resendOtp(pendingToken)
       setCooldown(RESEND_COOLDOWN_SECONDS)
-      Alert.alert("Code sent", "We emailed you a new verification code.")
+      showAlert("Code sent", "We emailed you a new verification code.")
     } catch (error: any) {
       if (error.response?.status === 401) {
         handleExpiredSession()
       } else {
-        Alert.alert("Couldn't resend code", extractErrorMessage(error))
+        showAlert("Couldn't resend code", extractErrorMessage(error))
       }
     } finally {
       setIsResending(false)

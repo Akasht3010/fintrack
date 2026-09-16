@@ -6,11 +6,11 @@ interface ConfirmOptions {
   destructive?: boolean
 }
 
-// React Native Web's Alert.alert only ever renders a single-button
-// window.alert() — a second button with its own onPress silently does
-// nothing, no dialog, no error. Anything that needs a real yes/no
-// confirmation (sign out, delete X) has to go through this instead of
-// Alert.alert directly, or it just quietly breaks on web.
+// React Native Web's Alert.alert() is a complete no-op on this RN Web
+// version — no dialog, no window.alert() fallback, nothing (see
+// src/utils/alert.ts). Anything that needs a real yes/no confirmation
+// (sign out, delete X) has to go through this instead of Alert.alert
+// directly, or it just quietly breaks on web with no error either.
 export function confirm(title: string, message: string, options: ConfirmOptions = {}): Promise<boolean> {
   const { confirmLabel = "OK", cancelLabel = "Cancel", destructive = false } = options
 

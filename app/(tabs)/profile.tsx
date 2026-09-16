@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform } from "react-native"
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
@@ -11,6 +11,7 @@ import { useSmsSync } from "@/hooks/useSmsSync"
 import { gmailApi } from "@/api/endpoints/gmail"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 import { storage as SecureStore } from "@/utils/storage"
 import { formatDate } from "@/utils/date"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
@@ -52,7 +53,7 @@ export default function ProfileScreen() {
   const handleConnectGmail = async () => {
     const result = await connectGmail()
     if (!result.success && result.error) {
-      Alert.alert("Couldn't connect Gmail", result.error)
+      showAlert("Couldn't connect Gmail", result.error)
     }
   }
 
@@ -71,7 +72,7 @@ export default function ProfileScreen() {
       await SecureStore.setItemAsync("user", JSON.stringify(refreshed))
       setUser(refreshed)
     } catch (error: any) {
-      Alert.alert("Error", extractErrorMessage(error, "Failed to disconnect Gmail"))
+      showAlert("Error", extractErrorMessage(error, "Failed to disconnect Gmail"))
     } finally {
       setIsDisconnecting(false)
     }

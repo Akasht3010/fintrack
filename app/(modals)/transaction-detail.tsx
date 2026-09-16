@@ -1,8 +1,9 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from "react-native"
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { transactionApi } from "@/api/endpoints/transactions"
+import { showAlert } from "@/utils/alert"
 import { formatCurrency } from "@/utils/currency"
 import { formatDateTime } from "@/utils/date"
 import { Colors } from "@/constants/colors"
@@ -48,7 +49,7 @@ export default function TransactionDetailScreen() {
       router.back()
     } catch (err) {
       setIsDeleting(false)
-      Alert.alert("Error", "Failed to delete transaction")
+      showAlert("Error", "Failed to delete transaction")
     }
   }
 

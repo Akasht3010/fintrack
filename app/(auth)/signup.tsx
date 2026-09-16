@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
@@ -11,6 +11,7 @@ import { useState } from "react"
 import { classifyIdentifier, isValidEmail, isValidPhone } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 import { confirm } from "@/utils/confirm"
+import { showAlert } from "@/utils/alert"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { BrandMark } from "@/components/shared/BrandMark"
 
@@ -43,33 +44,33 @@ export default function SignupScreen() {
     if (result.success) {
       router.replace("/(tabs)")
     } else if (result.error) {
-      Alert.alert("Google sign-in failed", result.error)
+      showAlert("Google sign-in failed", result.error)
     }
   }
 
   const handleSignup = async () => {
     if (!isNameValid) {
-      Alert.alert("Error", "Please enter your name")
+      showAlert("Error", "Please enter your name")
       return
     }
 
     if (!isEmailValid) {
-      Alert.alert("Invalid email", "Please enter a valid email address")
+      showAlert("Invalid email", "Please enter a valid email address")
       return
     }
 
     if (!isPhoneValid) {
-      Alert.alert("Invalid phone", "Please enter a valid 10-digit phone number")
+      showAlert("Invalid phone", "Please enter a valid 10-digit phone number")
       return
     }
 
     if (!isPasswordValid) {
-      Alert.alert("Weak password", `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+      showAlert("Weak password", `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
       return
     }
 
     if (!doPasswordsMatch) {
-      Alert.alert("Passwords don't match", "Make sure both password fields are the same")
+      showAlert("Passwords don't match", "Make sure both password fields are the same")
       return
     }
 
@@ -100,7 +101,7 @@ export default function SignupScreen() {
           router.replace({ pathname: "/(auth)/login", params: { identifier: email.trim() } })
         }
       } else {
-        Alert.alert("Sign up failed", extractErrorMessage(error))
+        showAlert("Sign up failed", extractErrorMessage(error))
       }
     } finally {
       setIsLoading(false)

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from "react-native"
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -14,6 +14,7 @@ import { GlassCard } from "@/components/shared/GlassCard"
 import { Chip } from "@/components/shared/Chip"
 import { confirm } from "@/utils/confirm"
 import { extractErrorMessage as errorDetail } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 
 const ACCOUNT_TYPES: AccountType[] = ["bank", "cash", "credit_card", "wallet", "investment"]
 
@@ -53,19 +54,19 @@ function AccountRow({ account }: { account: Account }) {
       invalidateAccountQueries(queryClient)
       setIsEditing(false)
     },
-    onError: (error: any) => Alert.alert("Couldn't save", errorDetail(error, "Failed to update account"))
+    onError: (error: any) => showAlert("Couldn't save", errorDetail(error, "Failed to update account"))
   })
 
   const { mutate: archive, isPending: isArchiving } = useMutation({
     mutationFn: () => accountsApi.update(account.id, { is_archived: !account.is_archived }),
     onSuccess: () => invalidateAccountQueries(queryClient),
-    onError: (error: any) => Alert.alert("Error", errorDetail(error, "Failed to update account"))
+    onError: (error: any) => showAlert("Error", errorDetail(error, "Failed to update account"))
   })
 
   const { mutate: remove, isPending: isDeleting } = useMutation({
     mutationFn: () => accountsApi.remove(account.id),
     onSuccess: () => invalidateAccountQueries(queryClient),
-    onError: (error: any) => Alert.alert("Couldn't delete", errorDetail(error, "Failed to delete account"))
+    onError: (error: any) => showAlert("Couldn't delete", errorDetail(error, "Failed to delete account"))
   })
 
   const handleDelete = async () => {
@@ -179,7 +180,7 @@ export default function AccountsScreen() {
       setNewName("")
       setNewOpeningBalance("")
     },
-    onError: (error: any) => Alert.alert("Couldn't add account", errorDetail(error, "Failed to create account"))
+    onError: (error: any) => showAlert("Couldn't add account", errorDetail(error, "Failed to create account"))
   })
 
   return (

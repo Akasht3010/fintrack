@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native"
+import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { router, useLocalSearchParams } from "expo-router"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
+import { showAlert } from "@/utils/alert"
 import { useState } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
 
@@ -16,12 +17,12 @@ export default function ForgotPasswordScreen() {
 
   const handleSubmit = async () => {
     if (!identifierInput.trim()) {
-      Alert.alert("Error", "Please enter a phone number or email")
+      showAlert("Error", "Please enter a phone number or email")
       return
     }
 
     if (!isValid) {
-      Alert.alert(
+      showAlert(
         "Invalid input",
         kind === "email"
           ? "Please enter a valid email address"
@@ -44,7 +45,7 @@ export default function ForgotPasswordScreen() {
       // the identifier matches an account, so there's no "no account found"
       // branch — an unknown identifier is indistinguishable from a real one
       // that just got a code emailed to it.
-      Alert.alert("Couldn't send code", extractErrorMessage(error))
+      showAlert("Couldn't send code", extractErrorMessage(error))
     } finally {
       setIsLoading(false)
     }

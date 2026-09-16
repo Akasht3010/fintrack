@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react"
-import { View, Text, ActivityIndicator, Alert } from "react-native"
+import { View, Text, ActivityIndicator } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { Colors } from "@/constants/colors"
+import { showAlert } from "@/utils/alert"
 
 /**
  * Landing screen for the Google sign-in OAuth redirect
@@ -41,10 +42,10 @@ export default function AuthCallback() {
           router.replace("/(tabs)")
           return
         } catch {
-          Alert.alert("Google sign-in failed", "Something went wrong finishing sign-in")
+          showAlert("Google sign-in failed", "Something went wrong finishing sign-in")
         }
       } else {
-        Alert.alert("Google sign-in failed", typeof error === "string" ? error : "Google sign-in did not return a code")
+        showAlert("Google sign-in failed", typeof error === "string" ? error : "Google sign-in did not return a code")
       }
       router.replace("/(auth)/login")
     }
