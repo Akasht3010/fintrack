@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from "expo-router"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
+import { extractErrorMessage } from "@/api/client"
 import { useState } from "react"
 import { classifyIdentifier, isValidEmail, isValidPhone } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
@@ -92,17 +93,14 @@ export default function SignupScreen() {
       if (error.response?.status === 409) {
         const goToLogin = await confirm(
           "Account already exists",
-          error.response?.data?.detail || "This email or phone number is already registered.",
+          extractErrorMessage(error, "This email or phone number is already registered."),
           { confirmLabel: "Log In" }
         )
         if (goToLogin) {
           router.replace({ pathname: "/(auth)/login", params: { identifier: email.trim() } })
         }
       } else {
-        Alert.alert(
-          "Sign up failed",
-          error.response?.data?.detail || error.message || "Something went wrong"
-        )
+        Alert.alert("Sign up failed", extractErrorMessage(error))
       }
     } finally {
       setIsLoading(false)

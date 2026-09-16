@@ -56,6 +56,27 @@ function RootLayoutNav() {
   // getMe() call, turning a valid sign-in into a spurious 401.
   const isOAuthCallbackRoute = pathname === "/auth-callback" || pathname === "/gmail-callback"
 
+  const checkAuth = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("access_token")
+      if (!token) {
+        return
+      }
+
+      // Validates the token and refreshes the cached user in one step —
+      // if it's expired/invalid this throws and we fall through to clearing
+      // the stale session instead of leaving the user stuck on a broken one.
+      const user = await authApi.getMe()
+      await SecureStore.setItemAsync("user", JSON.stringify(user))
+      setUser(user)
+    } catch {
+      await SecureStore.deleteItemAsync("access_token")
+      await SecureStore.deleteItemAsync("user")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     Promise.all([checkAuth(), hydrateTheme()])
   }, [])
@@ -82,28 +103,6 @@ function RootLayoutNav() {
     // the user back to the login screen instead of leaving them stranded on
     // a now-broken authenticated screen.
   }, [isLoading, isAuthenticated, isOAuthCallbackRoute])
-
-  const checkAuth = async () => {
-    try {
-      const token = await SecureStore.getItemAsync("access_token")
-      if (!token) {
-        return
-      }
-
-      // Validates the token and refreshes the cached user in one step —
-      // if it's expired/invalid this throws and we fall through to clearing
-      // the stale session instead of leaving the user stuck on a broken one.
-      const user = await authApi.getMe()
-      await SecureStore.setItemAsync("user", JSON.stringify(user))
-      setUser(user)
-    } catch (err) {
-      await SecureStore.deleteItemAsync("access_token")
-      await SecureStore.deleteItemAsync("refresh_token")
-      await SecureStore.deleteItemAsync("user")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     // Desktop-web layout lives per route group instead of here: (auth) frames

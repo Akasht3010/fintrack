@@ -4,6 +4,7 @@ import { router } from "expo-router"
 import { useState } from "react"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
+import { extractErrorMessage } from "@/api/client"
 import { storage as SecureStore } from "@/utils/storage"
 import { isValidEmail, isValidPhone } from "@/utils/identifier"
 import { GlowBackground } from "@/components/shared/GlowBackground"
@@ -40,7 +41,7 @@ export default function EditProfileScreen() {
       setUser(updated)
       router.back()
     } catch (error: any) {
-      Alert.alert("Error", error?.response?.data?.detail || "Failed to update profile")
+      Alert.alert("Error", extractErrorMessage(error, "Failed to update profile"))
     } finally {
       setIsSaving(false)
     }

@@ -9,14 +9,18 @@ import { Colors } from "@/constants/colors"
 
 /**
  * Landing screen for the Google sign-in OAuth redirect
- * (exp://.../--/auth-callback?token=...|error=...). Same fallback role as
+ * (exp://.../--/auth-callback?code=...|error=...). Same fallback role as
  * gmail-callback.tsx — WebBrowser.openAuthSessionAsync (see useGoogleAuth)
  * is meant to intercept this before Expo Router ever sees it, but that
  * interception isn't reliable on Android/Expo Go, so this route has to
  * exist for real or the user lands on "Unmatched Route" mid sign-in.
+ *
+ * `code` is a short-lived, single-use exchange code, not the real JWT (see
+ * useGoogleAuth / the backend's google_callback for why) — traded here for
+ * the actual access token via authApi.exchangeGoogleCode.
  */
 export default function AuthCallback() {
-  const { token, error } = useLocalSearchParams<{ token?: string; error?: string }>()
+  const { code, error } = useLocalSearchParams<{ code?: string; error?: string }>()
   const { setUser } = useUserStore()
   const handled = useRef(false)
 
@@ -27,8 +31,9 @@ export default function AuthCallback() {
     WebBrowser.dismissBrowser()
 
     const finish = async () => {
-      if (typeof token === "string" && token) {
+      if (typeof code === "string" && code) {
         try {
+          const { access_token: token } = await authApi.exchangeGoogleCode(code)
           await SecureStore.setItemAsync("access_token", token)
           const user = await authApi.getMe()
           await SecureStore.setItemAsync("user", JSON.stringify(user))
@@ -39,7 +44,7 @@ export default function AuthCallback() {
           Alert.alert("Google sign-in failed", "Something went wrong finishing sign-in")
         }
       } else {
-        Alert.alert("Google sign-in failed", typeof error === "string" ? error : "Google sign-in did not return a token")
+        Alert.alert("Google sign-in failed", typeof error === "string" ? error : "Google sign-in did not return a code")
       }
       router.replace("/(auth)/login")
     }

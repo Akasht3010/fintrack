@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from "expo-router"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
+import { extractErrorMessage } from "@/api/client"
 import { useState, useEffect, useRef } from "react"
 
 const OTP_LENGTH = 6
@@ -81,10 +82,7 @@ export default function ResetPasswordScreen() {
         handleExpiredSession()
       } else {
         setCode("")
-        Alert.alert(
-          "Couldn't reset password",
-          error.response?.data?.detail || error.message || "Something went wrong"
-        )
+        Alert.alert("Couldn't reset password", extractErrorMessage(error))
       }
     } finally {
       setIsLoading(false)
@@ -102,10 +100,7 @@ export default function ResetPasswordScreen() {
       if (error.response?.status === 401) {
         handleExpiredSession()
       } else {
-        Alert.alert(
-          "Couldn't resend code",
-          error.response?.data?.detail || error.message || "Something went wrong"
-        )
+        Alert.alert("Couldn't resend code", extractErrorMessage(error))
       }
     } finally {
       setIsResending(false)

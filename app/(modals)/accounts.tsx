@@ -13,6 +13,7 @@ import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { Chip } from "@/components/shared/Chip"
 import { confirm } from "@/utils/confirm"
+import { extractErrorMessage as errorDetail } from "@/api/client"
 
 const ACCOUNT_TYPES: AccountType[] = ["bank", "cash", "credit_card", "wallet", "investment"]
 
@@ -30,10 +31,6 @@ const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   credit_card: "Credit Card",
   wallet: "Wallet",
   investment: "Investment"
-}
-
-function errorDetail(error: any, fallback: string): string {
-  return error?.response?.data?.detail || fallback
 }
 
 function invalidateAccountQueries(queryClient: ReturnType<typeof useQueryClient>) {

@@ -5,6 +5,7 @@ import SmsReader from "../../modules/sms-reader"
 import { smsApi } from "@/api/endpoints/sms"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
+import { extractErrorMessage } from "@/api/client"
 
 // Reading the whole inbox and shipping it to the backend would mean every
 // personal text leaves the device just to find the handful of bank alerts —
@@ -83,7 +84,7 @@ export function useSmsSync() {
       }
     } catch (error: any) {
       if (!silent) {
-        Alert.alert("Sync failed", error.response?.data?.detail || error.message || "Something went wrong")
+        Alert.alert("Sync failed", extractErrorMessage(error))
       }
     } finally {
       setIsSyncing(false)

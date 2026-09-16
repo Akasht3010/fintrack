@@ -144,5 +144,13 @@ export const authApi = {
   async refreshToken(): Promise<{ access_token: string }> {
     const response = await apiClient.post<{ access_token: string }>("/api/auth/refresh")
     return response.data
+  },
+
+  // Trades the one-time `code` from the Google sign-in redirect for the
+  // real access token — see the backend's google_callback/google_exchange
+  // for why the token itself doesn't travel in that redirect's URL.
+  async exchangeGoogleCode(code: string): Promise<{ access_token: string }> {
+    const response = await apiClient.post<{ access_token: string }>("/api/auth/google/exchange", { code })
+    return response.data
   }
 }

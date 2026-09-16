@@ -3,6 +3,7 @@ import { File, Paths } from "expo-file-system"
 import * as Sharing from "expo-sharing"
 import { useState } from "react"
 import { transactionApi, TransactionExportFilters } from "@/api/endpoints/transactions"
+import { extractErrorMessage } from "@/api/client"
 
 export function useExportTransactions() {
   const [isExporting, setIsExporting] = useState(false)
@@ -36,7 +37,7 @@ export function useExportTransactions() {
 
       return { success: true }
     } catch (error: any) {
-      return { success: false, error: error?.response?.data?.detail || "Failed to export transactions" }
+      return { success: false, error: extractErrorMessage(error, "Failed to export transactions") }
     } finally {
       setIsExporting(false)
     }

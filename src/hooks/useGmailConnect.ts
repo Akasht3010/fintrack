@@ -8,6 +8,8 @@ import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { ENV } from "@/config/env"
 import { authApi } from "@/api/endpoints/auth"
+import { gmailApi } from "@/api/endpoints/gmail"
+import { extractErrorMessage } from "@/api/client"
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -15,9 +17,11 @@ WebBrowser.maybeCompleteAuthSession()
  * Same backend-mediated pattern as useGoogleAuth: the app's own deep link
  * changes every Expo Go session, so the backend's fixed /callback handles
  * the actual OAuth round-trip and bounces back to the app's current URL.
- * Unlike login, the user is already authenticated here — their existing
- * access token is passed as a query param so the backend knows which
- * account to attach the Gmail refresh token to.
+ * Unlike login, the user is already authenticated here — but since
+ * /authorize is opened as a top-level browser navigation (no room for an
+ * Authorization header), we first fetch a one-time link token over a normal
+ * authenticated request and pass *that* in the URL instead of the real
+ * access token (see gmailApi.linkToken).
  */
 export interface GmailConnectResult {
   success: boolean
@@ -32,10 +36,7 @@ export function useGmailConnect() {
     setIsLoading(true)
 
     try {
-      const accessToken = await SecureStore.getItemAsync("access_token")
-      if (!accessToken) {
-        return { success: false, error: "You need to be logged in to connect Gmail" }
-      }
+      const { link_token } = await gmailApi.linkToken()
 
       // Pin our custom scheme in a real build (`fintrack://gmail-callback`,
       // resolvable anywhere); in Expo Go fall back to the Expo Go redirect
@@ -45,7 +46,7 @@ export function useGmailConnect() {
       const appRedirectUri = AuthSession.makeRedirectUri(
         inExpoGo ? { path: "gmail-callback" } : { scheme: "fintrack", path: "gmail-callback" }
       )
-      const authorizeUrl = `${ENV.API_URL}/api/gmail/authorize?token=${encodeURIComponent(accessToken)}&app_redirect_uri=${encodeURIComponent(appRedirectUri)}`
+      const authorizeUrl = `${ENV.API_URL}/api/gmail/authorize?link_token=${encodeURIComponent(link_token)}&app_redirect_uri=${encodeURIComponent(appRedirectUri)}`
 
       if (Platform.OS === "web") {
         // Same reasoning as useGoogleAuth: popups are unreliable on web
@@ -77,7 +78,7 @@ export function useGmailConnect() {
       setUser(user)
       return { success: true }
     } catch (err: any) {
-      return { success: false, error: err.message ?? "Something went wrong" }
+      return { success: false, error: extractErrorMessage(err) }
     } finally {
       setIsLoading(false)
     }

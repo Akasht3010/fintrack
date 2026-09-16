@@ -7,6 +7,7 @@ import { budgetApi } from "@/api/endpoints/budgets"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
+import { extractErrorMessage } from "@/api/client"
 
 export interface GmailSyncOptions {
   // Suppresses the result/error alerts — used for automatic sync-on-open so
@@ -41,7 +42,7 @@ export function useGmailSync() {
       }
     } catch (error: any) {
       if (!silent) {
-        Alert.alert("Sync failed", error.response?.data?.detail || "Something went wrong")
+        Alert.alert("Sync failed", extractErrorMessage(error))
       }
       // A sync failure can mean the backend just cleared a stale/expired
       // Gmail connection (e.g. Google's 7-day testing-token expiry) —

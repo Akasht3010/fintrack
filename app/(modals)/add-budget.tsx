@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useMemo, useEffect } from "react"
 import { budgetApi } from "@/api/endpoints/budgets"
+import { extractErrorMessage } from "@/api/client"
 import { useCategories } from "@/hooks/useCategories"
 import { TransactionCategory } from "@/types/domain"
 import { GlowBackground } from "@/components/shared/GlowBackground"
@@ -34,6 +35,8 @@ export default function AddBudgetScreen() {
 
   useEffect(() => {
     if (existing) {
+      // Populating edit-mode fields once the existing budget finishes loading.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCategory(existing.category)
       setPeriod(existing.period)
       setLimitAmount(String(existing.limit_amount))
@@ -59,7 +62,7 @@ export default function AddBudgetScreen() {
       router.back()
     } catch (error: any) {
       if (error.response?.status === 409) {
-        Alert.alert("Budget already exists", error.response?.data?.detail || "This category already has a budget for the current period.")
+        Alert.alert("Budget already exists", extractErrorMessage(error, "This category already has a budget for the current period."))
       } else {
         Alert.alert("Error", `Failed to ${isEditMode ? "update" : "create"} budget`)
       }

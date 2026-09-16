@@ -10,10 +10,7 @@ import { ErrorState } from "@/components/shared/ErrorState"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { confirm } from "@/utils/confirm"
-
-function errorDetail(error: any, fallback: string): string {
-  return error?.response?.data?.detail || fallback
-}
+import { extractErrorMessage as errorDetail } from "@/api/client"
 
 function CategoryRow({ category }: { category: Category }) {
   const queryClient = useQueryClient()

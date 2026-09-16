@@ -8,11 +8,13 @@ import { useCategories } from "@/hooks/useCategories"
 import { useAccounts } from "@/hooks/useAccounts"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { budgetApi } from "@/api/endpoints/budgets"
+import { extractErrorMessage } from "@/api/client"
 import { Budget } from "@/types/domain"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
+import { generateIdempotencyKey } from "@/utils/idempotencyKey"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { Chip } from "@/components/shared/Chip"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 
 export default function AddExpenseScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
@@ -28,6 +30,10 @@ export default function AddExpenseScreen() {
   const { data: accounts } = useAccounts()
   const queryClient = useQueryClient()
   const [isSaving, setIsSaving] = useState(false)
+  // Generated once per screen visit (not per submit) so a retried create —
+  // not a deliberate resubmission after an error, but a network-level retry
+  // of the same attempt — reuses the same key and gets deduped server-side.
+  const idempotencyKeyRef = useRef(generateIdempotencyKey())
 
   const { data: existing, isLoading: isLoadingExisting } = useQuery({
     queryKey: ["transaction", id],
@@ -46,6 +52,7 @@ export default function AddExpenseScreen() {
   // the other list — fall back to the first category the new list actually has.
   useEffect(() => {
     if (categories?.length && !categories.some(c => c.name === selectedCategory)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedCategory(categories[0].name)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,6 +60,8 @@ export default function AddExpenseScreen() {
 
   useEffect(() => {
     if (existing) {
+      // Populating edit-mode fields once the existing transaction finishes loading.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAmount(String(existing.amount))
       setMerchant(existing.merchant)
       setDescription(existing.description === existing.merchant ? "" : existing.description)
@@ -122,7 +131,8 @@ export default function AddExpenseScreen() {
       date: new Date().toISOString(),
       source: "manual",
       is_recurring: false,
-      account_id: selectedAccountId ?? null
+      account_id: selectedAccountId ?? null,
+      idempotency_key: idempotencyKeyRef.current
     }, {
       onSuccess: async () => {
         queryClient.invalidateQueries({ queryKey: ["net-worth"] })
@@ -139,10 +149,9 @@ export default function AddExpenseScreen() {
       },
       onError: (error: any) => {
         console.log("Add transaction failed:", error?.response?.status, error?.response?.data, error?.message)
-        const detail = error?.response?.data?.detail
         Alert.alert(
           "Error",
-          detail || `Failed to add ${transactionType === "credit" ? "credit" : "expense"} (${error?.message || "unknown error"})`
+          extractErrorMessage(error, `Failed to add ${transactionType === "credit" ? "credit" : "expense"}`)
         )
       }
     })

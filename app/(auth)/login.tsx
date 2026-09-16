@@ -5,10 +5,10 @@ import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
 import { storage as SecureStore } from "@/utils/storage"
 import { authApi } from "@/api/endpoints/auth"
+import { extractErrorMessage } from "@/api/client"
 import { useState, useEffect } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
-import { confirm } from "@/utils/confirm"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { BrandMark } from "@/components/shared/BrandMark"
 
@@ -21,18 +21,18 @@ export default function LoginScreen() {
   const { signIn: signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth()
   const isDesktop = useIsDesktop()
 
-  useEffect(() => {
-    clearOldTokens()
-  }, [])
-
   const clearOldTokens = async () => {
     try {
       await SecureStore.deleteItemAsync("access_token")
       await SecureStore.deleteItemAsync("user")
-    } catch (err) {
+    } catch {
       console.log("No tokens to clear")
     }
   }
+
+  useEffect(() => {
+    clearOldTokens()
+  }, [])
 
   const { kind, value, isValid } = classifyIdentifier(identifierInput)
 
@@ -76,21 +76,11 @@ export default function LoginScreen() {
         params: { pendingToken: response.pending_token, emailHint: response.email_hint }
       })
     } catch (error: any) {
-      if (error.response?.status === 404) {
-        const goToSignup = await confirm(
-          "No account found",
-          `We couldn't find an account for that ${kind === "email" ? "email" : "phone number"}.`,
-          { confirmLabel: "Sign Up" }
-        )
-        if (goToSignup) {
-          router.push({ pathname: "/(auth)/signup", params: { identifier: value } })
-        }
-      } else {
-        Alert.alert(
-          "Sign in failed",
-          error.response?.data?.detail || error.message || "Something went wrong"
-        )
-      }
+      // The backend deliberately returns the same 401 + message whether the
+      // identifier is unknown or the password is wrong (avoids leaking
+      // whether a phone/email owns an account) — so there's no "offer to
+      // sign up" branch here anymore; just show the generic failure.
+      Alert.alert("Sign in failed", extractErrorMessage(error))
     } finally {
       setIsLoading(false)
     }

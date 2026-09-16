@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { router, useLocalSearchParams } from "expo-router"
 import { authApi } from "@/api/endpoints/auth"
+import { extractErrorMessage } from "@/api/client"
 import { useState } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
 
@@ -39,17 +40,11 @@ export default function ForgotPasswordScreen() {
         params: { pendingToken: response.pending_token, emailHint: response.email_hint }
       })
     } catch (error: any) {
-      if (error.response?.status === 404) {
-        Alert.alert(
-          "No account found",
-          `We couldn't find an account for that ${kind === "email" ? "email" : "phone number"}.`
-        )
-      } else {
-        Alert.alert(
-          "Couldn't send code",
-          error.response?.data?.detail || error.message || "Something went wrong"
-        )
-      }
+      // The backend always returns the same shape here regardless of whether
+      // the identifier matches an account, so there's no "no account found"
+      // branch — an unknown identifier is indistinguishable from a real one
+      // that just got a code emailed to it.
+      Alert.alert("Couldn't send code", extractErrorMessage(error))
     } finally {
       setIsLoading(false)
     }
@@ -75,7 +70,7 @@ export default function ForgotPasswordScreen() {
               Reset password
             </Text>
             <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
-              Enter your phone number or email and{"\n"}we'll send you a verification code
+              Enter your phone number or email and{"\n"}we&apos;ll send you a verification code
             </Text>
 
             <View className="w-full gap-4">

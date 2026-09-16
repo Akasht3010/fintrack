@@ -10,6 +10,7 @@ import { useGmailSync } from "@/hooks/useGmailSync"
 import { useSmsSync } from "@/hooks/useSmsSync"
 import { gmailApi } from "@/api/endpoints/gmail"
 import { authApi } from "@/api/endpoints/auth"
+import { extractErrorMessage } from "@/api/client"
 import { storage as SecureStore } from "@/utils/storage"
 import { formatDate } from "@/utils/date"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
@@ -70,7 +71,7 @@ export default function ProfileScreen() {
       await SecureStore.setItemAsync("user", JSON.stringify(refreshed))
       setUser(refreshed)
     } catch (error: any) {
-      Alert.alert("Error", error?.response?.data?.detail || "Failed to disconnect Gmail")
+      Alert.alert("Error", extractErrorMessage(error, "Failed to disconnect Gmail"))
     } finally {
       setIsDisconnecting(false)
     }

@@ -12,6 +12,10 @@ export interface TransactionCreatePayload {
   is_recurring?: boolean
   raw_text?: string
   account_id?: number | null
+  // Lets a retried create (e.g. resent after a timeout, the first attempt
+  // having actually succeeded) 409 instead of silently double-inserting —
+  // see the backend's (user_id, idempotency_key) unique index.
+  idempotency_key?: string
 }
 
 export interface TransactionUpdatePayload {

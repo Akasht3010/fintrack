@@ -4,6 +4,7 @@ import { router } from "expo-router"
 import { useState } from "react"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
+import { extractErrorMessage } from "@/api/client"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { confirm } from "@/utils/confirm"
@@ -31,7 +32,7 @@ export default function DeleteAccountScreen() {
       await logout()
       router.replace("/(auth)/login")
     } catch (error: any) {
-      Alert.alert("Error", error?.response?.data?.detail || "Failed to delete account")
+      Alert.alert("Error", extractErrorMessage(error, "Failed to delete account"))
       setIsDeleting(false)
     }
   }

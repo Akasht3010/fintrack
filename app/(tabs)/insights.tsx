@@ -145,7 +145,7 @@ export default function InsightsScreen() {
                         Nothing detected yet
                       </Text>
                       <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
-                        We'll spot subscriptions once a merchant charges you a few times on a regular cadence
+                        We&apos;ll spot subscriptions once a merchant charges you a few times on a regular cadence
                       </Text>
                     </View>
                   )}

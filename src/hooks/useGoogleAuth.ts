@@ -17,8 +17,11 @@ WebBrowser.maybeCompleteAuthSession()
  * but Expo Go's own deep link changes every session (exp://<lan-ip>:8081/...).
  * So the app opens the backend's /api/auth/google/authorize, which redirects
  * to Google; Google redirects back to the backend's fixed /callback; and the
- * backend then redirects the browser to *our* dynamic deep link with our own
- * JWT attached, which WebBrowser.openAuthSessionAsync catches.
+ * backend then redirects the browser to *our* dynamic deep link with a
+ * short-lived, single-use `code` attached (not the real JWT — see the
+ * backend's google_callback comment for why), which
+ * WebBrowser.openAuthSessionAsync catches. That code is then traded for the
+ * real access token via authApi.exchangeGoogleCode.
  */
 export interface GoogleSignInResult {
   success: boolean
@@ -67,11 +70,12 @@ export function useGoogleAuth() {
         return { success: false, error: "Google sign-in failed" }
       }
 
-      const token = Linking.parse(result.url).queryParams?.token
-      if (!token || typeof token !== "string") {
-        return { success: false, error: "Google sign-in did not return a token" }
+      const code = Linking.parse(result.url).queryParams?.code
+      if (!code || typeof code !== "string") {
+        return { success: false, error: "Google sign-in did not return a code" }
       }
 
+      const { access_token: token } = await authApi.exchangeGoogleCode(code)
       await SecureStore.setItemAsync("access_token", token)
       const user = await authApi.getMe()
       await SecureStore.setItemAsync("user", JSON.stringify(user))
