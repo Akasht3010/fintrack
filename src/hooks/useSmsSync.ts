@@ -14,6 +14,34 @@ import { showAlert } from "@/utils/alert"
 // that could plausibly be a transaction alert get sent at all.
 const LOOKS_LIKE_BANK_SMS = /(?:INR|Rs\.?|₹)\s*[:.]?\s*[\d,]+|[\d,]+\s*(?:INR|Rs\.?|₹)/i
 
+// The currency check alone is too broad — a friend's "Rs 500 for dinner"
+// text matches it too. Real bank/merchant SMS in India comes from a
+// DLT-registered alphanumeric sender id (e.g. "HDFCBK", "VM-ICICIB") or a
+// short numeric code, never from an ordinary phone number — requiring the
+// sender to look like one of those keeps personal messages from a phone
+// number out even when they happen to mention a rupee amount.
+const LOOKS_LIKE_BANK_SENDER = /^(?:[A-Z]{2}-)?[A-Z0-9]{6}$|^\d{5,6}$/
+
+// Bank senders also carry OTPs ("HDFCBK: 123456 is your OTP") — strip the
+// code itself before the message body ever leaves the device, independent
+// of whether the message is otherwise a real transaction alert.
+const OTP_DIGITS_BEFORE_KEYWORD = /\b\d{4,8}\b(?=[^\d]{0,20}\botp\b)/gi
+const OTP_DIGITS_AFTER_KEYWORD = /\botp\b[^\d]{0,20}\b(\d{4,8})\b/gi
+
+export function redactOtp(body: string): string {
+  return body
+    .replace(OTP_DIGITS_BEFORE_KEYWORD, "[REDACTED]")
+    .replace(OTP_DIGITS_AFTER_KEYWORD, (match, digits: string) => match.replace(digits, "[REDACTED]"))
+}
+
+export function isLikelyBankSms(address: string | null | undefined, body: string | null | undefined): boolean {
+  return Boolean(
+    body &&
+    LOOKS_LIKE_BANK_SMS.test(body) &&
+    LOOKS_LIKE_BANK_SENDER.test((address || "").trim().toUpperCase())
+  )
+}
+
 const INBOX_READ_LIMIT = 500
 
 export interface SmsSyncOptions {
@@ -57,8 +85,8 @@ export function useSmsSync() {
 
       const messages = await SmsReader.getInboxMessages(INBOX_READ_LIMIT)
       const candidates = messages
-        .filter((message) => message.body && LOOKS_LIKE_BANK_SMS.test(message.body))
-        .map((message) => ({ address: message.address, body: message.body, date: message.date }))
+        .filter((message) => isLikelyBankSms(message.address, message.body))
+        .map((message) => ({ address: message.address, body: redactOtp(message.body!), date: message.date }))
 
       if (candidates.length === 0) {
         if (!silent) {
