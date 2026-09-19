@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { storage as SecureStore } from "@/utils/storage"
+import { authApi } from "@/api/endpoints/auth"
 import { User } from "@/types/domain"
 
 interface UserState {
@@ -21,6 +22,16 @@ export const useUserStore = create<UserState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   logout: async () => {
+    try {
+      // Best-effort: bumps token_version server-side so this token (and any
+      // other outstanding one) stops working immediately instead of staying
+      // valid until its natural expiry. Never block clearing local state on
+      // this — an already-expired/invalid token, a deleted account, or no
+      // network at all are all reasons this can fail harmlessly.
+      await authApi.logout()
+    } catch {
+      // Local logout must still succeed either way.
+    }
     await SecureStore.deleteItemAsync("access_token")
     await SecureStore.deleteItemAsync("user")
     set({ user: null, isAuthenticated: false, isLoading: false })

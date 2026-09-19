@@ -146,6 +146,14 @@ export const authApi = {
     return response.data
   },
 
+  // Logs out everywhere: bumps the account's token_version server-side so
+  // every outstanding access token (this device and any other) stops
+  // working immediately, rather than staying valid until its natural
+  // expiry — see the backend's /api/auth/logout.
+  async logout(): Promise<void> {
+    await apiClient.post("/api/auth/logout")
+  },
+
   // Trades the one-time `code` from the Google sign-in redirect for the
   // real access token — see the backend's google_callback/google_exchange
   // for why the token itself doesn't travel in that redirect's URL.

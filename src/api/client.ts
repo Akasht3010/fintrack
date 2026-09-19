@@ -87,7 +87,10 @@ async function getFreshAccessToken(): Promise<string | null> {
   if (!token) return null
 
   const expiryMs = getTokenExpiryMs(token)
-  if (expiryMs === null || expiryMs - Date.now() >= REFRESH_THRESHOLD_MS) {
+  // A decode failure (corrupted storage, unexpected token shape) means the
+  // expiry can't be trusted either way — refresh now rather than sending a
+  // token straight to the server that's likely to just 401 there instead.
+  if (expiryMs !== null && expiryMs - Date.now() >= REFRESH_THRESHOLD_MS) {
     return token
   }
 
