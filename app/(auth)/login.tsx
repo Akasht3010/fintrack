@@ -27,7 +27,7 @@ export default function LoginScreen() {
       await SecureStore.deleteItemAsync("access_token")
       await SecureStore.deleteItemAsync("user")
     } catch {
-      console.log("No tokens to clear")
+      console.log("Failed to clear old tokens")
     }
   }
 
