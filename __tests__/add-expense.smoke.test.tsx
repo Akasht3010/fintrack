@@ -1,6 +1,8 @@
-import { render, waitFor } from "@testing-library/react-native"
+import { render, waitFor, fireEvent } from "@testing-library/react-native"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import AddExpenseScreen from "../app/(modals)/add-expense"
+import { transactionApi } from "@/api/endpoints/transactions"
+import { showAlert } from "@/utils/alert"
 
 jest.mock("expo-router", () => ({
   router: { push: jest.fn(), replace: jest.fn(), back: jest.fn() },
@@ -35,6 +37,10 @@ jest.mock("@/utils/budgetAlerts", () => ({
   notifyBudgetThresholdCrossings: jest.fn()
 }))
 
+jest.mock("@/utils/alert", () => ({
+  showAlert: jest.fn()
+}))
+
 function renderWithClient(ui: React.ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>)
@@ -44,5 +50,19 @@ describe("AddExpenseScreen", () => {
   it("renders without crashing", async () => {
     const { getAllByText } = await renderWithClient(<AddExpenseScreen />)
     await waitFor(() => expect(getAllByText("Add Expense").length).toBeGreaterThan(0))
+  })
+
+  it("rejects a non-numeric amount instead of submitting it as null", async () => {
+    // Regression test for F-P0-2: handleSubmit previously only checked
+    // amount.trim(), so "abc" sailed through parseFloat into `amount: NaN`
+    // (-> JSON `null`) with no client-side error message.
+    const { getAllByText, getByPlaceholderText } = await renderWithClient(<AddExpenseScreen />)
+    await waitFor(() => expect(getAllByText("Add Expense").length).toBeGreaterThan(0))
+
+    fireEvent.changeText(getByPlaceholderText("0.00"), "abc")
+    fireEvent.press(getAllByText("Add Expense")[1])
+
+    await waitFor(() => expect(showAlert).toHaveBeenCalledWith("Error", "Please enter a valid amount"))
+    expect(transactionApi.create).not.toHaveBeenCalled()
   })
 })

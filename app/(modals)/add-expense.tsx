@@ -75,8 +75,9 @@ export default function AddExpenseScreen() {
   const isPending = isCreating || isSaving
 
   const handleSubmit = async () => {
-    if (!amount.trim()) {
-      showAlert("Error", "Please enter an amount")
+    const parsedAmount = parseFloat(amount)
+    if (!amount.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
+      showAlert("Error", "Please enter a valid amount")
       return
     }
 
@@ -89,7 +90,7 @@ export default function AddExpenseScreen() {
       setIsSaving(true)
       try {
         await transactionApi.update(transactionId!, {
-          amount: parseFloat(amount),
+          amount: parsedAmount,
           type: transactionType,
           category: selectedCategory,
           merchant,
@@ -124,7 +125,7 @@ export default function AddExpenseScreen() {
     }
 
     createTransaction({
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       type: transactionType,
       category: selectedCategory,
       merchant,
@@ -149,7 +150,9 @@ export default function AddExpenseScreen() {
         router.back()
       },
       onError: (error: any) => {
-        console.log("Add transaction failed:", error?.response?.status, error?.response?.data, error?.message)
+        if (__DEV__) {
+          console.log("Add transaction failed:", error?.response?.status, error?.response?.data, error?.message)
+        }
         showAlert(
           "Error",
           extractErrorMessage(error, `Failed to add ${transactionType === "credit" ? "credit" : "expense"}`)
