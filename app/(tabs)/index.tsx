@@ -58,8 +58,8 @@ export default function DashboardScreen() {
 
   const { data: transactions = [], isLoading, error, refetch } = useQuery({
     queryKey: ["transactions", user?.id],
-    queryFn: async () => {
-      const response = await transactionApi.list({ page: 1, limit: 20 })
+    queryFn: async ({ signal }) => {
+      const response = await transactionApi.list({ page: 1, limit: 20 }, signal)
       return response.transactions
     },
     enabled: !!user?.id
@@ -70,7 +70,7 @@ export default function DashboardScreen() {
   // couldn't match the Insights tab.
   const { data: insights, refetch: refetchInsights } = useQuery({
     queryKey: ["insights"],
-    queryFn: () => insightsApi.summary(1),
+    queryFn: ({ signal }) => insightsApi.summary(1, signal),
     enabled: !!user?.id
   })
 

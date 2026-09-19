@@ -24,7 +24,7 @@ export default function RecurringScreen() {
   const CATEGORY_ICONS = useCategoryIcons()
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["recurring"],
-    queryFn: () => recurringApi.summary()
+    queryFn: ({ signal }) => recurringApi.summary(signal)
   })
 
   return (

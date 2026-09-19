@@ -20,7 +20,7 @@ export default function AddBudgetScreen() {
 
   const { data: budgets } = useQuery({
     queryKey: ["budgets"],
-    queryFn: () => budgetApi.list(),
+    queryFn: ({ signal }) => budgetApi.list(signal),
     enabled: isEditMode
   })
 
@@ -151,6 +151,7 @@ export default function AddBudgetScreen() {
               keyboardType="decimal-pad"
               className="flex-1 py-4 px-3 text-xl font-bold text-neutral-900 dark:text-white"
               placeholderTextColor="#9ca3af"
+              accessibilityLabel="Limit amount"
             />
           </View>
         </View>
@@ -160,6 +161,7 @@ export default function AddBudgetScreen() {
         <TouchableOpacity
           onPress={handleSubmit}
           disabled={isSubmitting}
+          accessibilityRole="button"
           className={`w-full items-center justify-center rounded-2xl py-4 ${
             isSubmitting
               ? "bg-neutral-200 dark:bg-neutral-800"

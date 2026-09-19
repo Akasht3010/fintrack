@@ -8,7 +8,7 @@ import { Category, CategoryType } from "@/types/domain"
 export function useCategories(type?: CategoryType) {
   return useQuery<Category[]>({
     queryKey: ["categories", type ?? "all"],
-    queryFn: () => categoriesApi.list(type)
+    queryFn: ({ signal }) => categoriesApi.list(type, signal)
   })
 }
 

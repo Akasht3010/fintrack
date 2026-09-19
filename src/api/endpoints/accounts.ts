@@ -2,14 +2,15 @@ import { apiClient } from "@/api/client"
 import { Account, AccountType, NetWorthSummary } from "@/types/domain"
 
 export const accountsApi = {
-  async list(includeArchived = false): Promise<Account[]> {
+  async list(includeArchived = false, signal?: AbortSignal): Promise<Account[]> {
     const response = await apiClient.get<Account[]>("/api/accounts", {
-      params: { include_archived: includeArchived }
+      params: { include_archived: includeArchived },
+      signal
     })
     return response.data
   },
-  async netWorth(): Promise<NetWorthSummary> {
-    const response = await apiClient.get<NetWorthSummary>("/api/accounts/net-worth")
+  async netWorth(signal?: AbortSignal): Promise<NetWorthSummary> {
+    const response = await apiClient.get<NetWorthSummary>("/api/accounts/net-worth", { signal })
     return response.data
   },
   async create(data: { name: string; type: AccountType; opening_balance?: number }): Promise<Account> {

@@ -31,7 +31,7 @@ export default function TransactionDetailScreen() {
 
   const { data: transaction, isLoading, error } = useQuery({
     queryKey: ["transaction", id],
-    queryFn: () => transactionApi.getById(transactionId),
+    queryFn: ({ signal }) => transactionApi.getById(transactionId, signal),
     enabled: !!id
   })
 
@@ -47,7 +47,7 @@ export default function TransactionDetailScreen() {
       await transactionApi.delete(transactionId)
       queryClient.invalidateQueries({ queryKey: ["transactions"] })
       router.back()
-    } catch (err) {
+    } catch {
       setIsDeleting(false)
       showAlert("Error", "Failed to delete transaction")
     }
@@ -149,6 +149,7 @@ export default function TransactionDetailScreen() {
             <TouchableOpacity
               onPress={() => router.push({ pathname: "/(modals)/add-expense", params: { id: transaction.id } })}
               disabled={isDeleting}
+              accessibilityRole="button"
               className="w-full items-center justify-center bg-primary-600 dark:bg-accent-600 rounded-2xl py-4 cursor-pointer hover:opacity-90 transition-opacity duration-150"
             >
               <Text className="text-base font-semibold text-white">Edit Transaction</Text>
@@ -157,6 +158,7 @@ export default function TransactionDetailScreen() {
             <TouchableOpacity
               onPress={handleDelete}
               disabled={isDeleting}
+              accessibilityRole="button"
               className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/20"
             >
               {isDeleting ? (

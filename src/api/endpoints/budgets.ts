@@ -8,8 +8,8 @@ export interface BudgetCreatePayload {
 }
 
 export const budgetApi = {
-  async list(): Promise<Budget[]> {
-    const response = await apiClient.get<Budget[]>("/api/budgets")
+  async list(signal?: AbortSignal): Promise<Budget[]> {
+    const response = await apiClient.get<Budget[]>("/api/budgets", { signal })
     return response.data
   },
 

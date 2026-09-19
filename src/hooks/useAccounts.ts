@@ -5,13 +5,13 @@ import { Account, NetWorthSummary } from "@/types/domain"
 export function useAccounts(includeArchived = false) {
   return useQuery<Account[]>({
     queryKey: ["accounts", { includeArchived }],
-    queryFn: () => accountsApi.list(includeArchived)
+    queryFn: ({ signal }) => accountsApi.list(includeArchived, signal)
   })
 }
 
 export function useNetWorth() {
   return useQuery<NetWorthSummary>({
     queryKey: ["net-worth"],
-    queryFn: () => accountsApi.netWorth()
+    queryFn: ({ signal }) => accountsApi.netWorth(signal)
   })
 }

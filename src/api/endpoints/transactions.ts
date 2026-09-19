@@ -72,18 +72,19 @@ export const transactionApi = {
     return response.data
   },
 
-  async list(filters: TransactionListFilters = {}) {
+  async list(filters: TransactionListFilters = {}, signal?: AbortSignal) {
     const { page = 1, limit = 20, ...rest } = filters
     const response = await apiClient.get<TransactionListResponse>(
       "/api/transactions",
-      { params: { page, limit, ...rest } }
+      { params: { page, limit, ...rest }, signal }
     )
     return response.data
   },
 
-  async getById(transactionId: number): Promise<Transaction> {
+  async getById(transactionId: number, signal?: AbortSignal): Promise<Transaction> {
     const response = await apiClient.get<Transaction>(
-      `/api/transactions/${transactionId}`
+      `/api/transactions/${transactionId}`,
+      { signal }
     )
     return response.data
   },

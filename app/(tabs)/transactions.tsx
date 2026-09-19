@@ -56,7 +56,7 @@ export default function TransactionsScreen() {
     hasNextPage
   } = useInfiniteQuery({
     queryKey: ["transactions", user?.id, selectedCategory, debouncedSearch, dateRange, minAmount, maxAmount],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       transactionApi.list({
         page: pageParam,
         limit: PAGE_SIZE,
@@ -65,7 +65,7 @@ export default function TransactionsScreen() {
         date_from: dateFromForRange(dateRange),
         min_amount: minAmount ? parseFloat(minAmount) : undefined,
         max_amount: maxAmount ? parseFloat(maxAmount) : undefined
-      }),
+      }, signal),
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.page * lastPage.limit < lastPage.total ? lastPage.page + 1 : undefined,

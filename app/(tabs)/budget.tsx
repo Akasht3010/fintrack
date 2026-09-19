@@ -29,7 +29,7 @@ export default function BudgetScreen() {
 
   const { data: budgets, isLoading, error, refetch } = useQuery({
     queryKey: ["budgets"],
-    queryFn: () => budgetApi.list()
+    queryFn: ({ signal }) => budgetApi.list(signal)
   })
 
   useFocusEffect(
@@ -136,6 +136,8 @@ export default function BudgetScreen() {
                     <TouchableOpacity
                       onPress={() => handleDelete(budget.id, budget.category)}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete ${budget.category} budget`}
                     >
                       <Ionicons name="trash-outline" size={18} color={trashColor} />
                     </TouchableOpacity>

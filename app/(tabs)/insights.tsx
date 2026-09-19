@@ -25,12 +25,12 @@ export default function InsightsScreen() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["insights"],
-    queryFn: () => insightsApi.summary(6)
+    queryFn: ({ signal }) => insightsApi.summary(6, signal)
   })
 
   const { data: recurring, refetch: refetchRecurring } = useQuery({
     queryKey: ["recurring"],
-    queryFn: () => recurringApi.summary()
+    queryFn: ({ signal }) => recurringApi.summary(signal)
   })
 
   useFocusEffect(

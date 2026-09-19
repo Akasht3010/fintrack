@@ -38,7 +38,7 @@ export default function AddExpenseScreen() {
 
   const { data: existing, isLoading: isLoadingExisting } = useQuery({
     queryKey: ["transaction", id],
-    queryFn: () => transactionApi.getById(transactionId!),
+    queryFn: ({ signal }) => transactionApi.getById(transactionId!, signal),
     enabled: isEditMode
   })
 
@@ -218,6 +218,7 @@ export default function AddExpenseScreen() {
               keyboardType="decimal-pad"
               className="flex-1 py-4 px-3 text-xl font-bold text-neutral-900 dark:text-white"
               placeholderTextColor="#9ca3af"
+              accessibilityLabel="Amount"
             />
           </View>
         </View>
@@ -291,6 +292,7 @@ export default function AddExpenseScreen() {
         <TouchableOpacity
           onPress={handleSubmit}
           disabled={isPending}
+          accessibilityRole="button"
           className={`w-full items-center justify-center rounded-2xl py-4 ${
             isPending
               ? "bg-neutral-200 dark:bg-neutral-800"

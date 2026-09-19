@@ -3,8 +3,8 @@ import { Category, CategoryType } from "@/types/domain"
 
 export const categoriesApi = {
   /** Omit `type` for every category; pass "expense"/"income" to also include "both" (transfer, other) but exclude the other type's. */
-  async list(type?: CategoryType): Promise<Category[]> {
-    const response = await apiClient.get<Category[]>("/api/categories", { params: type ? { type } : undefined })
+  async list(type?: CategoryType, signal?: AbortSignal): Promise<Category[]> {
+    const response = await apiClient.get<Category[]>("/api/categories", { params: type ? { type } : undefined, signal })
     return response.data
   },
   async create(data: { name: string; icon: string; type?: CategoryType }): Promise<Category> {
