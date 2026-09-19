@@ -28,4 +28,12 @@ describe("formatCurrency", () => {
   it("formats a negative amount", () => {
     expect(formatCurrency(-500)).toBe("-₹500")
   })
+
+  it("formats a decimal-string amount, as the API now sends", () => {
+    expect(formatCurrency("1234.50")).toBe("₹1,234.5")
+  })
+
+  it("does not lose precision on a decimal string a float can't represent exactly", () => {
+    expect(formatCurrency("19.99")).toBe("₹19.99")
+  })
 })

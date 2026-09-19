@@ -5,8 +5,10 @@ import { Ionicons } from "@expo/vector-icons"
 import { useColorScheme } from "nativewind"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useCallback, useState } from "react"
+import { Decimal } from "decimal.js"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { formatCurrency } from "@/utils/currency"
+import { toDecimal } from "@/utils/money"
 import { Colors } from "@/constants/colors"
 import { useCategoryIcons } from "@/hooks/useCategories"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -92,9 +94,12 @@ export default function BudgetScreen() {
               just stretching the cards themselves. */}
           <View className="gap-3 lg:flex-row lg:flex-wrap">
             {budgets.map((budget) => {
-              const percent = Math.min(budget.spent_amount / budget.limit_amount, 1) * 100
-              const isOver = budget.spent_amount > budget.limit_amount
-              const remaining = budget.limit_amount - budget.spent_amount
+              // remaining_amount is server-computed (limit_amount -
+              // spent_amount) — use it rather than re-deriving the
+              // subtraction client-side.
+              const remaining = toDecimal(budget.remaining_amount)
+              const isOver = remaining.isNegative()
+              const percent = Decimal.min(toDecimal(budget.spent_amount).div(toDecimal(budget.limit_amount)).times(100), 100).toNumber()
 
               return (
                 // Width goes on this wrapper, not GlassCard's own className
@@ -125,7 +130,7 @@ export default function BudgetScreen() {
                     </View>
                     <Text className={`text-xs font-medium mr-2 ${isOver ? "text-red-600 dark:text-red-400" : "text-muted dark:text-neutral-400"}`}>
                       {isOver
-                        ? `${formatCurrency(Math.abs(remaining))} over`
+                        ? `${formatCurrency(remaining.abs())} over`
                         : `${formatCurrency(remaining)} left`}
                     </Text>
                     <TouchableOpacity

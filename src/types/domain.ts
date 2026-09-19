@@ -19,7 +19,8 @@ export interface Transaction {
   id: number
   user_id: number
   account_id?: number | null
-  amount: number
+  // Decimal string, e.g. "19.99" — see src/utils/money.ts.
+  amount: string
   currency: string
   type: TransactionType
   category: TransactionCategory
@@ -38,8 +39,9 @@ export interface Account {
   name: string
   type: AccountType
   currency: string
-  opening_balance: number
-  balance: number
+  // Decimal strings — see src/utils/money.ts.
+  opening_balance: string
+  balance: string
   is_archived: boolean
   created_at: string
 }
@@ -48,13 +50,13 @@ export interface NetWorthAccountItem {
   id: number
   name: string
   type: AccountType
-  balance: number
+  balance: string
 }
 
 export interface NetWorthSummary {
-  net_worth: number
-  total_assets: number
-  total_liabilities: number
+  net_worth: string
+  total_assets: string
+  total_liabilities: string
   accounts: NetWorthAccountItem[]
 }
 
@@ -62,8 +64,12 @@ export interface Budget {
   id: number
   user_id: number
   category: TransactionCategory
-  limit_amount: number
-  spent_amount: number
+  // Decimal strings — see src/utils/money.ts. remaining_amount is
+  // server-computed (limit_amount - spent_amount); prefer it over
+  // re-deriving the subtraction client-side.
+  limit_amount: string
+  spent_amount: string
+  remaining_amount: string
   period: "weekly" | "monthly"
   start_date: string
   end_date: string

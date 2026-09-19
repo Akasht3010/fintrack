@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { accountsApi } from "@/api/endpoints/accounts"
 import { useAccounts } from "@/hooks/useAccounts"
 import { formatCurrency } from "@/utils/currency"
+import { toDecimal } from "@/utils/money"
 import { Account, AccountType } from "@/types/domain"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -78,7 +79,8 @@ function AccountRow({ account }: { account: Account }) {
   }
 
   const isCreditCard = account.type === "credit_card"
-  const isNegative = account.balance < 0
+  const balance = toDecimal(account.balance)
+  const isNegative = balance.isNegative()
 
   if (isEditing) {
     return (
@@ -141,7 +143,7 @@ function AccountRow({ account }: { account: Account }) {
         <Text className={`text-sm font-bold ${
           isCreditCard || isNegative ? "text-red-600 dark:text-red-400" : "text-neutral-900 dark:text-white"
         }`}>
-          {isCreditCard && account.balance > 0 ? "Owes " : ""}{formatCurrency(Math.abs(account.balance))}
+          {isCreditCard && balance.gt(0) ? "Owes " : ""}{formatCurrency(balance.abs())}
         </Text>
       </View>
       <View className="flex-row justify-end gap-4 mt-2">
