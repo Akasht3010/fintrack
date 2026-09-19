@@ -105,7 +105,13 @@ function CategoryRow({ category }: { category: Category }) {
         <Text className="text-lg">{category.icon}</Text>
         <Text className="text-sm font-medium text-neutral-900 dark:text-white capitalize">{category.name}</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={handleDelete} disabled={isDeleting} className="px-2 py-1 cursor-pointer hover:opacity-70 transition-opacity duration-150">
+      <TouchableOpacity
+        onPress={handleDelete}
+        disabled={isDeleting}
+        accessibilityRole="button"
+        accessibilityLabel={`Delete ${category.name} category`}
+        className="px-2 py-1 cursor-pointer hover:opacity-70 transition-opacity duration-150"
+      >
         {isDeleting ? (
           <ActivityIndicator size="small" color="#dc2626" />
         ) : (

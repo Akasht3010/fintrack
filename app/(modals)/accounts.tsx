@@ -90,6 +90,7 @@ function AccountRow({ account }: { account: Account }) {
           onChangeText={setName}
           className="border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-white"
           placeholderTextColor="#9ca3af"
+          accessibilityLabel="Account name"
         />
         <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3">
           <Text className="text-sm text-muted dark:text-neutral-400 mr-2">Opening balance</Text>
@@ -98,12 +99,14 @@ function AccountRow({ account }: { account: Account }) {
             onChangeText={setOpeningBalance}
             keyboardType="decimal-pad"
             className="flex-1 py-2 text-sm text-neutral-900 dark:text-white text-right"
+            accessibilityLabel="Opening balance"
           />
         </View>
         <View className="flex-row gap-2">
           <TouchableOpacity
             onPress={() => update()}
             disabled={isUpdating || !name.trim()}
+            accessibilityRole="button"
             className="flex-1 items-center py-2 rounded-xl bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
           >
             {isUpdating ? <ActivityIndicator color="#fff" size="small" /> : (
@@ -147,12 +150,24 @@ function AccountRow({ account }: { account: Account }) {
         </Text>
       </View>
       <View className="flex-row justify-end gap-4 mt-2">
-        <TouchableOpacity onPress={() => archive()} disabled={isArchiving} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
+        <TouchableOpacity
+          onPress={() => archive()}
+          disabled={isArchiving}
+          accessibilityRole="button"
+          accessibilityLabel={`${account.is_archived ? "Unarchive" : "Archive"} ${account.name}`}
+          className="cursor-pointer hover:opacity-70 transition-opacity duration-150"
+        >
           <Text className="text-xs font-medium text-primary-600 dark:text-accent-400">
             {isArchiving ? "..." : account.is_archived ? "Unarchive" : "Archive"}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleDelete} disabled={isDeleting} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
+        <TouchableOpacity
+          onPress={handleDelete}
+          disabled={isDeleting}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${account.name}`}
+          className="cursor-pointer hover:opacity-70 transition-opacity duration-150"
+        >
           {isDeleting ? (
             <ActivityIndicator size="small" color="#dc2626" />
           ) : (
@@ -224,6 +239,7 @@ export default function AccountsScreen() {
               placeholder="e.g., HDFC Savings"
               className="border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-3 text-sm text-neutral-900 dark:text-white mb-2"
               placeholderTextColor="#9ca3af"
+              accessibilityLabel="Account name"
             />
             <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 mb-2">
               <Text className="text-sm text-muted dark:text-neutral-400 mr-2">
@@ -236,11 +252,13 @@ export default function AccountsScreen() {
                 keyboardType="decimal-pad"
                 className="flex-1 py-3 text-sm text-neutral-900 dark:text-white text-right"
                 placeholderTextColor="#9ca3af"
+                accessibilityLabel={newType === "credit_card" ? "Amount currently owed" : "Opening balance"}
               />
             </View>
             <TouchableOpacity
               onPress={() => create()}
               disabled={isCreating || !newName.trim()}
+              accessibilityRole="button"
               className={`items-center justify-center py-3 rounded-xl ${
                 isCreating || !newName.trim()
                   ? "bg-neutral-200 dark:bg-neutral-800"

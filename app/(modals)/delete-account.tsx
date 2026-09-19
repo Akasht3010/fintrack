@@ -72,6 +72,7 @@ export default function DeleteAccountScreen() {
           autoCorrect={false}
           className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
           placeholderTextColor="#9ca3af"
+          accessibilityLabel={`Type ${CONFIRM_WORD} to confirm`}
         />
       </ScrollView>
 
@@ -79,6 +80,7 @@ export default function DeleteAccountScreen() {
         <TouchableOpacity
           onPress={handleDelete}
           disabled={!canDelete || isDeleting}
+          accessibilityRole="button"
           className={`w-full items-center justify-center rounded-2xl py-4 ${
             canDelete && !isDeleting
               ? "bg-red-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
