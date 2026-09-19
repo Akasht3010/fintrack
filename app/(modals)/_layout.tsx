@@ -1,13 +1,17 @@
+import { useRef } from "react"
 import { View } from "react-native"
 import { Stack } from "expo-router"
 import Animated from "react-native-reanimated"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { useEntranceAnimation } from "@/hooks/useEntranceAnimation"
+import { useModalA11y } from "@/hooks/useModalA11y"
 
 export default function ModalsLayout() {
   const isDesktop = useIsDesktop()
   const animatedStyle = useEntranceAnimation(200, 0.94)
+  const containerRef = useRef(null)
+  useModalA11y(containerRef)
 
   return (
     // Same idea as the (auth) card: below `md` this is a no-op and modals
@@ -25,7 +29,15 @@ export default function ModalsLayout() {
       <Animated.View
         style={[{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center" }, animatedStyle]}
       >
-        <View className="flex-1 w-full md:flex-none md:h-[85vh] md:w-[calc(100%-160px)] md:max-w-[640px] md:rounded-[28px] md:border md:border-neutral-200 md:dark:border-neutral-800 md:shadow-2xl md:overflow-hidden">
+        <View
+          ref={containerRef}
+          // role/aria-modal aren't in RN's View prop types but are real,
+          // supported pass-through props on react-native-web — no-ops on
+          // native. Paired with useModalA11y's focus trap + Escape-to-close
+          // above, since RN's own View has neither on web by default.
+          {...({ role: "dialog", "aria-modal": true } as any)}
+          className="flex-1 w-full md:flex-none md:h-[85vh] md:w-[calc(100%-160px)] md:max-w-[640px] md:rounded-[28px] md:border md:border-neutral-200 md:dark:border-neutral-800 md:shadow-2xl md:overflow-hidden"
+        >
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="transaction-detail" />
             <Stack.Screen name="add-expense" />
