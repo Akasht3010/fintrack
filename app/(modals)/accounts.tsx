@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { accountsApi } from "@/api/endpoints/accounts"
 import { useAccounts } from "@/hooks/useAccounts"
 import { formatCurrency } from "@/utils/currency"
-import { toDecimal } from "@/utils/money"
+import { parseMoneyInput, toDecimal } from "@/utils/money"
 import { Account, AccountType } from "@/types/domain"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -47,9 +47,9 @@ function AccountRow({ account }: { account: Account }) {
   const [openingBalance, setOpeningBalance] = useState(String(account.opening_balance))
 
   const { mutate: update, isPending: isUpdating } = useMutation({
-    mutationFn: () => accountsApi.update(account.id, {
+    mutationFn: (opening_balance: number) => accountsApi.update(account.id, {
       name: name.trim(),
-      opening_balance: parseFloat(openingBalance) || 0
+      opening_balance
     }),
     onSuccess: () => {
       invalidateAccountQueries(queryClient)
@@ -69,6 +69,17 @@ function AccountRow({ account }: { account: Account }) {
     onSuccess: () => invalidateAccountQueries(queryClient),
     onError: (error: any) => showAlert("Couldn't delete", errorDetail(error, "Failed to delete account"))
   })
+
+  // Editing an existing balance: an empty or malformed field is a mistake,
+  // never "set it to ₹0" — reject it instead of overwriting the real value.
+  const handleSave = () => {
+    const parsed = parseMoneyInput(openingBalance)
+    if (parsed === null) {
+      showAlert("Error", "Please enter a valid opening balance")
+      return
+    }
+    update(parsed)
+  }
 
   const handleDelete = async () => {
     const confirmed = await confirm("Delete account", `Delete "${account.name}"? This can't be undone.`, {
@@ -104,7 +115,7 @@ function AccountRow({ account }: { account: Account }) {
         </View>
         <View className="flex-row gap-2">
           <TouchableOpacity
-            onPress={() => update()}
+            onPress={handleSave}
             disabled={isUpdating || !name.trim()}
             accessibilityRole="button"
             className="flex-1 items-center py-2 rounded-xl bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
@@ -187,10 +198,10 @@ export default function AccountsScreen() {
   const [newOpeningBalance, setNewOpeningBalance] = useState("")
 
   const { mutate: create, isPending: isCreating } = useMutation({
-    mutationFn: () => accountsApi.create({
+    mutationFn: (opening_balance: number) => accountsApi.create({
       name: newName.trim(),
       type: newType,
-      opening_balance: parseFloat(newOpeningBalance) || 0
+      opening_balance
     }),
     onSuccess: () => {
       invalidateAccountQueries(queryClient)
@@ -199,6 +210,17 @@ export default function AccountsScreen() {
     },
     onError: (error: any) => showAlert("Couldn't add account", errorDetail(error, "Failed to create account"))
   })
+
+  // New account: a blank balance legitimately means "starts at ₹0", but
+  // anything typed must parse cleanly.
+  const handleCreate = () => {
+    const parsed = newOpeningBalance.trim() ? parseMoneyInput(newOpeningBalance) : 0
+    if (parsed === null) {
+      showAlert("Error", "Please enter a valid opening balance")
+      return
+    }
+    create(parsed)
+  }
 
   return (
     <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
@@ -256,7 +278,7 @@ export default function AccountsScreen() {
               />
             </View>
             <TouchableOpacity
-              onPress={() => create()}
+              onPress={handleCreate}
               disabled={isCreating || !newName.trim()}
               accessibilityRole="button"
               className={`items-center justify-center py-3 rounded-xl ${
