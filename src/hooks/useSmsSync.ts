@@ -42,7 +42,11 @@ export function isLikelyBankSms(address: string | null | undefined, body: string
   )
 }
 
+// Both mirror the backend's SmsSyncRequest bounds — a body over the limit
+// would get the whole sync rejected, so it's trimmed here instead. Bank
+// alerts put the amount and merchant in the first sentence or two.
 const INBOX_READ_LIMIT = 500
+const MAX_SMS_BODY_LENGTH = 2000
 
 export interface SmsSyncOptions {
   // Same purpose as useGmailSync's silent option — used for automatic
@@ -86,7 +90,7 @@ export function useSmsSync() {
       const messages = await SmsReader.getInboxMessages(INBOX_READ_LIMIT)
       const candidates = messages
         .filter((message) => isLikelyBankSms(message.address, message.body))
-        .map((message) => ({ address: message.address, body: redactOtp(message.body!), date: message.date }))
+        .map((message) => ({ address: message.address, body: redactOtp(message.body!).slice(0, MAX_SMS_BODY_LENGTH), date: message.date }))
 
       if (candidates.length === 0) {
         if (!silent) {
