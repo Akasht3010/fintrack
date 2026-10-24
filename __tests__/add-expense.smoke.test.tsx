@@ -52,17 +52,21 @@ describe("AddExpenseScreen", () => {
     await waitFor(() => expect(getAllByText("Add Expense").length).toBeGreaterThan(0))
   })
 
-  it("rejects a non-numeric amount instead of submitting it as null", async () => {
-    // Regression test for F-P0-2: handleSubmit previously only checked
-    // amount.trim(), so "abc" sailed through parseFloat into `amount: NaN`
-    // (-> JSON `null`) with no client-side error message.
+  // "abc" used to reach the API as `amount: NaN` (-> JSON null); the rest are
+  // strings parseFloat silently coerces — "12abc" -> 12, "1e5" -> 100000,
+  // "0.001" -> passes > 0 but is stored as 0.00.
+  it.each(["abc", "12abc", "1e5", "0.001", "-50"])("rejects %p instead of submitting it", async (input) => {
+    jest.mocked(showAlert).mockClear()
+    jest.mocked(transactionApi.create).mockClear()
     const { getAllByText, getByPlaceholderText } = await renderWithClient(<AddExpenseScreen />)
     await waitFor(() => expect(getAllByText("Add Expense").length).toBeGreaterThan(0))
 
-    fireEvent.changeText(getByPlaceholderText("0.00"), "abc")
-    fireEvent.press(getAllByText("Add Expense")[1])
+    await fireEvent.changeText(getByPlaceholderText("0.00"), input)
+    await fireEvent.press(getAllByText("Add Expense")[1])
 
-    await waitFor(() => expect(showAlert).toHaveBeenCalledWith("Error", "Please enter a valid amount"))
+    await waitFor(() =>
+      expect(showAlert).toHaveBeenCalledWith("Error", "Please enter a valid amount (up to 2 decimal places)")
+    )
     expect(transactionApi.create).not.toHaveBeenCalled()
   })
 })

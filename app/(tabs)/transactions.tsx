@@ -6,7 +6,7 @@ import { useInfiniteQuery } from "@tanstack/react-query"
 import { useUserStore } from "@/store/useUserStore"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency } from "@/utils/currency"
-import { sumMoney } from "@/utils/money"
+import { parseMoneyInput, sumMoney } from "@/utils/money"
 import { formatDate } from "@/utils/date"
 import { Colors } from "@/constants/colors"
 import { EmptyState } from "@/components/shared/EmptyState"
@@ -63,8 +63,8 @@ export default function TransactionsScreen() {
         category: selectedCategory === "all" ? undefined : selectedCategory,
         q: debouncedSearch || undefined,
         date_from: dateFromForRange(dateRange),
-        min_amount: minAmount ? parseFloat(minAmount) : undefined,
-        max_amount: maxAmount ? parseFloat(maxAmount) : undefined
+        min_amount: parseMoneyInput(minAmount) ?? undefined,
+        max_amount: parseMoneyInput(maxAmount) ?? undefined
       }, signal),
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>

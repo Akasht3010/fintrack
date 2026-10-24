@@ -12,6 +12,7 @@ import { extractErrorMessage } from "@/api/client"
 import { Budget } from "@/types/domain"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { generateIdempotencyKey } from "@/utils/idempotencyKey"
+import { parseMoneyInput } from "@/utils/money"
 import { showAlert } from "@/utils/alert"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { Chip } from "@/components/shared/Chip"
@@ -75,9 +76,9 @@ export default function AddExpenseScreen() {
   const isPending = isCreating || isSaving
 
   const handleSubmit = async () => {
-    const parsedAmount = parseFloat(amount)
-    if (!amount.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
-      showAlert("Error", "Please enter a valid amount")
+    const parsedAmount = parseMoneyInput(amount)
+    if (parsedAmount === null || parsedAmount <= 0) {
+      showAlert("Error", "Please enter a valid amount (up to 2 decimal places)")
       return
     }
 

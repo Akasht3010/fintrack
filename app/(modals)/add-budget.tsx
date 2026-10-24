@@ -10,6 +10,7 @@ import { useCategories } from "@/hooks/useCategories"
 import { TransactionCategory } from "@/types/domain"
 import { GlowBackground } from "@/components/shared/GlowBackground"
 import { Chip } from "@/components/shared/Chip"
+import { parseMoneyInput } from "@/utils/money"
 
 export default function AddBudgetScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
@@ -45,9 +46,9 @@ export default function AddBudgetScreen() {
   }, [existing])
 
   const handleSubmit = async () => {
-    const amount = parseFloat(limitAmount)
-    if (!limitAmount.trim() || isNaN(amount) || amount <= 0) {
-      showAlert("Error", "Please enter a valid limit amount")
+    const amount = parseMoneyInput(limitAmount)
+    if (amount === null || amount <= 0) {
+      showAlert("Error", "Please enter a valid limit amount (up to 2 decimal places)")
       return
     }
 
