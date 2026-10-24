@@ -1,0 +1,138 @@
+# Fintrack Weekly Code Review - 2026-10-12
+
+## Summary
+
+Both repos are in good shape overall — this is clearly a codebase that has already been through several review cycles (prior commits like "Fix findings from full-stack code review (2026-09-15)" and "Fix critical auth bypass" show the team acts on these). Money math is handled carefully end-to-end on the backend (`Numeric(12,2)` everywhere, `Decimal` in every schema, regression-tested), and object-level ownership checks are consistently correct across every transaction/account/budget/category endpoint — no IDOR was found. The headline concern this week is a genuine, exploitable **OAuth open-redirect that allows full account takeover** via the unvalidated `app_redirect_uri` parameter on `/api/auth/google/authorize` and `/api/gmail/authorize` — this should be fixed before the next deploy. The second standout issue is that the web build stores the JWT in `localStorage`, and several money-mutating screens have inconsistent React Query cache invalidation, so account/budget/insights figures can go stale after a save.
+
+- **fintrack** (frontend) reviewed at commit `c452e4d0af9ce1791056fff86e9a977425b54395`
+- **fintrack-backend** reviewed at commit `4629da17c88c2c1adf8e5971a223081c96458754`
+- Both repositories were available and reviewed. `node_modules` and the backend's Python virtualenv were not installed in this environment, so `npm run lint`/`typecheck`/`audit` and `pytest`/`pip-audit` could not be run; `ruff check` (pre-installed, not a project dependency) ran cleanly against the backend and is folded in below. No secrets, API keys, or private keys were found in either repo via pattern scan, and no `.env` files are committed.
+
+## Critical (P0) - fix before deploy
+
+- **[fintrack-backend/app/api/google_auth.py:53-65, 97-118]** and **[fintrack-backend/app/api/gmail.py:45-60, 65-83]** — Open redirect in the OAuth flow lets an attacker steal a victim's access token (account takeover)
+  Why it matters: `app_redirect_uri` is accepted as a raw, client-supplied query parameter and is never validated against an allowlist of the app's own deep-link schemes/origins before being bound to the server-side OAuth nonce (`create_state`, `app/utils/oauth_state.py`). An attacker can send a victim a link like `https://<api-host>/api/auth/google/authorize?app_redirect_uri=https://evil.example/collect`. The victim sees Google's real, trusted consent screen and approves it — nothing about the phishing attempt is visible there. The backend then redirects the browser to `https://evil.example/collect?code=<exchange_code>` (`google_auth.py:118`). The attacker's server captures that one-time `code` and calls `POST /api/auth/google/exchange` (`google_auth.py:129-137`) itself to mint a full access token for the victim's account — complete takeover, no XSS or device access required. The code's own comments show the team already reasoned carefully about *not* letting the JWT or a forgeable `state` blob travel in a URL, but that protection doesn't cover the final hop: the redirect target itself is still attacker-controlled. The same pattern exists on `/api/gmail/authorize` → `/api/gmail/callback`, where it's a lower-severity open redirect (no token is placed in that redirect, just a `gmail_connected=true/false` flag) but is still a phishing primitive worth closing in the same fix.
+  Fix: Validate `app_redirect_uri` against an explicit allowlist before calling `create_state`, e.g.:
+  ```python
+  ALLOWED_REDIRECT_PREFIXES = ("fintrack://", "https://fintrack.app/")  # the app's real scheme(s)/origin(s)
+
+  def _validate_redirect_uri(uri: str) -> str:
+      if not uri.startswith(ALLOWED_REDIRECT_PREFIXES):
+          raise HTTPException(status_code=400, detail="Invalid redirect URI")
+      return uri
+
+  @router.get("/authorize")
+  async def google_authorize(app_redirect_uri: str = Query(...)):
+      app_redirect_uri = _validate_redirect_uri(app_redirect_uri)
+      ...
+  ```
+  Apply the same check in `gmail.py:gmail_authorize`. Add a test asserting `/authorize?app_redirect_uri=https://evil.com` 400s.
+
+- **[fintrack/src/utils/storage.ts:1-30]** — JWT access token stored in `window.localStorage` on the web build
+  Why it matters: On web (this app deploys to production via `wrangler deploy`, not just local testing — see `package.json:"deploy"` and the Cloud Run backend wired up in git history), `storage.getItemAsync`/`setItemAsync` fall back to plain `localStorage` instead of an httpOnly cookie or any script-inaccessible store (lines 12-13, 19-20). The code comment says this is "fine for browser-based testing, which is all the web target is for here," but that assumption doesn't hold — the web build is a real production deployment. Any XSS (a compromised dependency, a reflected input, a malicious browser extension) can read `localStorage.getItem("access_token")` and silently exfiltrate a live session for a finance app. This is compounded by the logout finding below: a stolen token stays valid until it naturally expires, since logging out doesn't revoke it server-side.
+  Fix: Move the web token out of `localStorage`. The correct fix is an httpOnly, `Secure`, `SameSite=Strict` session cookie set by the backend (requires a CORS/`withCredentials` change on `apiClient` and a cookie-issuing change on login/refresh/OAuth-exchange). If that's too large for this sprint, at minimum keep the token in memory only on web (re-login on every page load) rather than in a script-readable store, and treat this as a tracked follow-up, not a closed question.
+
+## High (P1) - fix this sprint
+
+- **[fintrack-backend/app/services/gmail_service.py:41-48]** (hit from `app/api/gmail.py:101` and `app/api/auth.py:386`) — Gmail refresh token sent as a URL query parameter and liable to be logged on failure
+  Why it matters: `revoke_token` calls `httpx.post(url, params={"token": refresh_token}, headers={"content-type": "application/x-www-form-urlencoded"})`. `params=` puts the token in the request URL's query string even though the header claims a form-encoded body — so the long-lived Gmail refresh token (read access to the user's inbox) travels in a URL that proxies/httpx internals may include in connection error messages. Both call sites wrap this in `try/except Exception as e: print(f"...: {e}")` (`gmail.py:101`, `auth.py:386`), so a failed revoke (timeout, DNS, Google 4xx) can put that URL — and therefore the token — straight into server logs. This is exactly the "token in logs" risk the rest of the codebase is otherwise careful about (see the explicit reasoning in `google_auth.py` about never letting a bearer token land in a URL).
+  Fix: `httpx.post(url, data={"token": refresh_token}, timeout=10)` — `data=` puts it in the body, matching the header already being sent. If the failure is still logged, log only `type(e).__name__`/status code, not the raw exception text: `print(f"Gmail revoke failed for user {current_user.id}: {type(e).__name__}")`.
+
+- **[fintrack-backend/app/config/init_db.py:140-156]** — Legacy-DB migration path adds `budgets.remaining_amount` as `DOUBLE PRECISION`, not `NUMERIC(12,2)`
+  Why it matters: The ORM model (`app/models/budget.py:17`) declares `remaining_amount` as `Numeric(12,2)`, and the codebase is otherwise meticulous about never letting money touch a binary float (see the comments throughout `transaction.py`/`budget.py` and the dedicated `tests/test_money_precision.py`). But this one-time migration branch (reached only by a pre-existing Postgres DB missing the column — not a fresh `create_all`) runs `ALTER TABLE budgets ADD COLUMN remaining_amount DOUBLE PRECISION GENERATED ALWAYS AS (limit_amount - spent_amount) STORED` — reintroducing exactly the kind of float column the rest of the app guards against, for the "remaining budget" figure shown to the user. The later float→Decimal migration loop (lines 163-191) tries to retype it to `NUMERIC(12,2)`, but failures there are only `print()`-warned, not raised — so there's no durable guarantee or alert if a production instance silently keeps this column as float.
+  Fix: Change line 152 to declare `NUMERIC(12,2)` directly, matching every other money column's path:
+  ```python
+  conn.execute(text(
+      "ALTER TABLE budgets ADD COLUMN remaining_amount NUMERIC(12,2) "
+      "GENERATED ALWAYS AS (limit_amount - spent_amount) STORED"
+  ))
+  ```
+  Also consider having the later retype loop raise (fail startup) rather than print-and-continue if a money column still reports FLOAT/DOUBLE after the migration attempt, so this can't silently ship.
+
+- **[fintrack/src/hooks/useCreateTransaction.ts:11-18], [fintrack/app/(modals)/add-expense.tsx:98-103, 138-150], [fintrack/app/(modals)/transaction-detail.tsx:38-54]** — Inconsistent React Query cache invalidation after transaction create/edit/delete leaves money screens stale
+  Why it matters: Every one of these mutation paths invalidates a different, incomplete subset of the screens whose data they actually change:
+  - `useCreateTransaction.ts`'s own `onSuccess` invalidates only `["transactions", user.id]`.
+  - `add-expense.tsx`'s create path additionally invalidates `net-worth` and, for debits, `budgets` (lines 139, 144) — but never `["accounts"]`.
+  - `add-expense.tsx`'s edit path invalidates `transactions`, the single `transaction`, `budgets`, and `net-worth` (lines 99-102) — again never `["accounts"]`.
+  - `transaction-detail.tsx`'s delete path invalidates only `["transactions"]` (line 48) — not `accounts`, `budgets`, or `net-worth`.
+  - Nothing, anywhere in the codebase, invalidates `["insights"]` or `["recurring"]` after a transaction is created, edited, or deleted (confirmed by grepping every `invalidateQueries` call site) — yet both are built entirely from the transactions table (`app/api/insights.py`, `recurring_service.py`).
+  Since the global `QueryClient` has a 5-minute `staleTime` (`app/_layout.tsx`), a user can add an expense tied to an account and see that account's balance (`accounts.tsx`), this month's category breakdown (Insights tab), or the recurring-bills total sitting stale for up to 5 minutes, or until they manually pull-to-refresh. For a finance app, "the number on screen doesn't match what you just did" is exactly the kind of bug users notice immediately.
+  Fix: Introduce one shared helper that every transaction-mutating call site uses, e.g. `invalidateMoneyQueries(queryClient)` that invalidates `transactions`, `accounts`, `net-worth`, `budgets`, `insights`, and `recurring` together, and call it from `useCreateTransaction`'s `onSuccess`, `add-expense.tsx`'s create/edit paths, and `transaction-detail.tsx`'s delete path — rather than each call site hand-picking a subset.
+
+- **[fintrack/app/(modals)/add-expense.tsx:77-91]** — No client-side check that `amount` is a positive, finite number before submit
+  Why it matters: `handleSubmit` only checks `!amount.trim()` — unlike the sibling screen `add-budget.tsx:48-52`, which explicitly checks `isNaN(amount) || amount <= 0`. Typing `-500`, `0`, or non-numeric text and submitting sends that straight to the API. The backend's `Field(gt=0, le=MAX_TRANSACTION_AMOUNT)` on `TransactionBase.amount` / `TransactionUpdate.amount` (`app/schemas/transaction.py:18,35`) means **no bad amount can actually be persisted** — this is a UX/defense-in-depth gap, not a live money-corruption bug, since the backend is the real safety net here. But it does mean the user gets an opaque 422 instead of immediate, friendly feedback, and it means a single layer of defense (the backend schema) is all that stands between this form and a corrupted ledger — a future refactor that loosens that constraint would have no client-side backstop.
+  Fix: Mirror `add-budget.tsx`'s guard in both the create and edit submit paths: `const amt = parseFloat(amount); if (!amount.trim() || isNaN(amt) || amt <= 0) { showAlert("Error", "Please enter a valid amount"); return }`.
+
+- **[fintrack/src/store/useUserStore.ts:23-27]**, cross-referenced with **[fintrack-backend/app/api/auth.py]** — `logout()` never invalidates the session server-side; there is no logout/revocation endpoint at all
+  Why it matters: `logout()` only clears the locally stored token and resets Zustand state (`SecureStore.deleteItemAsync("access_token")`/`("user")`). `src/api/endpoints/auth.ts` has no `logout` call, and the backend has no `/api/auth/logout` or token-blacklist endpoint — confirmed at the only call site, `app/(tabs)/profile.tsx`'s sign-out handler. Combined with the `localStorage` finding above: on web, a token copied out of `localStorage` by an XSS payload remains fully valid against the backend for the rest of its lifetime, even after the legitimate user "signs out." The 30-minute access-token expiry (`ACCESS_TOKEN_EXPIRE_MINUTES`) bounds the damage, but sign-out is currently cosmetic from the server's point of view.
+  Fix: Add a minimal `POST /api/auth/logout` (or a refresh-token blacklist keyed by token `jti`/expiry) and call it from `logout()` before clearing local storage: `try { await authApi.logout() } finally { await SecureStore.deleteItemAsync(...) }`. Even a short-TTL in-memory revocation set (same pattern already used for `oauth_state.py`) would close most of the real-world gap given the short token lifetime.
+
+## Medium (P2) - worth doing
+
+- **[fintrack-backend/app/api/sms.py:38-45]** (schema at `app/schemas/sms.py:5-12`) — Unbounded SMS batch size, and an uncaught `datetime.fromtimestamp` can 500 an entire sync
+  Why it matters: `SmsSyncRequest.messages` has no `max_length`, and each message's client-supplied epoch-ms `date` is passed straight into `datetime.fromtimestamp(message.date / 1000, tz=IST)` with no try/except. One message with an out-of-range `date` (passes Pydantic's plain `int` check, e.g. a huge or negative number) raises `OverflowError`/`OSError` and fails the *entire* batch, discarding every other message that would have imported cleanly. There's also no batch-size cap, so one request can queue an arbitrarily large number of per-message queries/commits (see the N+1 note below).
+  Fix: Wrap the per-message date parse in try/except and count a bad timestamp as `skipped_unparsed` instead of raising; add `Field(max_length=500)` (or similar) to `SmsSyncRequest.messages`.
+
+- **[fintrack-backend/app/services/account_service.py:15-34]** and **[fintrack-backend/app/api/sms.py:46-96]** — N+1 query patterns on hot paths
+  Why it matters: `compute_balance` issues two aggregate queries per account; `GET /api/accounts` and `GET /api/accounts/net-worth` both call it once per account in a loop, so listing N accounts costs 2N+1 queries on two of the most-hit endpoints (every app open). Separately, `sms.py`'s sync loop runs two lookup queries plus one `db.commit()` per SMS message rather than batching, which scales linearly with inbox size on a path the frontend already gives a 60s timeout because it expects this to be slow (`src/api/endpoints/sms.ts`).
+  Fix: Replace the accounts loop with one query that groups `sum(amount)` by `(account_id, type)` across all the user's accounts, then compute each balance from that single result set. For SMS sync, batch the duplicate-check queries (e.g. one `IN` query for all markers up front) and defer commits until the end of the request where the unique-index semantics allow it.
+
+- **[fintrack-backend/sql/reset_to_int_ids.sql]** and **[fintrack-backend/sql/readable_views.sql:70]** — Destructive one-shot script and a real user's email committed to the repo
+  Why it matters: `reset_to_int_ids.sql` unconditionally `DROP TABLE ... CASCADE`s every table (users, transactions, accounts, budgets, OTP codes) with no guard against being re-run or run against the wrong database. Separately, `readable_views.sql:70`'s example-usage comment embeds a real email address (`akashthakkar931@gmail.com`) directly in source control — for an app whose whole premise is handling PII carefully, committing a real user's email into git history (even in a comment) is avoidable.
+  Fix: Move one-shot/destructive ops scripts to an untracked `ops/` location (or delete them from the repo once run, keeping them in a runbook instead), and replace the real email in `readable_views.sql` with a placeholder like `someone@example.com`.
+
+- **[fintrack-backend/tests/]** — No cross-user ownership (IDOR) tests for accounts or categories
+  Why it matters: `test_transactions.py` and `test_budgets.py` both explicitly assert a second user can't read/modify/delete the first user's rows, and the underlying `AccountService.get_own`/`CategoryService.get_own` code is correctly written today — but there's no equivalent test for accounts or categories. A future refactor of either `get_own` method could silently reintroduce an IDOR with nothing to catch it, even though the exact same regression is guarded against on transactions/budgets.
+  Fix: Add the same signup + cross-user-access test pattern already used in `test_budgets.py`/`test_transactions.py` for `PATCH`/`DELETE /api/accounts/{id}` and `/api/categories/{id}`.
+
+- **[fintrack/src/hooks/useCreateTransaction.ts, add-expense.tsx:37]** — Idempotency key isn't regenerated after a failed/edited resubmission
+  Why it matters: `idempotencyKeyRef` is generated once per screen mount and reused for every "Add Expense" click on that visit, including after a validation error resets the form state. The app has no automatic network-level retry (react-query mutations don't retry by default), so in practice the only time this key gets reused is when a user manually fixes a field after an error and resubmits — a different payload under the same key, which the backend's unique `(user_id, idempotency_key)` index will 409 as a false "duplicate."
+  Fix: Regenerate the key whenever the submitted fields change after an error, keeping it stable only across a true unmodified resend.
+
+- **[fintrack/src/store/useTransactionStore.ts]** — Unused, hand-rolled transaction store is dead code sitting next to the real data layer
+  Why it matters: Grepping the repo, this Zustand store is imported nowhere; all real transaction data flows through React Query. A second, unused "transactions" state shape left in the codebase is a latent landmine — a future change (human or AI-assisted) could get wired up against it by mistake, creating a second source of truth for money data.
+  Fix: Delete `src/store/useTransactionStore.ts`, or add a comment explaining why it's intentionally kept for an upcoming feature.
+
+- **[fintrack/src/api/client.ts:119-135]** — A 401/403 immediately force-logs-out rather than retrying once
+  Why it matters: The proactive refresh logic (lines 63-101) is well single-flighted, but once a 401/403 actually reaches the response interceptor, the code logs the user out immediately rather than attempting one reactive refresh+retry first. A transient backend hiccup or a device clock skew right at the proactive-refresh threshold would log a user out unnecessarily instead of quietly recovering.
+  Fix: Before logging out, attempt exactly one `refreshAccessToken()` + retry of the failing request; only log out if that also fails.
+
+- **[fintrack/app/, src/components/]** — No accessibility labels on icon-only controls across critical flows
+  Why it matters: A repo-wide search for `accessib` returns nothing. Every icon-only `TouchableOpacity` — the password show/hide toggle on login, every modal's `✕` close button, the transactions search-clear button — has no `accessibilityLabel`, so a screen-reader user hears nothing meaningful on the app's most important flows (login, add-expense, budget).
+  Fix: Add `accessibilityLabel` (and `accessibilityRole="button"` where relevant) starting with login's password-visibility toggle and every modal's close button, since those sit on every critical flow.
+
+- **[fintrack/__tests__/]** — Test coverage is two "renders without crashing" smoke tests plus one currency unit test
+  Why it matters: Neither `add-expense.smoke.test.tsx` nor `login.smoke.test.tsx` exercises actual submit/validation/error-handling logic — both mock the API to no-op promises. There's no coverage at all for `extractErrorMessage`'s detail-array normalization (the function with the most "this was a real bug" commentary in the codebase), the amount-validation gap above, the cache-invalidation gaps above, or the refresh/logout logic in `client.ts`/`useUserStore.ts`.
+  Fix: At minimum, add unit tests for `extractErrorMessage` (string vs. array `detail` vs. fallback) and for the amount-validation guard once it's added above.
+
+## Cross-repo contract issues
+
+No breaking contract drift was found — endpoint paths/methods, field names (snake_case consistently on the wire, converted deliberately at the few camelCase boundaries like `confirm_password`), enums (`TransactionType`, `TransactionSource`, `AccountType`, `CategoryType`, budget `period`), and response shapes are all kept carefully in sync between `fintrack-backend/app/schemas/*.py` and `fintrack/src/types/domain.ts` / `src/api/endpoints/*.ts`. Error handling is also aligned: `fintrack/src/api/client.ts`'s `extractErrorMessage` correctly handles both FastAPI's plain-string `HTTPException(detail=...)` shape and the structured Pydantic 422 array shape.
+
+One design choice worth flagging explicitly rather than as a bug:
+
+- **[fintrack-backend/app/schemas/money.py:1-13 <-> fintrack/src/utils/currency.ts, app/(tabs)/insights.tsx:53, app/(tabs)/transactions.tsx:98]** — Money travels over the wire as a JSON *number* (float), not a string, by deliberate design (`Money = Annotated[Decimal, PlainSerializer(lambda v: float(v), ...)]`), to stay compatible with existing numeric consumers on the frontend. This is safe today: every amount is bounded by `MAX_TRANSACTION_AMOUNT`/`MAX_OPENING_BALANCE` (1×10⁸) with 2 decimal places, well within what an IEEE-754 double represents exactly, and all real aggregation (insights, net worth, budget `spent`/`remaining`) happens server-side in SQL over `NUMERIC` columns, not client-side. The frontend does do its own `reduce`-based float summation in a couple of display-only spots (`insights.tsx:53`, `transactions.tsx:98`), but at these magnitudes/volumes any float drift is far smaller than the 2-decimal-place rounding `Intl.NumberFormat` applies on display, so it isn't currently observable. Nothing to fix now — just worth knowing if amounts, volumes, or precision requirements ever grow, since "string-in-transit" is the more defensive long-term contract for a money API.
+
+## Nits & style
+
+- `fintrack-backend/app/api/gmail.py:76-78` — a raw exception string (`str(e)`) is placed directly into the OAuth failure redirect's query string (`error={str(e)}`). Only the user who initiated the flow sees it, so this isn't a disclosure to a third party, but it's still better practice to redirect with a generic error code and log the real exception server-side instead.
+- `fintrack/app/(auth)/login.tsx:25-36` — `clearOldTokens()` runs unconditionally on every Login screen mount; `app/_layout.tsx` already has a comment describing a bug where this raced with the OAuth callback routes writing a fresh token. This two-file coupling (`isOAuthCallbackRoute` guard) is fragile and easy to break again — consider making "clear stale tokens" an explicit action tied only to real logout/401, not an implicit mount side effect.
+- `fintrack-backend/app/models/transaction.py` — only `(user_id, date)` is indexed; `budget_service.py`'s `compute_spent` filters by `(user_id, category, type, date)` on every budget read/sync. Not a problem at current data volumes, but a composite index would help it scale.
+- `fintrack-backend/app/utils/oauth_state.py:8` — the OAuth/link-token nonce store is an in-process Python dict. Fine for the current single-worker `uvicorn.run(...)`, but every in-flight OAuth flow would break if this ever moves to multiple workers/replicas without first moving this to Redis/DB-backed storage.
+- `fintrack/src/api/client.ts` — no `AbortController`/`signal` wired into `apiClient`, and a couple of multi-step async flows (`add-expense.tsx`'s before/after budget fetch around the mutation, `useGmailSync`/`useSmsSync`) have no unmount guard. Low risk (React tolerates a stray post-unmount `setState`), but a fast navigate-away mid-sync could still fire a stray alert after the user has left the screen.
+- `ruff check app/` on the backend reports 210 findings, almost entirely style/idiom (`UP045` typing-modernization, `I001` import sorting, `B008` function-call-in-default-argument — the latter is largely FastAPI's own idiomatic `Depends(...)`/`Query(...)` pattern, not a real bug) plus a handful of `BLE001` (blind `except Exception`) that were manually checked above and are all deliberate best-effort error handling with one logging fix noted (P1, gmail token). None of the remaining ones hide a security- or money-relevant issue.
+
+## What looks good
+
+- **End-to-end Decimal discipline on the backend.** Every money column is `Numeric(12,2)` (never `FLOAT`), every corresponding Pydantic schema uses the `Money`/`Decimal` type, `email_parser.py` parses amounts via `Decimal(str(...))` rather than `float()`, and this is actually regression-tested — `tests/test_money_precision.py` asserts an exact result summing 30× `0.10`, not just a type check.
+- **Careful, defense-in-depth OAuth and auth design everywhere except the one gap above.** Account enumeration is explicitly prevented on login/forgot-password (identical responses whether or not the identifier exists), OTP codes are hashed, attempt-limited, and compared with `hmac.compare_digest`, pending (pre-OTP) tokens are cryptographically distinct from real access tokens via a `purpose` claim, and the admin API is gated by a constant-time key compare with aggregate-only responses (no per-user PII). The reasoning is spelled out in comments at every decision point, not just implemented silently.
+- **Consistent object-level ownership checks.** Every transaction/account/budget/category GET-by-id, PATCH, and DELETE route filters by `user_id == current_user.id` (or goes through a `get_own()` helper that does the same) and 404s rather than leaking existence — confirmed by direct code read across every router, not just spot-checked.
+- **A genuinely good, DRY error-handling pattern on the frontend.** `extractErrorMessage` (`src/api/client.ts`) is the single place that normalizes both FastAPI's plain-string and Pydantic's structured validation errors, and every screen in the app routes through it — no ad-hoc `error.response.data.detail` reads anywhere else. The single-flight token refresh (`client.ts:63-101`) also correctly avoids the classic concurrent-refresh race.
+
+## Suggested next steps
+
+1. Fix the OAuth open-redirect (`app_redirect_uri` allowlist) on both `google_auth.py` and `gmail.py` — this is the one finding with a real, exploitable account-takeover path and should land before anything else this week.
+2. Decide on a path off `localStorage` for the web JWT (even "memory-only, re-login per page load" as an interim step), and pair it with a real `/api/auth/logout` endpoint so sign-out actually invalidates something server-side.
+3. Fix the Gmail-refresh-token-in-URL bug and the `budgets.remaining_amount` float migration — both are small, mechanical fixes with outsized risk if left.
+4. Introduce one shared cache-invalidation helper for transaction mutations (create/edit/delete) covering `accounts`, `budgets`, `net-worth`, `insights`, and `recurring` together, and add the missing client-side amount validation to `add-expense.tsx`.
+5. Everything else in Medium/Nits can be picked up opportunistically — none of it blocks a deploy.
