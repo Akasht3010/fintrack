@@ -69,7 +69,12 @@ Three ways in, all ending with the same backend access token:
 
 **Forgot password** (`forgot-password` → `reset-password`) runs the same OTP flow and also lets a Google-only account set a password for the first time.
 
-The access token is kept in `expo-secure-store` and attached as `Authorization: Bearer <token>` by the axios client (`src/api/client.ts`). There's no refresh flow — any 401/403 clears the session and drops to login (with a "Session expired" alert only if a live session was cut).
+Where the session lives depends on the platform (`src/utils/session.ts`):
+
+- **Native** — the access token is kept in `expo-secure-store` and attached as `Authorization: Bearer <token>` by the axios client (`src/api/client.ts`), which refreshes it proactively when under 5 minutes remain.
+- **Web** — no token is ever visible to JS. Requests send `X-Auth-Transport: cookie` with credentials; the backend keeps the session in an `HttpOnly; SameSite=Strict` cookie and returns `access_token: null`. App start renews the cookie, and requests renew it after 25 minutes. Because the cookie is `SameSite=Strict`, the web build must be served from the API's own origin (the Cloud Run service), not a separate host.
+
+Either way, any 401/403 clears the session and drops to login (with a "Session expired" alert only if a live session was cut).
 
 ## Features
 
