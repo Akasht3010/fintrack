@@ -13,6 +13,7 @@ import { GlowBackground } from "@/components/shared/GlowBackground"
 import { GlassCard } from "@/components/shared/GlassCard"
 import { confirm } from "@/utils/confirm"
 import { useState } from "react"
+import { invalidateTransactionQueries } from "@/api/invalidate"
 
 const SOURCE_LABELS: Record<string, string> = {
   manual: "Added manually",
@@ -45,7 +46,7 @@ export default function TransactionDetailScreen() {
     setIsDeleting(true)
     try {
       await transactionApi.delete(transactionId)
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      invalidateTransactionQueries(queryClient)
       router.back()
     } catch {
       setIsDeleting(false)

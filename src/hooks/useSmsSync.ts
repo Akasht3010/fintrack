@@ -7,6 +7,7 @@ import { budgetApi } from "@/api/endpoints/budgets"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { extractErrorMessage } from "@/api/client"
 import { showAlert } from "@/utils/alert"
+import { invalidateTransactionQueries } from "@/api/invalidate"
 
 // Reading the whole inbox and shipping it to the backend would mean every
 // personal text leaves the device just to find the handful of bank alerts —
@@ -101,8 +102,7 @@ export function useSmsSync() {
 
       const budgetsBefore = await budgetApi.list().catch(() => [])
       const result = await smsApi.sync(candidates)
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
-      queryClient.invalidateQueries({ queryKey: ["budgets"] })
+      invalidateTransactionQueries(queryClient)
 
       if (result.imported > 0) {
         const budgetsAfter = await budgetApi.list().catch(() => [])

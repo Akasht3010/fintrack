@@ -12,6 +12,7 @@ import { GlassCard } from "@/components/shared/GlassCard"
 import { confirm } from "@/utils/confirm"
 import { extractErrorMessage as errorDetail } from "@/api/client"
 import { showAlert } from "@/utils/alert"
+import { invalidateTransactionQueries } from "@/api/invalidate"
 
 function CategoryRow({ category }: { category: Category }) {
   const queryClient = useQueryClient()
@@ -23,8 +24,8 @@ function CategoryRow({ category }: { category: Category }) {
     mutationFn: () => categoriesApi.update(category.id, { name: name.trim(), icon: icon.trim() || "📌" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] })
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
-      queryClient.invalidateQueries({ queryKey: ["budgets"] })
+      // A rename cascades onto existing transactions and budgets server-side.
+      invalidateTransactionQueries(queryClient)
       setIsEditing(false)
     },
     onError: (error: any) => showAlert("Couldn't save", errorDetail(error, "Failed to update category"))

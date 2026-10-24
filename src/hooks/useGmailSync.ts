@@ -8,6 +8,7 @@ import { useUserStore } from "@/store/useUserStore"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { extractErrorMessage } from "@/api/client"
 import { showAlert } from "@/utils/alert"
+import { invalidateTransactionQueries } from "@/api/invalidate"
 
 export interface GmailSyncOptions {
   // Suppresses the result/error alerts — used for automatic sync-on-open so
@@ -26,8 +27,7 @@ export function useGmailSync() {
     try {
       const budgetsBefore = await budgetApi.list().catch(() => [])
       const result = await gmailApi.sync()
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
-      queryClient.invalidateQueries({ queryKey: ["budgets"] })
+      invalidateTransactionQueries(queryClient)
 
       if (result.imported > 0) {
         const budgetsAfter = await budgetApi.list().catch(() => [])

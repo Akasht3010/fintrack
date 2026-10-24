@@ -9,6 +9,7 @@ import { useAccounts } from "@/hooks/useAccounts"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { extractErrorMessage } from "@/api/client"
+import { invalidateTransactionQueries } from "@/api/invalidate"
 import { Budget } from "@/types/domain"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { generateIdempotencyKey } from "@/utils/idempotencyKey"
@@ -98,10 +99,7 @@ export default function AddExpenseScreen() {
           description: description || merchant,
           account_id: selectedAccountId ?? null
         })
-        queryClient.invalidateQueries({ queryKey: ["transactions"] })
-        queryClient.invalidateQueries({ queryKey: ["transaction", id] })
-        queryClient.invalidateQueries({ queryKey: ["budgets"] })
-        queryClient.invalidateQueries({ queryKey: ["net-worth"] })
+        invalidateTransactionQueries(queryClient)
         router.back()
       } catch (error: any) {
         showAlert("Error", extractErrorMessage(error, "Failed to update transaction"))
@@ -137,13 +135,12 @@ export default function AddExpenseScreen() {
       account_id: selectedAccountId ?? null,
       idempotency_key: idempotencyKeyRef.current
     }, {
+      // Cache invalidation is handled by useCreateTransaction itself.
       onSuccess: async () => {
-        queryClient.invalidateQueries({ queryKey: ["net-worth"] })
         if (transactionType === "debit") {
           try {
             const budgetsAfter = await budgetApi.list()
             await notifyBudgetThresholdCrossings(budgetsBefore, budgetsAfter)
-            queryClient.invalidateQueries({ queryKey: ["budgets"] })
           } catch {
             // Same — never let alerting get in the way of the actual save
           }
