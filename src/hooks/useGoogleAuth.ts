@@ -1,14 +1,13 @@
 import { useState } from "react"
 import { Platform } from "react-native"
 import * as WebBrowser from "expo-web-browser"
-import * as AuthSession from "expo-auth-session"
 import * as Linking from "expo-linking"
-import Constants from "expo-constants"
 import { storage as SecureStore } from "@/utils/storage"
 import { saveSession } from "@/utils/session"
 import { useUserStore } from "@/store/useUserStore"
 import { ENV } from "@/config/env"
 import { authApi } from "@/api/endpoints/auth"
+import { makeAppOAuthRedirectUri } from "@/utils/oauthRedirect"
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -44,10 +43,7 @@ export function useGoogleAuth() {
       // `exp://<metro-lan-ip>:8081/...` when loaded from a local dev server
       // (only works on that Wi-Fi), or `exp://u.expo.dev/<project>/...` when
       // loaded from a published EAS Update (public, works on cellular).
-      const inExpoGo = Constants.appOwnership === "expo"
-      const appRedirectUri = AuthSession.makeRedirectUri(
-        inExpoGo ? { path: "auth-callback" } : { scheme: "fintrack", path: "auth-callback" }
-      )
+      const appRedirectUri = makeAppOAuthRedirectUri("auth-callback")
       const authorizeUrl = `${ENV.API_URL}/api/auth/google/authorize?app_redirect_uri=${encodeURIComponent(appRedirectUri)}`
 
       if (Platform.OS === "web") {
