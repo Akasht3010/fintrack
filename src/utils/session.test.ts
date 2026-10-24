@@ -4,6 +4,8 @@ function loadSession(os: "web" | "ios") {
   const store: Record<string, string> = {}
   let mod: typeof import("./session") | undefined
   jest.isolateModules(() => {
+    // require(), not import: each case must load fresh copies inside isolateModules.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     Object.defineProperty(require("react-native").Platform, "OS", { value: os, configurable: true })
     jest.doMock("@/utils/storage", () => ({
       storage: {
@@ -11,6 +13,7 @@ function loadSession(os: "web" | "ios") {
         deleteItemAsync: jest.fn(async (k: string) => { delete store[k] })
       }
     }))
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     mod = require("./session")
   })
   return { session: mod!, store }
