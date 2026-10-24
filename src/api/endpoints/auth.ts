@@ -9,10 +9,8 @@ export interface SignupRequest {
   confirmPassword: string
 }
 
-export interface SignupResponse {
-  access_token: string
-  user: User
-}
+// Signup emails an OTP, same as login step 1 — finish it via verifyOtp.
+export type SignupResponse = LoginPendingResponse
 
 export interface LoginRequest {
   identifier: string

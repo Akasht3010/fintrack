@@ -3,8 +3,6 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
-import { storage as SecureStore } from "@/utils/storage"
-import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
 import { useState } from "react"
@@ -29,7 +27,6 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { setUser } = useUserStore()
   const { signIn: signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth()
 
   const isNameValid = name.trim().length > 0
@@ -85,11 +82,13 @@ export default function SignupScreen() {
         confirmPassword
       })
 
-      await SecureStore.setItemAsync("access_token", response.access_token)
-      await SecureStore.setItemAsync("user", JSON.stringify(response.user))
-
-      setUser(response.user)
-      router.replace("/(tabs)")
+      // Signup emails a code instead of returning a session — the account
+      // only becomes usable once the address is proven, same as login.
+      // replace, not push: going "back" would resubmit into a 409.
+      router.replace({
+        pathname: "/(auth)/verify-otp",
+        params: { pendingToken: response.pending_token, emailHint: response.email_hint }
+      })
     } catch (error: any) {
       if (error.response?.status === 409) {
         const goToLogin = await confirm(
