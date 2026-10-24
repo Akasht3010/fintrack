@@ -170,11 +170,32 @@ apiClient.interceptors.request.use(async (config) => {
 // both as "session's over."
 let isHandlingSessionExpiry = false
 
+// Endpoints whose 401 means "these credentials/codes are wrong", not "your
+// session ended" — the caller shows that error itself. Treating them as
+// expiry fired a pointless /logout (and, on web, /clear-session) on every
+// mistyped password or expired code.
+const NON_SESSION_AUTH_PATHS = [
+  "/api/auth/signup",
+  "/api/auth/login",
+  "/api/auth/verify-otp",
+  "/api/auth/resend-otp",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+  "/api/auth/google/exchange",
+  "/api/auth/logout",
+  "/api/auth/clear-session"
+]
+
+export function isSessionExpiryResponse(status: number | undefined, url: string | undefined): boolean {
+  if (status !== 401 && status !== 403) return false
+  const path = (url ?? "").split("?")[0]
+  return !NON_SESSION_AUTH_PATHS.some((p) => path.endsWith(p))
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const status = error.response?.status
-    if ((status === 401 || status === 403) && !isHandlingSessionExpiry) {
+    if (isSessionExpiryResponse(error.response?.status, error.config?.url) && !isHandlingSessionExpiry) {
       isHandlingSessionExpiry = true
       const wasAuthenticated = useUserStore.getState().isAuthenticated
       await useUserStore.getState().logout()
