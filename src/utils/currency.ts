@@ -7,10 +7,15 @@ import { toDecimal } from "./money"
 // totals) — converted to a number only here, at the final display step,
 // where Intl's own rounding to 2 decimal places makes the float conversion
 // harmless.
-export const formatCurrency = (amount: string | number | Decimal): string =>
-  new Intl.NumberFormat("en-IN", {
+export const formatCurrency = (amount: string | number | Decimal): string => {
+  // Whole rupees show no decimals; anything with paise shows both digits —
+  // "₹712.50", never "₹712.5" (which reads like a typo on a money figure).
+  const value = toDecimal(amount).toDecimalPlaces(2)
+  const digits = value.isInteger() ? 0 : 2
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(toDecimal(amount).toNumber())
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  }).format(value.toNumber())
+}
