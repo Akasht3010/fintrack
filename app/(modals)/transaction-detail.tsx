@@ -92,28 +92,28 @@ export default function TransactionDetailScreen() {
           <View className="px-6 mb-6">
             <GlassCard>
               <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted dark:text-neutral-400">Category</Text>
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Category</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                   {transaction.category}
                 </Text>
               </View>
 
               <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted dark:text-neutral-400">Date</Text>
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Date</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                   {formatDateTime(transaction.date)}
                 </Text>
               </View>
 
               <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted dark:text-neutral-400">Type</Text>
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Type</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                   {transaction.type}
                 </Text>
               </View>
 
               <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted dark:text-neutral-400">Source</Text>
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Source</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                   {SOURCE_LABELS[transaction.source] || transaction.source}
                 </Text>
@@ -121,7 +121,7 @@ export default function TransactionDetailScreen() {
 
               {!!transaction.account_id && (
                 <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                  <Text className="text-sm text-muted dark:text-neutral-400">Account</Text>
+                  <Text className="text-sm text-muted-foreground dark:text-neutral-400">Account</Text>
                   <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                     {accounts?.find(a => a.id === transaction.account_id)?.name || "—"}
                   </Text>
@@ -130,7 +130,7 @@ export default function TransactionDetailScreen() {
 
               {transaction.is_recurring && (
                 <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                  <Text className="text-sm text-muted dark:text-neutral-400">Recurring</Text>
+                  <Text className="text-sm text-muted-foreground dark:text-neutral-400">Recurring</Text>
                   <View className="px-3 py-1 rounded-full bg-primary-100 dark:bg-accent-900">
                     <Text className="text-xs font-medium text-primary-600 dark:text-accent-400">Yes</Text>
                   </View>
@@ -139,7 +139,7 @@ export default function TransactionDetailScreen() {
 
               {!!transaction.description && (
                 <View className="px-4 py-4">
-                  <Text className="text-sm text-muted dark:text-neutral-400 mb-1">Description</Text>
+                  <Text className="text-sm text-muted-foreground dark:text-neutral-400 mb-1">Description</Text>
                   <Text className="text-sm text-neutral-900 dark:text-white">{transaction.description}</Text>
                 </View>
               )}

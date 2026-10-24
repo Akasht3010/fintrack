@@ -106,7 +106,7 @@ export default function TransactionsScreen() {
       <View className="px-6 pt-4 pb-4">
         <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Transactions</Text>
         {hasActiveFilters && (
-          <Text className="text-sm text-muted dark:text-neutral-400 mt-2">
+          <Text className="text-sm text-muted-foreground dark:text-neutral-400 mt-2">
             {stats.count} transactions • {formatCurrency(stats.total)}
           </Text>
         )}
@@ -149,7 +149,7 @@ export default function TransactionsScreen() {
       {showFilters && (
         <View className="px-6 mb-3">
           <GlassCard className="p-4">
-            <Text className="text-xs font-medium text-muted dark:text-neutral-400 uppercase tracking-wider mb-2">
+            <Text className="text-xs font-medium text-muted-foreground dark:text-neutral-400 uppercase tracking-wider mb-2">
               Date range
             </Text>
             <View className="flex-row flex-wrap gap-2 mb-4">
@@ -172,7 +172,7 @@ export default function TransactionsScreen() {
               ))}
             </View>
 
-            <Text className="text-xs font-medium text-muted dark:text-neutral-400 uppercase tracking-wider mb-2">
+            <Text className="text-xs font-medium text-muted-foreground dark:text-neutral-400 uppercase tracking-wider mb-2">
               Amount
             </Text>
             <View className="flex-row items-center gap-3">
@@ -184,7 +184,7 @@ export default function TransactionsScreen() {
                 className="flex-1 border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-white"
                 placeholderTextColor="#9ca3af"
               />
-              <Text className="text-muted dark:text-neutral-400">–</Text>
+              <Text className="text-muted-foreground dark:text-neutral-400">–</Text>
               <TextInput
                 placeholder="Max"
                 value={maxAmount}
@@ -314,7 +314,7 @@ export default function TransactionsScreen() {
                             {transaction.merchant}
                           </Text>
                         </View>
-                        <Text className="text-xs text-muted dark:text-neutral-400 capitalize w-32">
+                        <Text className="text-xs text-muted-foreground dark:text-neutral-400 capitalize w-32">
                           {transaction.category}
                         </Text>
                         <Text
@@ -348,7 +348,7 @@ export default function TransactionsScreen() {
                             <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                               {transaction.merchant}
                             </Text>
-                            <Text className="text-xs text-muted dark:text-neutral-400 capitalize">
+                            <Text className="text-xs text-muted-foreground dark:text-neutral-400 capitalize">
                               {transaction.category}
                             </Text>
                           </View>

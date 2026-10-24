@@ -135,7 +135,7 @@ export default function SignupScreen() {
                 <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
                   Create account
                 </Text>
-                <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
+                <Text className="text-base text-muted-foreground dark:text-neutral-400 text-center leading-6 mb-12">
                   All your expenses across every app,{"\n"}in one clear view.
                 </Text>
               </>
@@ -251,7 +251,7 @@ export default function SignupScreen() {
 
               <View className="flex-row items-center gap-3 my-1">
                 <View className="flex-1 h-px bg-border dark:bg-neutral-800" />
-                <Text className="text-xs text-muted dark:text-neutral-400">or</Text>
+                <Text className="text-xs text-muted-foreground dark:text-neutral-400">or</Text>
                 <View className="flex-1 h-px bg-border dark:bg-neutral-800" />
               </View>
 
@@ -274,13 +274,13 @@ export default function SignupScreen() {
                 disabled={isLoading}
                 className="w-full items-center py-2"
               >
-                <Text className="text-sm text-muted dark:text-neutral-400">
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">
                   Already have an account?{" "}
                   <Text className="text-primary-600 dark:text-primary-400 font-semibold">Log In</Text>
                 </Text>
               </TouchableOpacity>
 
-              <Text className="text-xs text-muted dark:text-neutral-400 text-center mt-4 leading-5">
+              <Text className="text-xs text-muted-foreground dark:text-neutral-400 text-center mt-4 leading-5">
                 By continuing, you agree to our{" "}
                 <Text className="text-primary-600 dark:text-primary-400">Terms of Service</Text>
                 {" "}and{" "}

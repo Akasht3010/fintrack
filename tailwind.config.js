@@ -20,8 +20,21 @@ module.exports = {
       screens: {
         "3xl": "1920px"
       },
+      // shadcn/ui-style semantic tokens — values live in
+      // src/constants/global.css as RGB channels per color scheme, so one
+      // class (e.g. `bg-card`) is correct in both light and dark mode
+      // without a `dark:` twin. The numbered primary/accent shades are kept
+      // for screens that haven't moved to the tokens yet.
       colors: {
+        background: "rgb(var(--background) / <alpha-value>)",
+        foreground: "rgb(var(--foreground) / <alpha-value>)",
+        card: {
+          DEFAULT: "rgb(var(--card) / <alpha-value>)",
+          foreground: "rgb(var(--card-foreground) / <alpha-value>)"
+        },
         primary: {
+          DEFAULT: "rgb(var(--primary) / <alpha-value>)",
+          foreground: "rgb(var(--primary-foreground) / <alpha-value>)",
           50:  "#ecfdf5",
           100: "#d1fae5",
           400: "#34d399",
@@ -29,8 +42,17 @@ module.exports = {
           600: "#059669",
           900: "#064e3b"
         },
-        // A softer emerald accent is used on dark surfaces.
+        secondary: {
+          DEFAULT: "rgb(var(--secondary) / <alpha-value>)",
+          foreground: "rgb(var(--secondary-foreground) / <alpha-value>)"
+        },
+        muted: {
+          DEFAULT: "rgb(var(--muted) / <alpha-value>)",
+          foreground: "rgb(var(--muted-foreground) / <alpha-value>)"
+        },
         accent: {
+          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
+          foreground: "rgb(var(--accent-foreground) / <alpha-value>)",
           100: "#d1fae5",
           400: "#6ee7b7",
           500: "#34d399",
@@ -38,10 +60,16 @@ module.exports = {
           700: "#047857",
           900: "#064e3b"
         },
-        surface: "#ffffff",
-        background: "#f7f9f8",
-        border: "#e7ece9",
-        muted: "#727b76"
+        destructive: {
+          DEFAULT: "rgb(var(--destructive) / <alpha-value>)",
+          foreground: "rgb(var(--destructive-foreground) / <alpha-value>)"
+        },
+        positive: "rgb(var(--positive) / <alpha-value>)",
+        negative: "rgb(var(--negative) / <alpha-value>)",
+        border: "rgb(var(--border) / <alpha-value>)",
+        input: "rgb(var(--input) / <alpha-value>)",
+        ring: "rgb(var(--ring) / <alpha-value>)",
+        surface: "#ffffff"
       },
       fontFamily: {
         sans: ["Inter_400Regular"],

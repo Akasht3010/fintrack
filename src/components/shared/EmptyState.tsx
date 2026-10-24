@@ -1,4 +1,6 @@
-import { View, Text, TouchableOpacity } from "react-native"
+import { View } from "react-native"
+import { Button } from "@/components/ui/button"
+import { Text } from "@/components/ui/text"
 
 interface EmptyStateProps {
   icon?: string
@@ -11,24 +13,20 @@ interface EmptyStateProps {
 export function EmptyState({ icon = "📭", title, subtitle, actionLabel, onAction }: EmptyStateProps) {
   return (
     <View className="flex-1 items-center justify-center px-6 py-12">
-      <Text className="text-4xl mb-3">{icon}</Text>
-      <Text className="text-base font-semibold text-neutral-900 dark:text-white text-center">{title}</Text>
+      <View className="mb-4 h-14 w-14 items-center justify-center rounded-2xl border border-border bg-secondary">
+        <Text className="text-2xl">{icon}</Text>
+      </View>
+      <Text className="text-center text-base font-semibold">{title}</Text>
       {subtitle && (
-        <Text className="text-sm text-muted dark:text-neutral-400 text-center mt-1 max-w-[320px]">{subtitle}</Text>
+        <Text className="mt-1 max-w-[320px] text-center text-sm text-muted-foreground">{subtitle}</Text>
       )}
-      {/* Optional — a first-run empty state with nothing to click is
-          especially stark on a wide desktop window, where it's the only
-          thing on an otherwise-empty page. Not every call site has one
-          single obvious next action (a filtered "no matches" state
-          shouldn't offer to add a transaction, for instance), so this
-          stays opt-in rather than always rendering a button. */}
+      {/* Optional — not every call site has one obvious next action (a
+          filtered "no matches" state shouldn't offer to add a
+          transaction, for instance), so this stays opt-in. */}
       {actionLabel && onAction && (
-        <TouchableOpacity
-          onPress={onAction}
-          className="mt-5 px-6 py-3 rounded-2xl bg-primary-600 dark:bg-accent-600 cursor-pointer transition-opacity duration-150 hover:opacity-90"
-        >
-          <Text className="text-sm font-semibold text-white">{actionLabel}</Text>
-        </TouchableOpacity>
+        <Button onPress={onAction} size="sm" className="mt-5 px-4">
+          <Text>{actionLabel}</Text>
+        </Button>
       )}
     </View>
   )

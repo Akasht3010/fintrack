@@ -205,7 +205,7 @@ export default function AddExpenseScreen() {
                 className={`text-sm font-semibold ${
                   transactionType === t
                     ? "text-neutral-900 dark:text-white"
-                    : "text-muted dark:text-neutral-400"
+                    : "text-muted-foreground dark:text-neutral-400"
                 }`}
               >
                 {t === "debit" ? "Expense" : "Credit"}

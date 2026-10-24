@@ -123,12 +123,12 @@ export default function BudgetScreen() {
                         <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
                           {budget.category}
                         </Text>
-                        <Text className="text-xs text-muted dark:text-neutral-400 capitalize">
+                        <Text className="text-xs text-muted-foreground dark:text-neutral-400 capitalize">
                           {budget.period}
                         </Text>
                       </View>
                     </View>
-                    <Text className={`text-xs font-medium mr-2 ${isOver ? "text-red-600 dark:text-red-400" : "text-muted dark:text-neutral-400"}`}>
+                    <Text className={`text-xs font-medium mr-2 ${isOver ? "text-red-600 dark:text-red-400" : "text-muted-foreground dark:text-neutral-400"}`}>
                       {isOver
                         ? `${formatCurrency(remaining.abs())} over`
                         : `${formatCurrency(remaining)} left`}
@@ -150,7 +150,7 @@ export default function BudgetScreen() {
                     />
                   </View>
 
-                  <Text className="text-xs text-muted dark:text-neutral-400">
+                  <Text className="text-xs text-muted-foreground dark:text-neutral-400">
                     {formatCurrency(budget.spent_amount)} of {formatCurrency(budget.limit_amount)}
                   </Text>
                 </GlassCard>

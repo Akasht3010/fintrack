@@ -70,7 +70,7 @@ export default function ForgotPasswordScreen() {
             <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
               Reset password
             </Text>
-            <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
+            <Text className="text-base text-muted-foreground dark:text-neutral-400 text-center leading-6 mb-12">
               Enter your phone number or email and{"\n"}we&apos;ll send you a verification code
             </Text>
 
@@ -116,7 +116,7 @@ export default function ForgotPasswordScreen() {
                 disabled={isLoading}
                 className="w-full items-center py-2"
               >
-                <Text className="text-sm text-muted dark:text-neutral-400">
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">
                   Back to <Text className="text-primary-600 dark:text-primary-400 font-semibold">Log In</Text>
                 </Text>
               </TouchableOpacity>

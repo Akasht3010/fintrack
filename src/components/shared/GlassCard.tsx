@@ -1,6 +1,6 @@
-import { View, TouchableOpacity } from "react-native"
-import { useColorScheme } from "nativewind"
+import { View, Pressable } from "react-native"
 import { ReactNode } from "react"
+import { cn } from "@/lib/utils"
 
 interface GlassCardProps {
   children: ReactNode
@@ -10,27 +10,33 @@ interface GlassCardProps {
   radius?: number
 }
 
-export function GlassCard({ children, className = "", onPress, onLongPress, radius = 20 }: GlassCardProps) {
-  const { colorScheme } = useColorScheme()
-  const isDark = colorScheme === "dark"
+/**
+ * Legacy card surface, now drawn with the design tokens (same look as
+ * components/ui/card) so screens that haven't been redesigned yet still
+ * match the new ones. New code should use <Card> directly.
+ */
+export function GlassCard({ children, className = "", onPress, onLongPress, radius = 16 }: GlassCardProps) {
   const isPressable = !!(onPress || onLongPress)
-  const Wrapper = isPressable ? TouchableOpacity : View
-  // TouchableOpacity's own opacity-on-press feedback is a touch affordance —
-  // on desktop web a mouse user gets no signal a card is clickable at all
-  // until they've already clicked it. `hover:`/`cursor-pointer` are web-only
-  // (NativeWind compiles them to a real `:hover` media query; native ignores
-  // them), so this only changes anything on web, and only for cards that are
-  // actually pressable.
-  const interactiveClasses = isPressable ? "cursor-pointer transition-colors duration-150" : ""
+  const base = "border border-border bg-card shadow-sm shadow-black/5"
 
+  if (!isPressable) {
+    return (
+      <View style={{ borderRadius: radius }} className={cn(base, className)}>
+        {children}
+      </View>
+    )
+  }
+
+  // `web:` hover/cursor classes only exist on web; on native, Pressable's
+  // active: state gives the touch feedback instead.
   return (
-    <Wrapper
+    <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
       style={{ borderRadius: radius }}
-      className={`${isDark ? "bg-neutral-900 border border-white/10" : "bg-white border border-border shadow-sm"} ${isPressable ? "hover:bg-neutral-50 dark:hover:bg-white/[0.06]" : ""} ${interactiveClasses} ${className}`}
+      className={cn(base, "active:opacity-80 web:cursor-pointer web:transition-colors web:duration-150 web:hover:bg-accent/60", className)}
     >
       {children}
-    </Wrapper>
+    </Pressable>
   )
 }

@@ -1,4 +1,8 @@
-import { View, Text, TouchableOpacity } from "react-native"
+import { View } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import { useTheme } from "@/lib/theme"
+import { Button } from "@/components/ui/button"
+import { Text } from "@/components/ui/text"
 
 interface ErrorStateProps {
   message?: string
@@ -6,17 +10,18 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({ message = "Something went wrong", onRetry }: ErrorStateProps) {
+  const { colors } = useTheme()
   return (
     <View className="flex-1 items-center justify-center px-6 py-12">
-      <Text className="text-4xl mb-3">⚠️</Text>
-      <Text className="text-base font-semibold text-neutral-900 dark:text-white text-center">{message}</Text>
+      <View className="mb-4 h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">
+        <Ionicons name="alert-circle-outline" size={26} color={colors.destructive} />
+      </View>
+      <Text className="text-center text-base font-semibold">{message}</Text>
       {onRetry && (
-        <TouchableOpacity
-          onPress={onRetry}
-          className="mt-4 px-6 py-3 rounded-2xl bg-primary-600"
-        >
-          <Text className="text-sm font-semibold text-white">Try Again</Text>
-        </TouchableOpacity>
+        <Button onPress={onRetry} variant="outline" size="sm" className="mt-4 px-4">
+          <Ionicons name="refresh" size={14} color={colors.foreground} />
+          <Text>Try again</Text>
+        </Button>
       )}
     </View>
   )

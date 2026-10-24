@@ -1,18 +1,10 @@
-import { View, StyleSheet } from "react-native"
-import { useColorScheme } from "nativewind"
+import { View } from "react-native"
 
 /**
- * Dark mode uses a quiet ink surface. Kept as a shared background component
- * so screens can opt into a consistent surface without decorative clutter.
+ * Full-bleed page background in the theme's `background` token. Kept as a
+ * component (rather than inlined) because many screens render it as their
+ * first child and pair it with a transparent SafeAreaView.
  */
 export function GlowBackground() {
-  const { colorScheme } = useColorScheme()
-  if (colorScheme !== "dark") return null
-  return <View style={[StyleSheet.absoluteFill, styles.base]} pointerEvents="none" />
+  return <View pointerEvents="none" className="absolute inset-0 bg-background" />
 }
-
-const styles = StyleSheet.create({
-  base: {
-    backgroundColor: "#0d1511"
-  }
-})

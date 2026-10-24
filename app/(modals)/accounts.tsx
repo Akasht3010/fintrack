@@ -104,7 +104,7 @@ function AccountRow({ account }: { account: Account }) {
           accessibilityLabel="Account name"
         />
         <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3">
-          <Text className="text-sm text-muted dark:text-neutral-400 mr-2">Opening balance</Text>
+          <Text className="text-sm text-muted-foreground dark:text-neutral-400 mr-2">Opening balance</Text>
           <TextInput
             value={openingBalance}
             onChangeText={setOpeningBalance}
@@ -149,7 +149,7 @@ function AccountRow({ account }: { account: Account }) {
             <Text className={`text-sm font-medium text-neutral-900 dark:text-white ${account.is_archived ? "opacity-50" : ""}`}>
               {account.name}
             </Text>
-            <Text className="text-xs text-muted dark:text-neutral-400 mt-0.5">
+            <Text className="text-xs text-muted-foreground dark:text-neutral-400 mt-0.5">
               {ACCOUNT_TYPE_LABELS[account.type]}{account.is_archived ? " · Archived" : ""}
             </Text>
           </View>
@@ -264,7 +264,7 @@ export default function AccountsScreen() {
               accessibilityLabel="Account name"
             />
             <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 mb-2">
-              <Text className="text-sm text-muted dark:text-neutral-400 mr-2">
+              <Text className="text-sm text-muted-foreground dark:text-neutral-400 mr-2">
                 {newType === "credit_card" ? "Amount currently owed" : "Opening balance"}
               </Text>
               <TextInput

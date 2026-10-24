@@ -95,21 +95,21 @@ export default function InsightsScreen() {
               <GlassCard className="p-4">
                 <View className="flex-row items-center">
                   <View className="flex-1">
-                    <Text className="text-xs text-muted dark:text-neutral-400">Credit</Text>
+                    <Text className="text-xs text-muted-foreground dark:text-neutral-400">Credit</Text>
                     <Text className="text-xl font-bold text-green-600 dark:text-emerald-400 mt-1">
                       {formatCurrency(currentMonthIncome)}
                     </Text>
                   </View>
                   <View className="w-px h-10 bg-border dark:bg-white/10" />
                   <View className="flex-1 items-end">
-                    <Text className="text-xs text-muted dark:text-neutral-400">Expenses</Text>
+                    <Text className="text-xs text-muted-foreground dark:text-neutral-400">Expenses</Text>
                     <Text className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
                       {formatCurrency(currentMonthExpense)}
                     </Text>
                   </View>
                 </View>
                 <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-border dark:border-white/10">
-                  <Text className="text-xs text-muted dark:text-neutral-400">
+                  <Text className="text-xs text-muted-foreground dark:text-neutral-400">
                     {currentMonthIncome > 0 ? `Saved ${savingsRate}% of credit` : "Net this month"}
                   </Text>
                   <Text className={`text-sm font-bold ${savings >= 0 ? "text-neutral-900 dark:text-white" : "text-red-600 dark:text-red-400"}`}>
@@ -133,9 +133,9 @@ export default function InsightsScreen() {
                     <View>
                       <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
                         {formatCurrency(recurring.monthly_total)}
-                        <Text className="text-sm font-medium text-muted dark:text-neutral-400">/mo</Text>
+                        <Text className="text-sm font-medium text-muted-foreground dark:text-neutral-400">/mo</Text>
                       </Text>
-                      <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                      <Text className="text-xs text-muted-foreground dark:text-neutral-400 mt-1">
                         {recurring.items.length} recurring bill{recurring.items.length === 1 ? "" : "s"} detected
                       </Text>
                     </View>
@@ -144,7 +144,7 @@ export default function InsightsScreen() {
                       <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                         Nothing detected yet
                       </Text>
-                      <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                      <Text className="text-xs text-muted-foreground dark:text-neutral-400 mt-1">
                         We&apos;ll spot subscriptions once a merchant charges you a few times on a regular cadence
                       </Text>
                     </View>
@@ -164,11 +164,11 @@ export default function InsightsScreen() {
               <View className="flex-row items-center gap-3">
                 <View className="flex-row items-center gap-1.5">
                   <View className="w-2 h-2 rounded-full bg-green-500 dark:bg-emerald-400" />
-                  <Text className="text-[11px] text-muted dark:text-neutral-400">Credit</Text>
+                  <Text className="text-[11px] text-muted-foreground dark:text-neutral-400">Credit</Text>
                 </View>
                 <View className="flex-row items-center gap-1.5">
                   <View className="w-2 h-2 rounded-full bg-primary-600 dark:bg-accent-500" />
-                  <Text className="text-[11px] text-muted dark:text-neutral-400">Expenses</Text>
+                  <Text className="text-[11px] text-muted-foreground dark:text-neutral-400">Expenses</Text>
                 </View>
               </View>
             </View>
@@ -201,7 +201,7 @@ export default function InsightsScreen() {
                           className="w-2.5 rounded-full bg-primary-600 dark:bg-accent-500"
                         />
                       </View>
-                      <Text className="text-[10px] font-medium text-muted dark:text-neutral-400">
+                      <Text className="text-[10px] font-medium text-muted-foreground dark:text-neutral-400">
                         {m.label}
                       </Text>
                     </View>
@@ -268,7 +268,7 @@ export default function InsightsScreen() {
                         <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                           {merchant.merchant}
                         </Text>
-                        <Text className="text-xs text-muted dark:text-neutral-400 mt-1">
+                        <Text className="text-xs text-muted-foreground dark:text-neutral-400 mt-1">
                           {merchant.count} transaction{merchant.count === 1 ? "" : "s"}
                         </Text>
                       </View>

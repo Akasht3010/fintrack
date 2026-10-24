@@ -52,7 +52,7 @@ function CategoryRow({ category }: { category: Category }) {
           <Text className="text-lg">{category.icon}</Text>
           <Text className="text-sm font-medium text-neutral-900 dark:text-white capitalize">{category.name}</Text>
         </View>
-        <Text className="text-xs text-muted dark:text-neutral-500">Default</Text>
+        <Text className="text-xs text-muted-foreground dark:text-neutral-500">Default</Text>
       </View>
     )
   }

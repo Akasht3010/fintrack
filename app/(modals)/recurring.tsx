@@ -52,7 +52,7 @@ export default function RecurringScreen() {
       ) : (
         <ScrollView className="px-6 py-6" showsVerticalScrollIndicator={false}>
           <View className="mb-6">
-            <Text className="text-sm text-muted dark:text-neutral-400">Estimated monthly cost</Text>
+            <Text className="text-sm text-muted-foreground dark:text-neutral-400">Estimated monthly cost</Text>
             <Text className="text-4xl font-bold text-neutral-900 dark:text-white mt-1">
               {formatCurrency(data.monthly_total)}
             </Text>
@@ -72,7 +72,7 @@ export default function RecurringScreen() {
                         <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                           {item.merchant}
                         </Text>
-                        <Text className="text-xs text-muted dark:text-neutral-400 capitalize mt-0.5">
+                        <Text className="text-xs text-muted-foreground dark:text-neutral-400 capitalize mt-0.5">
                           {CADENCE_LABELS[item.cadence]} • {item.occurrences} charges seen
                         </Text>
                       </View>
@@ -83,7 +83,7 @@ export default function RecurringScreen() {
                   </View>
 
                   <View className="flex-row items-center justify-between pt-3 border-t border-border dark:border-white/10">
-                    <Text className="text-xs text-muted dark:text-neutral-400">
+                    <Text className="text-xs text-muted-foreground dark:text-neutral-400">
                       Last charged {formatDate(item.last_date)}
                     </Text>
                     <Text className={`text-xs font-medium ${isOverdue ? "text-red-600 dark:text-red-400" : "text-primary-600 dark:text-accent-400"}`}>

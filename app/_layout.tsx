@@ -1,5 +1,5 @@
 import { useEffect } from "react"
-import { Stack, router, usePathname } from "expo-router"
+import { Stack, ThemeProvider, router, usePathname } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { storage as SecureStore } from "@/utils/storage"
@@ -19,6 +19,7 @@ import { useThemeStore } from "@/store/useThemeStore"
 import { authApi } from "@/api/endpoints/auth"
 import { useBillReminders } from "@/hooks/useBillReminders"
 import { useGmailAutoSync } from "@/hooks/useGmailAutoSync"
+import { navigationTheme, useTheme } from "@/lib/theme"
 import "../src/constants/global.css"
 
 SplashScreen.preventAutoHideAsync()
@@ -48,6 +49,7 @@ function RootLayoutNav() {
   })
   const hydrateTheme = useThemeStore((state) => state.hydrate)
   const pathname = usePathname()
+  const { isDark } = useTheme()
   // auth-callback and gmail-callback own their own navigation once they've
   // finished establishing (or failing to establish) the session — they run
   // an async write-token-then-fetch-user sequence that takes a beat. If this
@@ -124,11 +126,13 @@ function RootLayoutNav() {
     // (see app/(modals)/_layout.tsx) — a single wrapper here would nest all
     // three inside one box, which is exactly the "whole site trapped in a
     // card" look those group layouts exist to avoid.
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(modals)" options={{ presentation: "modal" }} />
-    </Stack>
+    <ThemeProvider value={navigationTheme(isDark)}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(modals)" options={{ presentation: "modal" }} />
+      </Stack>
+    </ThemeProvider>
   )
 }
 

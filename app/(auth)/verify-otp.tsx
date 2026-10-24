@@ -117,7 +117,7 @@ export default function VerifyOtpScreen() {
             <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
               Check your email
             </Text>
-            <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
+            <Text className="text-base text-muted-foreground dark:text-neutral-400 text-center leading-6 mb-12">
               Enter the {OTP_LENGTH}-digit code we sent to{"\n"}
               {params.emailHint ? <Text className="font-semibold">{params.emailHint}</Text> : "your email"}
             </Text>
@@ -157,7 +157,7 @@ export default function VerifyOtpScreen() {
                 {isResending ? (
                   <ActivityIndicator color="#6b7280" />
                 ) : (
-                  <Text className="text-sm text-muted dark:text-neutral-400">
+                  <Text className="text-sm text-muted-foreground dark:text-neutral-400">
                     {cooldown > 0 ? (
                       `Resend code in ${cooldown}s`
                     ) : (

@@ -108,7 +108,7 @@ export default function ProfileScreen() {
           <Text className="text-xl font-bold text-neutral-900 dark:text-white">
             {user?.name ?? "User"}
           </Text>
-          <Text className="text-sm text-muted dark:text-neutral-400 mt-1">{user?.email}</Text>
+          <Text className="text-sm text-muted-foreground dark:text-neutral-400 mt-1">{user?.email}</Text>
         </View>
 
         {/* Account info + appearance in a narrower left rail, sync/data
@@ -121,14 +121,14 @@ export default function ProfileScreen() {
           <View className="gap-6 lg:w-[340px] lg:shrink-0">
             <GlassCard>
               <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted dark:text-neutral-400">Phone</Text>
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Phone</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                   {user?.phone || "Not added"}
                 </Text>
               </View>
 
               <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted dark:text-neutral-400">Gmail</Text>
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Gmail</Text>
                 <View className={`px-3 py-1 rounded-full ${user?.gmail_connected ? "bg-primary-100 dark:bg-accent-900" : "bg-neutral-100 dark:bg-white/10"}`}>
                   <Text className={`text-xs font-medium ${user?.gmail_connected ? "text-primary-600 dark:text-accent-400" : "text-neutral-500 dark:text-neutral-400"}`}>
                     {user?.gmail_connected ? "Connected" : "Not connected"}
@@ -137,7 +137,7 @@ export default function ProfileScreen() {
               </View>
 
               <View className="flex-row items-center justify-between px-4 py-4">
-                <Text className="text-sm text-muted dark:text-neutral-400">Member since</Text>
+                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Member since</Text>
                 <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
                   {user?.created_at ? formatDate(user.created_at) : "—"}
                 </Text>
@@ -159,7 +159,7 @@ export default function ProfileScreen() {
                       className={`text-sm font-medium capitalize ${
                         mode === option
                           ? "text-neutral-900 dark:text-white"
-                          : "text-muted dark:text-neutral-400"
+                          : "text-muted-foreground dark:text-neutral-400"
                       }`}
                     >
                       {option}
@@ -252,7 +252,7 @@ export default function ProfileScreen() {
             onPress={() => router.push("/(modals)/delete-account")}
             className="w-full items-center justify-center py-2 cursor-pointer hover:opacity-70 transition-opacity duration-150"
           >
-            <Text className="text-sm font-medium text-muted dark:text-neutral-500">Delete Account</Text>
+            <Text className="text-sm font-medium text-muted-foreground dark:text-neutral-500">Delete Account</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

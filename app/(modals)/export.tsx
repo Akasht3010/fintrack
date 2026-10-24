@@ -101,7 +101,7 @@ export default function ExportScreen() {
         </View>
 
         <GlassCard className="p-4 mb-6">
-          <Text className="text-xs text-muted dark:text-neutral-400">
+          <Text className="text-xs text-muted-foreground dark:text-neutral-400">
             Exports a CSV with the date, type, amount, category, merchant, description, source, and recurring flag for every matching transaction.
           </Text>
         </GlassCard>
