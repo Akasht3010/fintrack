@@ -3,12 +3,22 @@ import { storage as SecureStore } from "@/utils/storage"
 import { ENV } from "@/config/env"
 import { useUserStore } from "@/store/useUserStore"
 import { showAlert } from "@/utils/alert"
+import {
+  AUTH_TRANSPORT_HEADERS,
+  cookieSessionAgeMs,
+  noteCookieSessionIssued,
+  usesCookieSession
+} from "@/utils/session"
 
 export const apiClient = axios.create({
   baseURL: ENV.API_URL,
   timeout: 10000,
+  // Web authenticates with the backend's HttpOnly session cookie — see
+  // src/utils/session.ts.
+  withCredentials: usesCookieSession,
   headers: {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    ...AUTH_TRANSPORT_HEADERS
   }
 })
 
@@ -62,6 +72,33 @@ const REFRESH_THRESHOLD_MS = 5 * 60 * 1000
 
 let refreshPromise: Promise<string | null> | null = null
 
+// Web: renew the cookie once it's this old (server-side expiry is 30 min).
+const COOKIE_RENEW_AFTER_MS = 25 * 60 * 1000
+let cookieRenewPromise: Promise<boolean> | null = null
+
+/** Asks the backend to re-issue the session cookie. Resolves false if the
+ *  session is already gone. Bare axios for the same reason as
+ *  refreshAccessToken below. */
+export function renewCookieSession(): Promise<boolean> {
+  if (!cookieRenewPromise) {
+    cookieRenewPromise = axios
+      .post(`${ENV.API_URL}/api/auth/refresh`, null, {
+        withCredentials: true,
+        headers: AUTH_TRANSPORT_HEADERS,
+        timeout: 10000
+      })
+      .then(() => {
+        noteCookieSessionIssued()
+        return true
+      })
+      .catch(() => false)
+      .finally(() => {
+        cookieRenewPromise = null
+      })
+  }
+  return cookieRenewPromise
+}
+
 async function refreshAccessToken(currentToken: string): Promise<string | null> {
   try {
     // A bare axios call, not apiClient — going through apiClient's own
@@ -104,6 +141,17 @@ async function getFreshAccessToken(): Promise<string | null> {
 }
 
 apiClient.interceptors.request.use(async (config) => {
+  if (usesCookieSession) {
+    // The browser attaches the cookie itself; only keep it from expiring.
+    // Unknown age (fresh page load, signed out) is left alone — app start
+    // renews explicitly, and an unauthenticated request has nothing to renew.
+    const age = cookieSessionAgeMs()
+    if (age !== null && age >= COOKIE_RENEW_AFTER_MS) {
+      await renewCookieSession()
+    }
+    return config
+  }
+
   const token = await getFreshAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`

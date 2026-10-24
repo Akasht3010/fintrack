@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 import { storage as SecureStore } from "@/utils/storage"
+import { saveSession } from "@/utils/session"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { Colors } from "@/constants/colors"
@@ -35,7 +36,7 @@ export default function AuthCallback() {
       if (typeof code === "string" && code) {
         try {
           const { access_token: token } = await authApi.exchangeGoogleCode(code)
-          await SecureStore.setItemAsync("access_token", token)
+          await saveSession(token)
           const user = await authApi.getMe()
           await SecureStore.setItemAsync("user", JSON.stringify(user))
           setUser(user)

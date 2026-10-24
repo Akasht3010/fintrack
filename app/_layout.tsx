@@ -3,6 +3,8 @@ import { Stack, router, usePathname } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { storage as SecureStore } from "@/utils/storage"
+import { clearStoredSession, usesCookieSession } from "@/utils/session"
+import { renewCookieSession } from "@/api/client"
 import * as SplashScreen from "expo-splash-screen"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import {
@@ -58,9 +60,20 @@ function RootLayoutNav() {
 
   const checkAuth = async () => {
     try {
-      const token = await SecureStore.getItemAsync("access_token")
-      if (!token) {
-        return
+      if (usesCookieSession) {
+        // The cookie is invisible to JS, so "is there a session?" is only
+        // answerable by the server. Renewing first also restarts the 30-min
+        // clock this page load knows nothing about. Any token an older web
+        // build left in localStorage is removed either way.
+        await clearStoredSession()
+        if (!(await renewCookieSession())) {
+          return
+        }
+      } else {
+        const token = await SecureStore.getItemAsync("access_token")
+        if (!token) {
+          return
+        }
       }
 
       // Validates the token and refreshes the cached user in one step —
@@ -70,7 +83,7 @@ function RootLayoutNav() {
       await SecureStore.setItemAsync("user", JSON.stringify(user))
       setUser(user)
     } catch {
-      await SecureStore.deleteItemAsync("access_token")
+      await clearStoredSession()
       await SecureStore.deleteItemAsync("user")
     } finally {
       setLoading(false)

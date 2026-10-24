@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { storage as SecureStore } from "@/utils/storage"
+import { clearStoredSession, usesCookieSession } from "@/utils/session"
 import { authApi } from "@/api/endpoints/auth"
 import { User } from "@/types/domain"
 
@@ -30,9 +31,13 @@ export const useUserStore = create<UserState>((set) => ({
       // network at all are all reasons this can fail harmlessly.
       await authApi.logout()
     } catch {
-      // Local logout must still succeed either way.
+      // Local logout must still succeed either way. On web, a dead cookie
+      // makes /logout 401 and can't clear itself — drop it explicitly.
+      if (usesCookieSession) {
+        await authApi.clearSession().catch(() => {})
+      }
     }
-    await SecureStore.deleteItemAsync("access_token")
+    await clearStoredSession()
     await SecureStore.deleteItemAsync("user")
     set({ user: null, isAuthenticated: false, isLoading: false })
   }

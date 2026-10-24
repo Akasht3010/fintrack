@@ -5,6 +5,7 @@ import * as AuthSession from "expo-auth-session"
 import * as Linking from "expo-linking"
 import Constants from "expo-constants"
 import { storage as SecureStore } from "@/utils/storage"
+import { saveSession } from "@/utils/session"
 import { useUserStore } from "@/store/useUserStore"
 import { ENV } from "@/config/env"
 import { authApi } from "@/api/endpoints/auth"
@@ -76,7 +77,7 @@ export function useGoogleAuth() {
       }
 
       const { access_token: token } = await authApi.exchangeGoogleCode(code)
-      await SecureStore.setItemAsync("access_token", token)
+      await saveSession(token)
       const user = await authApi.getMe()
       await SecureStore.setItemAsync("user", JSON.stringify(user))
       setUser(user)

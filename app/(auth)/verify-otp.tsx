@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { router, useLocalSearchParams } from "expo-router"
 import { storage as SecureStore } from "@/utils/storage"
+import { saveSession } from "@/utils/session"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
@@ -57,7 +58,7 @@ export default function VerifyOtpScreen() {
         ? await authApi.confirmEmailChange({ pendingToken, code })
         : await authApi.verifyOtp({ pendingToken, code })
 
-      await SecureStore.setItemAsync("access_token", response.access_token)
+      await saveSession(response.access_token)
       await SecureStore.setItemAsync("user", JSON.stringify(response.user))
 
       setUser(response.user)

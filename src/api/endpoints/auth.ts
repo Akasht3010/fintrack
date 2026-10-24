@@ -29,9 +29,11 @@ export interface VerifyOtpRequest {
   code: string
 }
 
-// Step 2 of login: OTP confirmed, this is the real session.
+// Step 2 of login: OTP confirmed, this is the real session. access_token
+// is null on web, where the session is an HttpOnly cookie — persist it via
+// saveSession (src/utils/session.ts), never directly.
 export interface VerifyOtpResponse {
-  access_token: string
+  access_token: string | null
   user: User
 }
 
@@ -55,7 +57,7 @@ export interface ResetPasswordRequest {
 
 // Step 2 of password reset: OTP confirmed, password changed, logged in.
 export interface ResetPasswordResponse {
-  access_token: string
+  access_token: string | null  // null on web — see VerifyOtpResponse
   user: User
 }
 
@@ -156,9 +158,15 @@ export const authApi = {
     return response.data
   },
 
-  async refreshToken(): Promise<{ access_token: string }> {
-    const response = await apiClient.post<{ access_token: string }>("/api/auth/refresh")
+  async refreshToken(): Promise<{ access_token: string | null }> {
+    const response = await apiClient.post<{ access_token: string | null }>("/api/auth/refresh")
     return response.data
+  },
+
+  // Web: drops a session cookie that's already dead (so /logout can't be
+  // authenticated) but still sitting in the browser.
+  async clearSession(): Promise<void> {
+    await apiClient.post("/api/auth/clear-session")
   },
 
   // Logs out everywhere: bumps the account's token_version server-side so
@@ -172,8 +180,8 @@ export const authApi = {
   // Trades the one-time `code` from the Google sign-in redirect for the
   // real access token — see the backend's google_callback/google_exchange
   // for why the token itself doesn't travel in that redirect's URL.
-  async exchangeGoogleCode(code: string): Promise<{ access_token: string }> {
-    const response = await apiClient.post<{ access_token: string }>("/api/auth/google/exchange", { code })
+  async exchangeGoogleCode(code: string): Promise<{ access_token: string | null }> {
+    const response = await apiClient.post<{ access_token: string | null }>("/api/auth/google/exchange", { code })
     return response.data
   }
 }
