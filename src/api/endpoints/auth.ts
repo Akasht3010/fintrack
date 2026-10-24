@@ -59,9 +59,10 @@ export interface ResetPasswordResponse {
   user: User
 }
 
+// Email isn't here: changing it needs a code sent to the new address —
+// see requestEmailChange / confirmEmailChange.
 export interface UpdateProfileRequest {
   name?: string
-  email?: string
   phone?: string
 }
 
@@ -82,6 +83,22 @@ export const authApi = {
 
   async updateMe(data: UpdateProfileRequest): Promise<User> {
     const response = await apiClient.patch<User>("/api/auth/me", data)
+    return response.data
+  },
+
+  // Step 1 of an email change: emails a code to the NEW address.
+  async requestEmailChange(newEmail: string): Promise<LoginPendingResponse> {
+    const response = await apiClient.post<LoginPendingResponse>("/api/auth/me/email", { new_email: newEmail })
+    return response.data
+  },
+
+  // Step 2: switches the email and ends every other session — the response
+  // carries a fresh token for this device.
+  async confirmEmailChange(data: VerifyOtpRequest): Promise<VerifyOtpResponse> {
+    const response = await apiClient.post<VerifyOtpResponse>(
+      "/api/auth/me/email/verify",
+      { pending_token: data.pendingToken, code: data.code }
+    )
     return response.data
   },
 

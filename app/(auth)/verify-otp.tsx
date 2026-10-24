@@ -13,8 +13,11 @@ const OTP_LENGTH = 6
 const RESEND_COOLDOWN_SECONDS = 30
 
 export default function VerifyOtpScreen() {
-  const params = useLocalSearchParams<{ pendingToken?: string; emailHint?: string }>()
+  const params = useLocalSearchParams<{ pendingToken?: string; emailHint?: string; flow?: string }>()
   const pendingToken = params.pendingToken ?? ""
+  // Login/signup by default; "email-change" confirms a new address for an
+  // already signed-in user and returns to the app rather than to login.
+  const isEmailChange = params.flow === "email-change"
   const [code, setCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
@@ -34,6 +37,10 @@ export default function VerifyOtpScreen() {
   const isCodeValid = code.length === OTP_LENGTH
 
   const handleExpiredSession = () => {
+    if (isEmailChange) {
+      showAlert("Code expired", "Please start the email change again.", () => router.replace("/(tabs)/profile"))
+      return
+    }
     showAlert("Session expired", "Please log in again.", () => router.replace("/(auth)/login"))
   }
 
@@ -46,12 +53,19 @@ export default function VerifyOtpScreen() {
     setIsLoading(true)
 
     try {
-      const response = await authApi.verifyOtp({ pendingToken, code })
+      const response = isEmailChange
+        ? await authApi.confirmEmailChange({ pendingToken, code })
+        : await authApi.verifyOtp({ pendingToken, code })
 
       await SecureStore.setItemAsync("access_token", response.access_token)
       await SecureStore.setItemAsync("user", JSON.stringify(response.user))
 
       setUser(response.user)
+      if (isEmailChange) {
+        showAlert("Email updated", `Your email is now ${response.user.email}. Other devices have been signed out.`)
+        router.replace("/(tabs)/profile")
+        return
+      }
       router.replace("/(tabs)")
     } catch (error: any) {
       if (error.response?.status === 401) {

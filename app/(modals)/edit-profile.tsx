@@ -35,11 +35,21 @@ export default function EditProfileScreen() {
     try {
       const updated = await authApi.updateMe({
         name: name.trim(),
-        email: email.trim().toLowerCase(),
         phone: phone.trim() || undefined
       })
       await SecureStore.setItemAsync("user", JSON.stringify(updated))
       setUser(updated)
+
+      // A new email only takes effect once the code sent to it comes back.
+      const newEmail = email.trim().toLowerCase()
+      if (newEmail !== updated.email) {
+        const pending = await authApi.requestEmailChange(newEmail)
+        router.replace({
+          pathname: "/(auth)/verify-otp",
+          params: { pendingToken: pending.pending_token, emailHint: pending.email_hint, flow: "email-change" }
+        })
+        return
+      }
       router.back()
     } catch (error: any) {
       showAlert("Error", extractErrorMessage(error, "Failed to update profile"))
