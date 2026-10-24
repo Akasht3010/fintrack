@@ -10,7 +10,6 @@ export interface TransactionCreatePayload {
   date: string
   source: "gmail" | "manual" | "sms" | "aa"
   is_recurring?: boolean
-  raw_text?: string
   account_id?: number | null
   // Lets a retried create (e.g. resent after a timeout, the first attempt
   // having actually succeeded) 409 instead of silently double-inserting —

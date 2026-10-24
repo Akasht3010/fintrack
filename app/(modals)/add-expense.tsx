@@ -229,6 +229,7 @@ export default function AddExpenseScreen() {
           <TextInput
             placeholder={transactionType === "credit" ? "e.g., Salary, Freelance, etc." : "e.g., Swiggy, Uber, etc."}
             value={merchant}
+            maxLength={120}
             onChangeText={setMerchant}
             className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
             placeholderTextColor="#9ca3af"
@@ -277,6 +278,7 @@ export default function AddExpenseScreen() {
           <TextInput
             placeholder="Add notes"
             value={description}
+            maxLength={500}
             onChangeText={setDescription}
             className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white h-20"
             placeholderTextColor="#9ca3af"
