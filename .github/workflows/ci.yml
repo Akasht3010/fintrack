@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [uat, main]
+  push:
+    branches: [uat, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # expo-env.d.ts is gitignored (Expo regenerates it on `expo start`), but
+      # tsc needs it for expo/types — without it the global.css import fails.
+      - name: Generate expo-env.d.ts
+        run: echo '/// <reference types="expo/types" />' > expo-env.d.ts
+
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --ci
