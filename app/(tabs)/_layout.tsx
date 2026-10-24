@@ -1,53 +1,40 @@
 import { Tabs } from "expo-router"
 import { Platform, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { useColorScheme } from "nativewind"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
-import { Colors } from "@/constants/colors"
-import { Sidebar } from "@/components/shared/Sidebar"
-import { GlowBackground } from "@/components/shared/GlowBackground"
+import { useTheme } from "@/lib/theme"
+import { Sidebar, NAV_ITEMS } from "@/components/shared/Sidebar"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 
+// Must match useTabBarClearance (height + bottom gap) so scroll content
+// always clears the floating bar.
 const TAB_BAR_HEIGHT = 64
 const TAB_BAR_SIDE_MARGIN = 16
-const TAB_BAR_RADIUS = 32
+const TAB_BAR_RADIUS = 24
+
+const TAB_ROUTES = ["index", "transactions", "budget", "insights", "profile"] as const
 
 export default function TabsLayout() {
-  const { colorScheme } = useColorScheme()
-  const isDark = colorScheme === "dark"
+  const { colors, isDark } = useTheme()
   const insets = useSafeAreaInsets()
   const isDesktop = useIsDesktop()
 
   return (
-    // Desktop nav moves to a Sidebar (X/Instagram-style) instead of the
-    // floating bottom bar, and content is capped to a comfortable dashboard
-    // width rather than stretching across the whole window — the row is
-    // centered as a [sidebar + content] group so it doesn't hug the left
-    // edge on very wide screens. The column is wide enough for real
-    // multi-column page layouts (dashboard sidebar, budget grid, etc.), not
-    // just a single narrow reading line — it scales up gradually across
-    // breakpoints instead of freezing at one fixed width, up through a 3xl
-    // (1920px) step for large monitors/TVs. Past that point the shell still
-    // stops growing on purpose — an infinitely wide page would just be
-    // unreadable — while keeping a quiet neutral background around it.
-    <View className="flex-1 flex-row relative md:justify-center md:bg-white md:dark:bg-black">
-      {isDesktop && <GlowBackground />}
+    // Desktop: sidebar + a content column capped to a comfortable dashboard
+    // width that still scales up through the 3xl (1920px) breakpoint; the
+    // [sidebar + content] group is centered so it doesn't hug the left edge
+    // on very wide screens. Mobile: full-bleed content + floating tab bar.
+    <View className="flex-1 flex-row bg-background md:justify-center">
       {isDesktop && <Sidebar />}
       <View className="flex-1 lg:flex-none lg:w-[820px] xl:w-[1000px] 2xl:w-[1160px] 3xl:w-[1320px]">
         <Tabs
           screenOptions={{
             headerShown: false,
-            tabBarActiveTintColor: isDark ? Colors.accent[400] : Colors.primary[600],
-            tabBarInactiveTintColor: isDark ? "#9ca3af" : Colors.muted,
+            sceneStyle: { backgroundColor: colors.background },
+            tabBarActiveTintColor: colors.primary,
+            tabBarInactiveTintColor: colors.mutedForeground,
             tabBarBackground: () => (
-              <View
-                style={{
-                  flex: 1,
-                  borderRadius: TAB_BAR_RADIUS,
-                  overflow: "hidden",
-                  backgroundColor: isDark ? "#151e19" : "#ffffff"
-                }}
-              />
+              <View style={{ flex: 1, borderRadius: TAB_BAR_RADIUS, overflow: "hidden", backgroundColor: colors.card }} />
             ),
             tabBarStyle: {
               display: isDesktop ? "none" : "flex",
@@ -59,73 +46,47 @@ export default function TabsLayout() {
               borderRadius: TAB_BAR_RADIUS,
               borderTopWidth: 0,
               borderWidth: 1,
-              borderColor: isDark ? "rgba(255,255,255,0.10)" : "#e7ece9",
+              borderColor: colors.border,
               paddingBottom: 0,
               paddingTop: 8,
               overflow: "hidden",
               ...Platform.select({
                 ios: {
                   shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: isDark ? 0.5 : 0.12,
-                  shadowRadius: 16
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: isDark ? 0.5 : 0.08,
+                  shadowRadius: 20
                 },
-                android: {
-                  elevation: 12
-                }
+                android: { elevation: 10 },
+                default: { boxShadow: isDark ? "0 8px 30px rgba(0,0,0,0.5)" : "0 8px 30px rgba(9,9,11,0.08)" }
               })
             },
             tabBarLabelStyle: {
               fontSize: 11,
-              fontWeight: "500"
+              fontFamily: "Inter_500Medium"
             }
           }}
         >
-          <Tabs.Screen
-            name="index"
-            options={{
-              title: "Home",
-              tabBarIcon: ({ color, size, focused }) => (
-                <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
-              )
-            }}
-          />
-          <Tabs.Screen
-            name="transactions"
-            options={{
-              title: "Transactions",
-              tabBarIcon: ({ color, size, focused }) => (
-                <Ionicons name={focused ? "receipt" : "receipt-outline"} size={size} color={color} />
-              )
-            }}
-          />
-          <Tabs.Screen
-            name="budget"
-            options={{
-              title: "Budget",
-              tabBarIcon: ({ color, size, focused }) => (
-                <Ionicons name={focused ? "wallet" : "wallet-outline"} size={size} color={color} />
-              )
-            }}
-          />
-          <Tabs.Screen
-            name="insights"
-            options={{
-              title: "Insights",
-              tabBarIcon: ({ color, size, focused }) => (
-                <Ionicons name={focused ? "stats-chart" : "stats-chart-outline"} size={size} color={color} />
-              )
-            }}
-          />
-          <Tabs.Screen
-            name="profile"
-            options={{
-              title: "Profile",
-              tabBarIcon: ({ color, size, focused }) => (
-                <Ionicons name={focused ? "person-circle" : "person-circle-outline"} size={size} color={color} />
-              )
-            }}
-          />
+          {TAB_ROUTES.map((name, i) => {
+            const item = NAV_ITEMS[i]
+            return (
+              <Tabs.Screen
+                key={name}
+                name={name}
+                options={{
+                  // "Overview" is too long for a five-up bar on a ~360px phone.
+                  title: name === "index" ? "Home" : item.label,
+                  tabBarIcon: ({ color, focused }) => (
+                    <Ionicons
+                      name={focused ? item.activeIcon : item.icon}
+                      size={22}
+                      color={color}
+                    />
+                  )
+                }}
+              />
+            )
+          })}
         </Tabs>
       </View>
     </View>

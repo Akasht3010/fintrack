@@ -1,24 +1,24 @@
 import { View } from "react-native"
 import { Stack } from "expo-router"
 import Animated from "react-native-reanimated"
-import { AmbientSpotlight } from "@/components/shared/AmbientSpotlight"
+import { AuthBackdrop } from "@/components/effects/AuthBackdrop"
 import { AuthBrandPanel } from "@/components/shared/AuthBrandPanel"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { useEntranceAnimation } from "@/hooks/useEntranceAnimation"
 
 export default function AuthLayout() {
   const isDesktop = useIsDesktop()
-  const animatedStyle = useEntranceAnimation(300)
+  const animatedStyle = useEntranceAnimation(400, 0.98)
 
   // NativeWind doesn't patch Animated.View for className support, so the
-  // card's actual sizing/shape stays on a plain (NativeWind-aware) View
-  // nested inside a bare, style-only Animated.View that just handles the
-  // entrance animation (see below). Fixed desktop width rather than the
-  // old calc()-from-viewport one — it now sits next to AuthBrandPanel
-  // inside a centered row instead of being the only thing on screen, so
-  // its width no longer needs to account for the whole window's margins.
+  // card's sizing/shape stays on a plain View nested inside a style-only
+  // Animated.View that just handles the entrance animation.
+  //
+  // On desktop the grid + spotlight frame the opaque card from out here.
+  // Phones have no card, and stack scenes paint an opaque background over
+  // anything behind them, so screens there draw <AuthBackdrop /> themselves.
   const card = (
-    <View className="flex-1 w-full md:flex-none md:h-[85vh] md:w-[460px] md:rounded-[32px] md:border md:border-neutral-200 md:dark:border-neutral-800 md:shadow-2xl md:overflow-hidden">
+    <View className="w-full flex-1 md:h-[86vh] md:max-h-[760px] md:w-[440px] md:flex-none md:overflow-hidden md:rounded-3xl md:border md:border-border md:bg-card md:shadow-2xl md:shadow-black/10">
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
@@ -30,20 +30,11 @@ export default function AuthLayout() {
   )
 
   return (
-    // Auth screens are short, single-purpose forms — exactly what a centered
-    // card suits (this is how X and Instagram present sign-in on desktop
-    // too). Below the `md` breakpoint this is a no-op, so phones and the
-    // native app render full-bleed as before. At desktop width the card no
-    // longer floats alone in the middle of a mostly-empty window — it sits
-    // beside AuthBrandPanel, which gives the rest of the space useful content
-    // (brand mark, headline, and a short product summary).
-    <View className="flex-1 bg-white dark:bg-neutral-950 relative md:items-center md:justify-center md:bg-[#f4f7f5] md:dark:bg-neutral-950">
-      {isDesktop && <AmbientSpotlight />}
-      <Animated.View
-        style={[{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center" }, animatedStyle]}
-      >
+    <View className="relative flex-1 bg-background">
+      {isDesktop && <AuthBackdrop />}
+      <Animated.View style={[{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center" }, animatedStyle]}>
         {isDesktop ? (
-          <View className="flex-1 w-full flex-row items-center justify-center gap-20 px-10 max-w-[1160px] mx-auto">
+          <View className="mx-auto w-full max-w-[1160px] flex-1 flex-row items-center justify-center gap-16 px-10">
             <AuthBrandPanel />
             {card}
           </View>

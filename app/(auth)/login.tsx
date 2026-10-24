@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native"
+import { View, Pressable, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
@@ -11,7 +11,14 @@ import { useState, useEffect } from "react"
 import { classifyIdentifier } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
+import { useTheme } from "@/lib/theme"
 import { BrandMark } from "@/components/shared/BrandMark"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
+import { Label, Separator } from "@/components/ui/misc"
+import { FadeIn } from "@/components/effects/FadeIn"
+import { AuthBackdrop } from "@/components/effects/AuthBackdrop"
 
 export default function LoginScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
@@ -21,6 +28,7 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false)
   const { signIn: signInWithGoogle, isLoading: isGoogleLoading } = useGoogleAuth()
   const isDesktop = useIsDesktop()
+  const { colors } = useTheme()
 
   const clearOldTokens = async () => {
     try {
@@ -36,6 +44,7 @@ export default function LoginScreen() {
   }, [])
 
   const { kind, value, isValid } = classifyIdentifier(identifierInput)
+  const showIdentifierError = identifierInput.trim().length > 0 && !isValid
 
   const handleGoogleSignIn = async () => {
     const result = await signInWithGoogle()
@@ -80,152 +89,152 @@ export default function LoginScreen() {
       // The backend deliberately returns the same 401 + message whether the
       // identifier is unknown or the password is wrong (avoids leaking
       // whether a phone/email owns an account) — so there's no "offer to
-      // sign up" branch here anymore; just show the generic failure.
+      // sign up" branch here; just show the generic failure.
       showAlert("Sign in failed", extractErrorMessage(error))
     } finally {
       setIsLoading(false)
     }
   }
 
-  return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
-      <StatusBar style="auto" />
+  const canSubmit = isValid && !!password && !isLoading
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
+  return (
+    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background md:bg-card">
+      <StatusBar style="auto" />
+      {!isDesktop && <AuthBackdrop />}
+
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="flex-1 items-center justify-center px-6">
-            {isDesktop ? (
-              <>
-              {/* The desktop brand panel already carries the logo and tagline. */}
-              <Text className="text-2xl font-bold text-neutral-900 dark:text-white text-center mb-2">
-                Welcome back
-              </Text>
-              <Text className="text-sm text-muted text-center mb-7">Sign in to continue to your account</Text>
-              </>
-            ) : (
-              <>
-                <View className="mb-8">
-                  <BrandMark size={80} />
+          <View className="w-full max-w-[400px] flex-1 justify-center self-center px-6 py-10 md:px-9">
+            <FadeIn>
+              {/* The desktop brand panel already carries the logo. */}
+              {!isDesktop && (
+                <View className="mb-8 items-center">
+                  <BrandMark size={56} />
                 </View>
-                <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3 tracking-tight">
-                  Fintrack
-                </Text>
-                <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
-                  All your expenses across every app,{"\n"}in one clear view.
-                </Text>
-              </>
-            )}
-
-            <View className="w-full gap-4">
-              <View>
-                <TextInput
-                  placeholder="Phone number or email"
-                  value={identifierInput}
-                  onChangeText={setIdentifierInput}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                  className="w-full bg-white dark:bg-neutral-900 border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
-                  placeholderTextColor="#9ca3af"
-                />
-                {identifierInput.trim().length > 0 && !isValid && (
-                  <Text className="text-xs text-red-500 mt-2">
-                    {kind === "email"
-                      ? "Please enter a valid email address"
-                      : "Please enter a valid 10-digit phone number"}
-                  </Text>
-                )}
-              </View>
-
-              <View className="relative">
-                <TextInput
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!isPasswordVisible}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                  className="w-full bg-white dark:bg-neutral-900 border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 pr-12 text-base text-neutral-900 dark:text-white"
-                  placeholderTextColor="#9ca3af"
-                />
-                <TouchableOpacity
-                  onPress={() => setIsPasswordVisible(v => !v)}
-                  className="absolute right-4 top-0 bottom-0 items-center justify-center"
-                >
-                  <Ionicons name={isPasswordVisible ? "eye-off" : "eye"} size={20} color="#9ca3af" />
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                onPress={() => router.push({ pathname: "/(auth)/forgot-password", params: { identifier: identifierInput } })}
-                disabled={isLoading}
-                className="items-end"
-              >
-                <Text className="text-sm text-primary-600 dark:text-primary-400 font-semibold">
-                  Forgot password?
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleLogin}
-                disabled={isLoading || !isValid || !password}
-                className={`w-full flex-row items-center justify-center ${isLoading || !isValid || !password ? 'bg-neutral-200 dark:bg-neutral-800' : 'bg-primary-600'} rounded-2xl py-4`}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text className={`text-base font-semibold ${isLoading || !isValid || !password ? 'text-neutral-400' : 'text-white'}`}>
-                    Log In
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <View className="flex-row items-center gap-3 my-1">
-                <View className="flex-1 h-px bg-border dark:bg-neutral-800" />
-                <Text className="text-xs text-muted dark:text-neutral-400">or</Text>
-                <View className="flex-1 h-px bg-border dark:bg-neutral-800" />
-              </View>
-
-              <TouchableOpacity
-                onPress={handleGoogleSignIn}
-                disabled={isLoading || isGoogleLoading}
-                className="w-full flex-row items-center justify-center bg-white dark:bg-neutral-900 border border-border dark:border-neutral-700 rounded-2xl py-4"
-              >
-                {isGoogleLoading ? (
-                  <ActivityIndicator color="#111827" />
-                ) : (
-                  <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                    Continue with Google
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => router.push({ pathname: "/(auth)/signup", params: { identifier: identifierInput } })}
-                disabled={isLoading}
-                className="w-full items-center py-2"
-              >
-                <Text className="text-sm text-muted dark:text-neutral-400">
-                  Don&apos;t have an account?{" "}
-                  <Text className="text-primary-600 dark:text-primary-400 font-semibold">Sign Up</Text>
-                </Text>
-              </TouchableOpacity>
-
-              <Text className="text-xs text-muted dark:text-neutral-400 text-center mt-4 leading-5">
-                By continuing, you agree to our{" "}
-                <Text className="text-primary-600 dark:text-primary-400">Terms of Service</Text>
-                {" "}and{" "}
-                <Text className="text-primary-600 dark:text-primary-400">Privacy Policy</Text>
+              )}
+              <Text className="text-center text-2xl font-bold tracking-tight">Welcome back</Text>
+              <Text className="mt-2 text-center text-sm text-muted-foreground">
+                Enter your email or phone number to continue
               </Text>
-            </View>
+            </FadeIn>
+
+            <FadeIn delay={90} style={{ marginTop: 32 }}>
+              <View className="gap-5">
+                <View className="gap-2">
+                  <Label nativeID="identifierLabel">Email or phone</Label>
+                  <Input
+                    accessibilityLabelledBy="identifierLabel"
+                    accessibilityLabel="Email or phone"
+                    placeholder="you@example.com"
+                    value={identifierInput}
+                    onChangeText={setIdentifierInput}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="username"
+                    textContentType="username"
+                    editable={!isLoading}
+                    invalid={showIdentifierError}
+                    returnKeyType="next"
+                    leading={<Ionicons name="mail-outline" size={18} color={colors.mutedForeground} />}
+                  />
+                  {showIdentifierError && (
+                    <Text className="text-xs text-destructive">
+                      {kind === "email"
+                        ? "Please enter a valid email address"
+                        : "Please enter a valid 10-digit phone number"}
+                    </Text>
+                  )}
+                </View>
+
+                <View className="gap-2">
+                  <View className="flex-row items-center justify-between">
+                    <Label nativeID="passwordLabel">Password</Label>
+                    <Pressable
+                      onPress={() => router.push({ pathname: "/(auth)/forgot-password", params: { identifier: identifierInput } })}
+                      disabled={isLoading}
+                      accessibilityRole="link"
+                      hitSlop={8}
+                      className="web:cursor-pointer"
+                    >
+                      <Text className="text-sm font-medium text-primary web:hover:underline">Forgot password?</Text>
+                    </Pressable>
+                  </View>
+                  <Input
+                    accessibilityLabelledBy="passwordLabel"
+                    accessibilityLabel="Password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!isPasswordVisible}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="current-password"
+                    textContentType="password"
+                    editable={!isLoading}
+                    returnKeyType="go"
+                    onSubmitEditing={() => canSubmit && handleLogin()}
+                    leading={<Ionicons name="lock-closed-outline" size={18} color={colors.mutedForeground} />}
+                    trailing={
+                      <Pressable
+                        onPress={() => setIsPasswordVisible(v => !v)}
+                        accessibilityRole="button"
+                        accessibilityLabel={isPasswordVisible ? "Hide password" : "Show password"}
+                        hitSlop={10}
+                        className="web:cursor-pointer"
+                      >
+                        <Ionicons name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} size={18} color={colors.mutedForeground} />
+                      </Pressable>
+                    }
+                  />
+                </View>
+
+                <Button onPress={handleLogin} loading={isLoading} disabled={!canSubmit} className="mt-1">
+                  <Text>Log in</Text>
+                </Button>
+
+                <View className="flex-row items-center gap-3">
+                  <Separator className="flex-1" />
+                  <Text className="text-xs uppercase tracking-wider text-muted-foreground">Or continue with</Text>
+                  <Separator className="flex-1" />
+                </View>
+
+                <Button
+                  variant="outline"
+                  onPress={handleGoogleSignIn}
+                  loading={isGoogleLoading}
+                  disabled={isLoading}
+                >
+                  <Ionicons name="logo-google" size={17} color={colors.foreground} />
+                  <Text>Google</Text>
+                </Button>
+              </View>
+            </FadeIn>
+
+            <FadeIn delay={180} style={{ marginTop: 28 }}>
+              <View className="flex-row items-center justify-center">
+                <Text className="text-sm text-muted-foreground">Don&apos;t have an account? </Text>
+                <Pressable
+                  onPress={() => router.push({ pathname: "/(auth)/signup", params: { identifier: identifierInput } })}
+                  disabled={isLoading}
+                  accessibilityRole="link"
+                  hitSlop={8}
+                  className="web:cursor-pointer"
+                >
+                  <Text className="text-sm font-semibold text-primary web:hover:underline">Sign up</Text>
+                </Pressable>
+              </View>
+
+              <Text className="mt-6 text-center text-xs leading-5 text-muted-foreground">
+                By continuing, you agree to our <Text className="text-xs text-foreground underline">Terms of Service</Text>
+                {" "}and <Text className="text-xs text-foreground underline">Privacy Policy</Text>.
+              </Text>
+            </FadeIn>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -1,39 +1,68 @@
-import { View, Text } from "react-native"
+import { View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useTheme } from "@/lib/theme"
+import { Text } from "@/components/ui/text"
+import { Badge } from "@/components/ui/misc"
+import { FadeIn } from "@/components/effects/FadeIn"
 import { BrandMark } from "./BrandMark"
 
 const POINTS = [
-  { icon: "layers-outline" as const, text: "Manual, Gmail, and SMS transactions in one ledger" },
-  { icon: "shield-checkmark-outline" as const, text: "Gmail tokens encrypted at rest, two-factor login" },
-  { icon: "trending-up-outline" as const, text: "Budgets and spending insights that stay current" }
+  { icon: "layers-outline" as const, title: "One ledger", text: "Manual, Gmail and SMS transactions together." },
+  { icon: "shield-checkmark-outline" as const, title: "Private by default", text: "Encrypted Gmail tokens and two-factor sign-in." },
+  { icon: "trending-up-outline" as const, title: "Always current", text: "Budgets and insights that update as you spend." }
 ]
 
 /**
- * Desktop-only left pane for the (auth) group (see app/(auth)/_layout.tsx) —
- * gives the wide half of the screen the auth card doesn't need something to
- * say, instead of leaving it as empty ambient glow. Mirrors the marketing
- * site's hero copy/brand mark so the app doesn't visually reset the moment
- * someone arrives from fintrack-web.
+ * Desktop-only left pane for the (auth) group (see app/(auth)/_layout.tsx),
+ * so the half of the window the sign-in card doesn't need carries the
+ * product pitch instead of empty space.
  */
 export function AuthBrandPanel() {
+  const { colors } = useTheme()
+
   return (
-    <View className="flex-1 justify-center px-10 max-w-[520px]">
-      <BrandMark size={56} />
-      <Text className="text-4xl font-bold text-neutral-900 dark:text-white mt-8 leading-tight">
-        Money,{"\n"}made clear.
-      </Text>
-      <Text className="text-base text-neutral-600 dark:text-neutral-400 mt-5 leading-6 max-w-[420px]">
-        Manual entries, Gmail bank alerts, and SMS — unified, categorized, and budgeted, without the spreadsheet.
-      </Text>
+    <View className="max-w-[520px] flex-1 justify-center px-10">
+      <FadeIn>
+        <View className="flex-row items-center gap-2.5">
+          <BrandMark size={36} />
+          <Text className="text-lg font-semibold tracking-tight">Fintrack</Text>
+        </View>
+      </FadeIn>
+
+      <FadeIn delay={80}>
+        <Badge variant="outline" className="mt-10 gap-1.5 bg-background/70">
+          <View className="h-1.5 w-1.5 rounded-full bg-primary" />
+          <Text>Personal finance, without the spreadsheet</Text>
+        </Badge>
+      </FadeIn>
+
+      <FadeIn delay={160}>
+        <Text className="mt-5 text-5xl font-bold leading-[56px] tracking-tighter">
+          Every rupee,{"\n"}
+          <Text className="text-5xl font-bold leading-[56px] tracking-tighter text-primary">in one clear view.</Text>
+        </Text>
+      </FadeIn>
+
+      <FadeIn delay={240}>
+        <Text className="mt-5 max-w-[440px] text-base leading-7 text-muted-foreground">
+          Fintrack pulls your bank alerts, card spends and manual entries into a single, categorized
+          ledger — with budgets that roll forward on their own.
+        </Text>
+      </FadeIn>
 
       <View className="mt-10 gap-5">
-        {POINTS.map((point) => (
-          <View key={point.text} className="flex-row items-start gap-3">
-            <View className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-500/15 items-center justify-center mt-0.5">
-              <Ionicons name={point.icon} size={16} color="#059669" />
+        {POINTS.map((point, i) => (
+          <FadeIn key={point.title} delay={320 + i * 80}>
+            <View className="flex-row items-start gap-3.5">
+              <View className="h-9 w-9 items-center justify-center rounded-lg border border-border bg-card">
+                <Ionicons name={point.icon} size={17} color={colors.primary} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold">{point.title}</Text>
+                <Text className="mt-0.5 text-sm text-muted-foreground">{point.text}</Text>
+              </View>
             </View>
-            <Text className="flex-1 text-sm text-neutral-700 dark:text-neutral-300 leading-5 mt-1.5">{point.text}</Text>
-          </View>
+          </FadeIn>
         ))}
       </View>
     </View>
