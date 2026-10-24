@@ -22,27 +22,26 @@ module.exports = {
       },
       colors: {
         primary: {
-          50:  "#f0fdf4",
-          100: "#dcfce7",
-          400: "#4ade80",
-          500: "#22c55e",
-          600: "#16a34a",
-          900: "#14532d"
+          50:  "#ecfdf5",
+          100: "#d1fae5",
+          400: "#34d399",
+          500: "#10b981",
+          600: "#059669",
+          900: "#064e3b"
         },
-        // Dark-mode-only accent (indigo/violet), used for the "liquid glass"
-        // look — light mode keeps `primary` (green) untouched.
+        // A softer emerald accent is used on dark surfaces.
         accent: {
-          100: "#e0e7ff",
-          400: "#a5b4fc",
-          500: "#818cf8",
-          600: "#6366f1",
-          700: "#4f46e5",
-          900: "#312e81"
+          100: "#d1fae5",
+          400: "#6ee7b7",
+          500: "#34d399",
+          600: "#059669",
+          700: "#047857",
+          900: "#064e3b"
         },
         surface: "#ffffff",
-        background: "#f9fafb",
-        border: "#e5e7eb",
-        muted: "#6b7280"
+        background: "#f7f9f8",
+        border: "#e7ece9",
+        muted: "#727b76"
       },
       fontFamily: {
         sans: ["Inter_400Regular"],

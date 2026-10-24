@@ -1,7 +1,6 @@
 import { Tabs } from "expo-router"
-import { Platform, View, StyleSheet } from "react-native"
+import { Platform, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { BlurView } from "expo-blur"
 import { useColorScheme } from "nativewind"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Colors } from "@/constants/colors"
@@ -30,10 +29,7 @@ export default function TabsLayout() {
     // breakpoints instead of freezing at one fixed width, up through a 3xl
     // (1920px) step for large monitors/TVs. Past that point the shell still
     // stops growing on purpose — an infinitely wide page would just be
-    // unreadable — but the ambient glow behind it (gated to desktop only, so
-    // the phone app never sees it) now spans the full window instead of
-    // stopping at the shell's own edge, so the surrounding space reads as a
-    // designed background rather than a dead void the app is floating in.
+    // unreadable — while keeping a quiet neutral background around it.
     <View className="flex-1 flex-row relative md:justify-center md:bg-white md:dark:bg-black">
       {isDesktop && <GlowBackground />}
       {isDesktop && <Sidebar />}
@@ -41,26 +37,17 @@ export default function TabsLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
-            tabBarActiveTintColor: isDark ? "#a5b4fc" : Colors.primary[600],
+            tabBarActiveTintColor: isDark ? Colors.accent[400] : Colors.primary[600],
             tabBarInactiveTintColor: isDark ? "#9ca3af" : Colors.muted,
             tabBarBackground: () => (
-              <BlurView
-                intensity={isDark ? 40 : 14}
-                tint={isDark ? "dark" : "light"}
-                experimentalBlurMethod="dimezisBlurView"
-                style={{ flex: 1, borderRadius: TAB_BAR_RADIUS, overflow: "hidden" }}
-              >
-                {isDark && (
-                  <View
-                    style={{
-                      // RN 0.86 removed StyleSheet.absoluteFillObject; absoluteFill
-                      // is now the plain object it used to be.
-                      ...StyleSheet.absoluteFill,
-                      backgroundColor: "rgba(99,102,241,0.12)"
-                    }}
-                  />
-                )}
-              </BlurView>
+              <View
+                style={{
+                  flex: 1,
+                  borderRadius: TAB_BAR_RADIUS,
+                  overflow: "hidden",
+                  backgroundColor: isDark ? "#151e19" : "#ffffff"
+                }}
+              />
             ),
             tabBarStyle: {
               display: isDesktop ? "none" : "flex",
@@ -72,7 +59,7 @@ export default function TabsLayout() {
               borderRadius: TAB_BAR_RADIUS,
               borderTopWidth: 0,
               borderWidth: 1,
-              borderColor: isDark ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.06)",
+              borderColor: isDark ? "rgba(255,255,255,0.10)" : "#e7ece9",
               paddingBottom: 0,
               paddingTop: 8,
               overflow: "hidden",

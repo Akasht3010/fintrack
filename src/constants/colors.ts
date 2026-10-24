@@ -1,20 +1,25 @@
 export const Colors = {
   primary: {
-    50:  "#f0fdf4",
-    100: "#dcfce7",
-    400: "#4ade80",
-    500: "#22c55e",
-    600: "#16a34a",
-    900: "#14532d"
+    50:  "#ecfdf5",
+    100: "#d1fae5",
+    400: "#34d399",
+    500: "#10b981",
+    600: "#059669",
+    900: "#064e3b"
+  },
+  accent: {
+    400: "#6ee7b7",
+    500: "#34d399",
+    600: "#059669"
   },
   neutral: {
     50:  "#f9fafb",
-    100: "#f3f4f6",
+    100: "#f1f4f2",
     200: "#e5e7eb",
     400: "#9ca3af",
     500: "#6b7280",
     700: "#374151",
-    900: "#111827"
+    900: "#14201a"
   },
   success: "#16a34a",
   warning: "#f59e0b",
@@ -22,8 +27,8 @@ export const Colors = {
   info:    "#3b82f6",
   white:   "#ffffff",
   black:   "#000000",
-  background: "#f9fafb",
+  background: "#f7f9f8",
   surface:    "#ffffff",
-  border:     "#e5e7eb",
-  muted:      "#6b7280"
+  border:     "#e7ece9",
+  muted:      "#727b76"
 }

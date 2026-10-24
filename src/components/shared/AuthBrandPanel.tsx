@@ -17,22 +17,22 @@ const POINTS = [
  */
 export function AuthBrandPanel() {
   return (
-    <View className="flex-1 justify-center px-16 max-w-[560px]">
+    <View className="flex-1 justify-center px-10 max-w-[520px]">
       <BrandMark size={56} />
-      <Text className="text-4xl font-bold text-white mt-8 leading-tight">
-        All your money.{"\n"}One honest ledger.
+      <Text className="text-4xl font-bold text-neutral-900 dark:text-white mt-8 leading-tight">
+        Money,{"\n"}made clear.
       </Text>
-      <Text className="text-base text-neutral-400 mt-5 leading-6 max-w-[420px]">
+      <Text className="text-base text-neutral-600 dark:text-neutral-400 mt-5 leading-6 max-w-[420px]">
         Manual entries, Gmail bank alerts, and SMS — unified, categorized, and budgeted, without the spreadsheet.
       </Text>
 
       <View className="mt-10 gap-5">
         {POINTS.map((point) => (
           <View key={point.text} className="flex-row items-start gap-3">
-            <View className="w-8 h-8 rounded-full bg-primary-500/15 items-center justify-center mt-0.5">
-              <Ionicons name={point.icon} size={16} color="#4ade80" />
+            <View className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-500/15 items-center justify-center mt-0.5">
+              <Ionicons name={point.icon} size={16} color="#059669" />
             </View>
-            <Text className="flex-1 text-sm text-neutral-300 leading-5 mt-1.5">{point.text}</Text>
+            <Text className="flex-1 text-sm text-neutral-700 dark:text-neutral-300 leading-5 mt-1.5">{point.text}</Text>
           </View>
         ))}
       </View>

@@ -1,7 +1,7 @@
 import { View } from "react-native"
 import { Stack } from "expo-router"
 import Animated from "react-native-reanimated"
-import { GlowBackground } from "@/components/shared/GlowBackground"
+import { AmbientSpotlight } from "@/components/shared/AmbientSpotlight"
 import { AuthBrandPanel } from "@/components/shared/AuthBrandPanel"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { useEntranceAnimation } from "@/hooks/useEntranceAnimation"
@@ -35,11 +35,10 @@ export default function AuthLayout() {
     // too). Below the `md` breakpoint this is a no-op, so phones and the
     // native app render full-bleed as before. At desktop width the card no
     // longer floats alone in the middle of a mostly-empty window — it sits
-    // beside AuthBrandPanel, which gives the rest of the space real content
-    // (brand mark, headline, the same pitch as the marketing site) instead
-    // of just ambient glow.
-    <View className="flex-1 bg-white dark:bg-neutral-950 relative md:items-center md:justify-center md:bg-neutral-100 md:dark:bg-black">
-      {isDesktop && <GlowBackground />}
+    // beside AuthBrandPanel, which gives the rest of the space useful content
+    // (brand mark, headline, and a short product summary).
+    <View className="flex-1 bg-white dark:bg-neutral-950 relative md:items-center md:justify-center md:bg-[#f4f7f5] md:dark:bg-neutral-950">
+      {isDesktop && <AmbientSpotlight />}
       <Animated.View
         style={[{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center" }, animatedStyle]}
       >

@@ -101,20 +101,19 @@ export default function LoginScreen() {
         >
           <View className="flex-1 items-center justify-center px-6">
             {isDesktop ? (
-              // The (auth) layout's AuthBrandPanel already carries the mark,
-              // "Fintrack", and the tagline on desktop — repeating all three
-              // here too would just be the same branding twice above one
-              // form. A plain "Welcome back" keeps the card oriented without
-              // that redundancy.
-              <Text className="text-2xl font-bold text-neutral-900 dark:text-white text-center mb-8">
+              <>
+              {/* The desktop brand panel already carries the logo and tagline. */}
+              <Text className="text-2xl font-bold text-neutral-900 dark:text-white text-center mb-2">
                 Welcome back
               </Text>
+              <Text className="text-sm text-muted text-center mb-7">Sign in to continue to your account</Text>
+              </>
             ) : (
               <>
                 <View className="mb-8">
                   <BrandMark size={80} />
                 </View>
-                <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
+                <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3 tracking-tight">
                   Fintrack
                 </Text>
                 <Text className="text-base text-muted dark:text-neutral-400 text-center leading-6 mb-12">
@@ -133,7 +132,7 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!isLoading}
-                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
+                  className="w-full bg-white dark:bg-neutral-900 border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
                   placeholderTextColor="#9ca3af"
                 />
                 {identifierInput.trim().length > 0 && !isValid && (
@@ -154,7 +153,7 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   editable={!isLoading}
-                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 pr-12 text-base text-neutral-900 dark:text-white"
+                  className="w-full bg-white dark:bg-neutral-900 border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 pr-12 text-base text-neutral-900 dark:text-white"
                   placeholderTextColor="#9ca3af"
                 />
                 <TouchableOpacity
@@ -178,7 +177,7 @@ export default function LoginScreen() {
               <TouchableOpacity
                 onPress={handleLogin}
                 disabled={isLoading || !isValid || !password}
-                className={`w-full flex-row items-center justify-center ${isLoading || !isValid || !password ? 'bg-neutral-200' : 'bg-primary-600'} rounded-2xl py-4`}
+                className={`w-full flex-row items-center justify-center ${isLoading || !isValid || !password ? 'bg-neutral-200 dark:bg-neutral-800' : 'bg-primary-600'} rounded-2xl py-4`}
               >
                 {isLoading ? (
                   <ActivityIndicator color="#fff" />
@@ -198,7 +197,7 @@ export default function LoginScreen() {
               <TouchableOpacity
                 onPress={handleGoogleSignIn}
                 disabled={isLoading || isGoogleLoading}
-                className="w-full flex-row items-center justify-center border border-border dark:border-neutral-700 rounded-2xl py-4"
+                className="w-full flex-row items-center justify-center bg-white dark:bg-neutral-900 border border-border dark:border-neutral-700 rounded-2xl py-4"
               >
                 {isGoogleLoading ? (
                   <ActivityIndicator color="#111827" />

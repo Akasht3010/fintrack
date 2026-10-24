@@ -19,26 +19,30 @@ import { useCategoryIcons } from "@/hooks/useCategories"
 import { useNetWorth } from "@/hooks/useAccounts"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { useCallback, useState } from "react"
+import Animated from "react-native-reanimated"
+import { useEntranceAnimation } from "@/hooks/useEntranceAnimation"
 import type { Transaction } from "@/types/domain"
 
-function SummaryCardContent({ totalSpent, totalIncome, net }: { totalSpent: number; totalIncome: number; net: number }) {
+function SummaryCardContent({ totalSpent, totalIncome, net, isDark }: { totalSpent: number; totalIncome: number; net: number; isDark: boolean }) {
+  const primary = isDark ? "text-white" : "text-neutral-900"
+  const secondary = isDark ? "text-emerald-50/75" : "text-neutral-500"
   return (
     <>
-      <Text className="text-white text-sm font-medium opacity-80">This month</Text>
+      <Text className={`${secondary} text-sm font-medium`}>THIS MONTH</Text>
       <View className="flex-row items-center mt-3">
         <View className="flex-1">
-          <Text className="text-white text-xs opacity-70">Expenses</Text>
-          <Text className="text-white text-2xl font-bold mt-1">{formatCurrency(totalSpent)}</Text>
+          <Text className={`${secondary} text-xs`}>Expenses</Text>
+          <Text className={`${primary} text-2xl font-bold mt-1`}>{formatCurrency(totalSpent)}</Text>
         </View>
-        <View className="w-px h-10 bg-white/25" />
+        <View className={`w-px h-10 ${isDark ? "bg-white/20" : "bg-border"}`} />
         <View className="flex-1 items-end">
-          <Text className="text-white text-xs opacity-70">Credit</Text>
-          <Text className="text-white text-2xl font-bold mt-1">{formatCurrency(totalIncome)}</Text>
+          <Text className={`${secondary} text-xs`}>Income</Text>
+          <Text className={`${primary} text-2xl font-bold mt-1`}>{formatCurrency(totalIncome)}</Text>
         </View>
       </View>
-      <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-white/20">
-        <Text className="text-white text-xs opacity-70">Net</Text>
-        <Text className="text-white text-sm font-bold">
+      <View className={`flex-row items-center justify-between mt-4 pt-4 border-t ${isDark ? "border-white/20" : "border-border"}`}>
+        <Text className={`${secondary} text-xs`}>Net cash flow</Text>
+        <Text className={`${primary} text-sm font-bold`}>
           {net >= 0 ? "+" : "−"}{formatCurrency(Math.abs(net))}
         </Text>
       </View>
@@ -55,6 +59,7 @@ export default function DashboardScreen() {
   const { colorScheme } = useColorScheme()
   const isDark = colorScheme === "dark"
   const isDesktop = useIsDesktop()
+  const summaryAnimation = useEntranceAnimation(500, 0.98)
 
   const { data: transactions = [], isLoading, error, refetch } = useQuery({
     queryKey: ["transactions", user?.id],
@@ -115,19 +120,17 @@ export default function DashboardScreen() {
     </GlassCard>
   )
 
-  const summaryCard = isDark ? (
-    <LinearGradient
-      colors={["#6366f1", "#7c3aed"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ borderRadius: 24, padding: 24 }}
-    >
-      <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} />
-    </LinearGradient>
-  ) : (
-    <View className="bg-primary-600 rounded-3xl p-6">
-      <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} />
-    </View>
+  const summaryCard = (
+    <Animated.View style={[{ borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: isDark ? "rgba(255,255,255,0.10)" : "#e7ece9" }, summaryAnimation]}>
+      <LinearGradient
+        colors={isDark ? ["#12372a", "#0d251b"] : ["#ffffff", "#f0fbf5"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ padding: 24 }}
+      >
+        <SummaryCardContent totalSpent={totalSpent} totalIncome={totalIncome} net={net} isDark={isDark} />
+      </LinearGradient>
+    </Animated.View>
   )
 
   const topCategoryCard = topCategory && (

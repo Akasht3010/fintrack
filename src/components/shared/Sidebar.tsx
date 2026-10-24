@@ -67,7 +67,7 @@ export function Sidebar() {
                 <Ionicons
                   name={isActive ? item.activeIcon : item.icon}
                   size={24}
-                  color={isActive ? (isDark ? "#a5b4fc" : "#16a34a") : (isDark ? "#9ca3af" : "#6b7280")}
+                  color={isActive ? (isDark ? "#6ee7b7" : "#059669") : (isDark ? "#9ca3af" : "#6b7280")}
                 />
                 <Text
                   className={`text-base transition-colors duration-200 ${
