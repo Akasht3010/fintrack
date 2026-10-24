@@ -70,3 +70,25 @@ describe("AddExpenseScreen", () => {
     expect(transactionApi.create).not.toHaveBeenCalled()
   })
 })
+
+describe("AddExpenseScreen retry handling", () => {
+  it("treats an idempotency 409 as already saved, not as an error", async () => {
+    const { router } = jest.requireMock("expo-router")
+    const { useUserStore } = jest.requireActual("@/store/useUserStore")
+    useUserStore.setState({ user: { id: 1, name: "T", email: "t@example.com", gmail_connected: false, created_at: "" } })
+    jest.mocked(showAlert).mockClear()
+    jest.mocked(router.back).mockClear()
+    jest.mocked(transactionApi.create).mockRejectedValueOnce({
+      response: { status: 409, data: { detail: "A transaction with this idempotency_key already exists" } }
+    })
+
+    const { getAllByText, getByPlaceholderText, getByLabelText } = await renderWithClient(<AddExpenseScreen />)
+    await waitFor(() => expect(getAllByText("Add Expense").length).toBeGreaterThan(0))
+    await fireEvent.changeText(getByPlaceholderText("0.00"), "250")
+    await fireEvent.changeText(getByLabelText("Merchant"), "Cafe")
+    await fireEvent.press(getAllByText("Add Expense")[1])
+
+    await waitFor(() => expect(router.back).toHaveBeenCalled())
+    expect(showAlert).not.toHaveBeenCalled()
+  })
+})

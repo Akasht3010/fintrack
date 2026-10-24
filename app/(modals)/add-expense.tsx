@@ -148,6 +148,16 @@ export default function AddExpenseScreen() {
         router.back()
       },
       onError: (error: any) => {
+        // The only 409 the create endpoint returns is the idempotency key
+        // already being used — i.e. an earlier attempt of this same
+        // submission (whose response we never got, e.g. a timeout) did
+        // save. Treat it as the success it is rather than inviting the user
+        // to add the expense a second time by hand.
+        if (error?.response?.status === 409) {
+          invalidateTransactionQueries(queryClient)
+          router.back()
+          return
+        }
         if (__DEV__) {
           console.log("Add transaction failed:", error?.response?.status, error?.response?.data, error?.message)
         }
@@ -230,6 +240,7 @@ export default function AddExpenseScreen() {
             placeholder={transactionType === "credit" ? "e.g., Salary, Freelance, etc." : "e.g., Swiggy, Uber, etc."}
             value={merchant}
             maxLength={120}
+            accessibilityLabel={transactionType === "credit" ? "Source" : "Merchant"}
             onChangeText={setMerchant}
             className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
             placeholderTextColor="#9ca3af"
