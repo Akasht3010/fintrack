@@ -1,5 +1,5 @@
 import { View } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
+import { useTheme } from "@/lib/theme"
 
 interface BrandMarkProps {
   size?: number
@@ -7,34 +7,31 @@ interface BrandMarkProps {
 }
 
 /**
- * The app's actual logo mark — three ascending bars on a green gradient
- * square, matching the mark used on the marketing site (fintrack-web) and
- * the app favicon. Built from plain Views + LinearGradient (already a
- * dependency) rather than an SVG file, so it scales crisply at any size
- * without adding react-native-svg just for one icon.
+ * The logo mark — three ascending bars on a square, drawn in the theme's
+ * foreground/background so it stays monochrome in both color schemes.
+ * Plain Views rather than an SVG so no react-native-svg dependency.
  */
 export function BrandMark({ size = 40, radius }: BrandMarkProps) {
+  const { colors } = useTheme()
   const barWidth = Math.max(2, size * 0.12)
   const gap = size * 0.08
 
   return (
-    <LinearGradient
-      colors={["#4ade80", "#16a34a"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <View
       style={{
         width: size,
         height: size,
-        borderRadius: radius ?? size * 0.28,
+        borderRadius: radius ?? size * 0.24,
+        backgroundColor: colors.foreground,
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "row",
         gap
       }}
     >
-      <View style={{ width: barWidth, height: size * 0.32, borderRadius: barWidth / 2, backgroundColor: "#052e14" }} />
-      <View style={{ width: barWidth, height: size * 0.5, borderRadius: barWidth / 2, backgroundColor: "#052e14" }} />
-      <View style={{ width: barWidth, height: size * 0.66, borderRadius: barWidth / 2, backgroundColor: "#052e14" }} />
-    </LinearGradient>
+      {[0.32, 0.5, 0.66].map((h) => (
+        <View key={h} style={{ width: barWidth, height: size * h, borderRadius: barWidth / 2, backgroundColor: colors.background }} />
+      ))}
+    </View>
   )
 }

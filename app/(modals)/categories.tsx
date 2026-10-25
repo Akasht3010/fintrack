@@ -1,20 +1,23 @@
 import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { router } from "expo-router"
+import { View, Pressable, ActivityIndicator } from "react-native"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { categoriesApi } from "@/api/endpoints/categories"
 import { useCategories } from "@/hooks/useCategories"
 import { Category } from "@/types/domain"
-import { ErrorState } from "@/components/shared/ErrorState"
-import { GlowBackground } from "@/components/shared/GlowBackground"
-import { GlassCard } from "@/components/shared/GlassCard"
 import { confirm } from "@/utils/confirm"
 import { extractErrorMessage as errorDetail } from "@/api/client"
 import { showAlert } from "@/utils/alert"
 import { invalidateTransactionQueries } from "@/api/invalidate"
+import { useTheme } from "@/lib/theme"
+import { cn } from "@/lib/utils"
+import { ErrorState } from "@/components/shared/ErrorState"
+import { ModalScreen, SectionTitle } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
 
-function CategoryRow({ category }: { category: Category }) {
+function CategoryRow({ category, last }: { category: Category; last: boolean }) {
   const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(category.name)
@@ -45,80 +48,53 @@ function CategoryRow({ category }: { category: Category }) {
     if (confirmed) remove()
   }
 
-  if (category.is_default) {
-    return (
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-border dark:border-white/10">
-        <View className="flex-row items-center gap-3">
-          <Text className="text-lg">{category.icon}</Text>
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white capitalize">{category.name}</Text>
-        </View>
-        <Text className="text-xs text-muted-foreground dark:text-neutral-500">Default</Text>
-      </View>
-    )
-  }
+  const rowClass = cn("min-h-[48px] flex-row items-center gap-3 px-4 py-2.5", !last && "border-b border-border")
 
   if (isEditing) {
     return (
-      <View className="px-4 py-3 border-b border-border dark:border-white/10 gap-2">
-        <View className="flex-row items-center gap-2">
-          <TextInput
-            value={icon}
-            onChangeText={setIcon}
-            className="w-14 text-center border border-border dark:border-white/15 dark:bg-white/5 rounded-xl py-2 text-lg text-neutral-900 dark:text-white"
-            maxLength={4}
-          />
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            className="flex-1 border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-white"
-            placeholderTextColor="#9ca3af"
-          />
+      <View className={cn("gap-2 p-4", !last && "border-b border-border")}>
+        <View className="flex-row gap-2">
+          <Input value={icon} onChangeText={setIcon} maxLength={4} containerClassName="w-14" className="text-center" accessibilityLabel="Icon" />
+          <Input value={name} onChangeText={setName} containerClassName="flex-1" accessibilityLabel="Category name" />
         </View>
         <View className="flex-row gap-2">
-          <TouchableOpacity
-            onPress={() => update()}
-            disabled={isUpdating || !name.trim()}
-            className="flex-1 items-center py-2 rounded-xl bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
-          >
-            {isUpdating ? <ActivityIndicator color="#fff" size="small" /> : (
-              <Text className="text-sm font-semibold text-white">Save</Text>
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            disabled={isUpdating}
             onPress={() => {
               setName(category.name)
               setIcon(category.icon)
               setIsEditing(false)
             }}
-            disabled={isUpdating}
-            className="flex-1 items-center py-2 rounded-xl border border-border dark:border-white/15 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
           >
-            <Text className="text-sm font-semibold text-neutral-900 dark:text-white">Cancel</Text>
-          </TouchableOpacity>
+            <Text>Cancel</Text>
+          </Button>
+          <Button size="sm" className="flex-1" onPress={() => update()} loading={isUpdating} disabled={!name.trim()}>
+            <Text>Save</Text>
+          </Button>
         </View>
       </View>
     )
   }
 
   return (
-    <View className="flex-row items-center justify-between px-4 py-3 border-b border-border dark:border-white/10">
-      <TouchableOpacity onPress={() => setIsEditing(true)} className="flex-row items-center gap-3 flex-1 cursor-pointer hover:opacity-80 transition-opacity duration-150">
-        <Text className="text-lg">{category.icon}</Text>
-        <Text className="text-sm font-medium text-neutral-900 dark:text-white capitalize">{category.name}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={handleDelete}
-        disabled={isDeleting}
-        accessibilityRole="button"
-        accessibilityLabel={`Delete ${category.name} category`}
-        className="px-2 py-1 cursor-pointer hover:opacity-70 transition-opacity duration-150"
-      >
-        {isDeleting ? (
-          <ActivityIndicator size="small" color="#dc2626" />
-        ) : (
-          <Text className="text-sm font-medium text-red-600 dark:text-red-400">Delete</Text>
-        )}
-      </TouchableOpacity>
+    <View className={rowClass}>
+      <Text className="w-6 text-center text-base">{category.icon}</Text>
+      <Text className="flex-1 text-sm capitalize">{category.name}</Text>
+      {category.is_default ? (
+        <Text className="text-xs text-muted-foreground">Default</Text>
+      ) : (
+        <View className="flex-row gap-4">
+          <Pressable onPress={() => setIsEditing(true)} accessibilityRole="button" accessibilityLabel={`Edit ${category.name} category`} hitSlop={6} className="web:cursor-pointer">
+            <Text className="text-xs font-medium text-muted-foreground">Edit</Text>
+          </Pressable>
+          <Pressable onPress={handleDelete} disabled={isDeleting} accessibilityRole="button" accessibilityLabel={`Delete ${category.name} category`} hitSlop={6} className="web:cursor-pointer">
+            <Text className={cn("text-xs font-medium text-destructive", isDeleting && "opacity-50")}>Delete</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   )
 }
@@ -126,6 +102,7 @@ function CategoryRow({ category }: { category: Category }) {
 export default function CategoriesScreen() {
   const { data: categories, isLoading, error, refetch } = useCategories()
   const queryClient = useQueryClient()
+  const { colors } = useTheme()
   const [newName, setNewName] = useState("")
   const [newIcon, setNewIcon] = useState("")
 
@@ -143,73 +120,43 @@ export default function CategoriesScreen() {
   const custom = categories?.filter(c => !c.is_default) ?? []
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
-      <GlowBackground />
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Categories</Text>
-        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
-          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
-        </TouchableOpacity>
-      </View>
-
+    <ModalScreen title="Categories">
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" />
+        <View className="flex-1 items-center justify-center py-16">
+          <ActivityIndicator color={colors.mutedForeground} />
         </View>
       ) : error ? (
         <ErrorState message="Failed to load categories" onRetry={refetch} />
       ) : (
-        <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Add a category</Text>
-            <View className="flex-row items-center gap-2">
-              <TextInput
-                value={newIcon}
-                onChangeText={setNewIcon}
-                placeholder="📌"
-                className="w-14 text-center border border-border dark:border-white/15 dark:bg-white/5 rounded-xl py-3 text-lg text-neutral-900 dark:text-white"
-                maxLength={4}
-              />
-              <TextInput
-                value={newName}
-                onChangeText={setNewName}
-                placeholder="e.g., Side Hustle"
-                className="flex-1 border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-3 text-sm text-neutral-900 dark:text-white"
-                placeholderTextColor="#9ca3af"
-              />
-              <TouchableOpacity
-                onPress={() => create()}
-                disabled={isCreating || !newName.trim()}
-                className={`items-center justify-center px-4 py-3 rounded-xl ${
-                  isCreating || !newName.trim()
-                    ? "bg-neutral-200 dark:bg-neutral-800"
-                    : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
-                }`}
-              >
-                {isCreating ? <ActivityIndicator color="#fff" size="small" /> : (
-                  <Text className="text-sm font-semibold text-white">Add</Text>
-                )}
-              </TouchableOpacity>
+        <>
+          <View>
+            <SectionTitle title="Add a category" />
+            <View className="flex-row gap-2">
+              <Input value={newIcon} onChangeText={setNewIcon} placeholder="📌" maxLength={4} containerClassName="w-14" className="text-center" accessibilityLabel="Icon" />
+              <Input value={newName} onChangeText={setNewName} placeholder="e.g. Side hustle" containerClassName="flex-1" accessibilityLabel="Category name" />
+              <Button onPress={() => create()} loading={isCreating} disabled={!newName.trim()}>
+                <Text>Add</Text>
+              </Button>
             </View>
           </View>
 
           {custom.length > 0 && (
-            <View className="mb-6">
-              <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Custom</Text>
-              <GlassCard>
-                {custom.map(category => <CategoryRow key={category.id} category={category} />)}
-              </GlassCard>
+            <View>
+              <SectionTitle title="Custom" />
+              <Card>
+                {custom.map((c, i) => <CategoryRow key={c.id} category={c} last={i === custom.length - 1} />)}
+              </Card>
             </View>
           )}
 
-          <View className="mb-8">
-            <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Default</Text>
-            <GlassCard>
-              {defaults.map(category => <CategoryRow key={category.id} category={category} />)}
-            </GlassCard>
+          <View>
+            <SectionTitle title="Default" />
+            <Card>
+              {defaults.map((c, i) => <CategoryRow key={c.id} category={c} last={i === defaults.length - 1} />)}
+            </Card>
           </View>
-        </ScrollView>
+        </>
       )}
-    </SafeAreaView>
+    </ModalScreen>
   )
 }

@@ -20,7 +20,7 @@ module.exports = {
       screens: {
         "3xl": "1920px"
       },
-      // shadcn/ui-style semantic tokens — values live in
+      // Semantic design tokens — values live in
       // src/constants/global.css as RGB channels per color scheme, so one
       // class (e.g. `bg-card`) is correct in both light and dark mode
       // without a `dark:` twin. The numbered primary/accent shades are kept
@@ -35,12 +35,14 @@ module.exports = {
         primary: {
           DEFAULT: "rgb(var(--primary) / <alpha-value>)",
           foreground: "rgb(var(--primary-foreground) / <alpha-value>)",
-          50:  "#ecfdf5",
-          100: "#d1fae5",
-          400: "#34d399",
-          500: "#10b981",
-          600: "#059669",
-          900: "#064e3b"
+          // Legacy numbered shades, kept only so any stray old class can't
+          // reintroduce color: they map onto the neutral scale.
+          50:  "#fafafa",
+          100: "#f5f5f5",
+          400: "#a3a3a3",
+          500: "#737373",
+          600: "#171717",
+          900: "#0a0a0a"
         },
         secondary: {
           DEFAULT: "rgb(var(--secondary) / <alpha-value>)",
@@ -53,12 +55,12 @@ module.exports = {
         accent: {
           DEFAULT: "rgb(var(--accent) / <alpha-value>)",
           foreground: "rgb(var(--accent-foreground) / <alpha-value>)",
-          100: "#d1fae5",
-          400: "#6ee7b7",
-          500: "#34d399",
-          600: "#059669",
-          700: "#047857",
-          900: "#064e3b"
+          100: "#f5f5f5",
+          400: "#d4d4d4",
+          500: "#a3a3a3",
+          600: "#404040",
+          700: "#262626",
+          900: "#171717"
         },
         destructive: {
           DEFAULT: "rgb(var(--destructive) / <alpha-value>)",

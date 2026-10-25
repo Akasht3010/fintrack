@@ -1,15 +1,19 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { StatusBar } from "expo-status-bar"
+import { Pressable } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
+import { useState, useEffect, useRef } from "react"
 import { storage as SecureStore } from "@/utils/storage"
 import { saveSession } from "@/utils/session"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
 import { showAlert } from "@/utils/alert"
-import { useState, useEffect, useRef } from "react"
+import { useTheme } from "@/lib/theme"
+import { AuthScreen } from "@/components/layout/AuthScreen"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
+import { Field } from "@/components/ui/misc"
 
 const OTP_LENGTH = 6
 const RESEND_COOLDOWN_SECONDS = 30
@@ -26,6 +30,7 @@ export default function ResetPasswordScreen() {
   const [isResending, setIsResending] = useState(false)
   const [cooldown, setCooldown] = useState(RESEND_COOLDOWN_SECONDS)
   const { setUser } = useUserStore()
+  const { colors } = useTheme()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -51,30 +56,20 @@ export default function ResetPasswordScreen() {
       showAlert("Error", `Enter the ${OTP_LENGTH}-digit code we emailed you`)
       return
     }
-
     if (!isPasswordValid) {
       showAlert("Weak password", `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
       return
     }
-
     if (!doPasswordsMatch) {
       showAlert("Passwords don't match", "Make sure both password fields are the same")
       return
     }
 
     setIsLoading(true)
-
     try {
-      const response = await authApi.resetPassword({
-        pendingToken,
-        code,
-        newPassword,
-        confirmNewPassword
-      })
-
+      const response = await authApi.resetPassword({ pendingToken, code, newPassword, confirmNewPassword })
       await saveSession(response.access_token)
       await SecureStore.setItemAsync("user", JSON.stringify(response.user))
-
       setUser(response.user)
       router.replace("/(tabs)")
     } catch (error: any) {
@@ -91,7 +86,6 @@ export default function ResetPasswordScreen() {
 
   const handleResend = async () => {
     setIsResending(true)
-
     try {
       await authApi.resendOtp(pendingToken)
       setCooldown(RESEND_COOLDOWN_SECONDS)
@@ -108,127 +102,78 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
-      <StatusBar style="auto" />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+    <AuthScreen
+      title="Choose a new password"
+      subtitle={
+        <>
+          Enter the code we sent to{" "}
+          {params.emailHint ? <Text className="text-sm font-medium text-foreground">{params.emailHint}</Text> : "your email"} and a new password.
+        </>
+      }
+      footer={
+        <Button variant="ghost" onPress={handleResend} loading={isResending} disabled={cooldown > 0}>
+          <Text className="text-muted-foreground">{cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}</Text>
+        </Button>
+      }
+    >
+      <Field label="Verification code">
+        <Input
+          accessibilityLabel="Verification code"
+          placeholder="000000"
+          value={code}
+          onChangeText={(text) => setCode(text.replace(/\D/g, "").slice(0, OTP_LENGTH))}
+          keyboardType="number-pad"
+          autoComplete="one-time-code"
+          textContentType="oneTimeCode"
+          maxLength={OTP_LENGTH}
+          editable={!isLoading}
+          autoFocus
+          className="text-center text-lg tracking-[6px]"
+        />
+      </Field>
+      <Field
+        label="New password"
+        hint={`At least ${MIN_PASSWORD_LENGTH} characters`}
+        error={newPassword.length > 0 && !isPasswordValid && `Password must be at least ${MIN_PASSWORD_LENGTH} characters`}
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="flex-1 items-center justify-center px-6">
-            <View className="w-20 h-20 rounded-3xl bg-primary-500 items-center justify-center mb-8">
-              <Text className="text-4xl">✉️</Text>
-            </View>
-            <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
-              Check your email
-            </Text>
-            <Text className="text-base text-muted-foreground dark:text-neutral-400 text-center leading-6 mb-12">
-              Enter the {OTP_LENGTH}-digit code we sent to{"\n"}
-              {params.emailHint ? <Text className="font-semibold">{params.emailHint}</Text> : "your email"}
-              {" "}and choose a new password
-            </Text>
-
-            <View className="w-full gap-4">
-              <TextInput
-                placeholder="000000"
-                value={code}
-                onChangeText={(text) => setCode(text.replace(/\D/g, "").slice(0, OTP_LENGTH))}
-                keyboardType="number-pad"
-                maxLength={OTP_LENGTH}
-                editable={!isLoading}
-                autoFocus
-                className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-2xl tracking-[8px] text-center text-neutral-900 dark:text-white"
-                placeholderTextColor="#9ca3af"
-              />
-
-              <View>
-                <View className="relative">
-                  <TextInput
-                    placeholder="New password"
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                    secureTextEntry={!isPasswordVisible}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isLoading}
-                    className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 pr-12 text-base text-neutral-900 dark:text-white"
-                    placeholderTextColor="#9ca3af"
-                  />
-                  <TouchableOpacity
-                    onPress={() => setIsPasswordVisible(v => !v)}
-                    className="absolute right-4 top-0 bottom-0 items-center justify-center"
-                  >
-                    <Ionicons name={isPasswordVisible ? "eye-off" : "eye"} size={20} color="#9ca3af" />
-                  </TouchableOpacity>
-                </View>
-                {newPassword.trim().length > 0 && !isPasswordValid && (
-                  <Text className="text-xs text-red-500 mt-2">
-                    Password must be at least {MIN_PASSWORD_LENGTH} characters
-                  </Text>
-                )}
-              </View>
-
-              <View>
-                <TextInput
-                  placeholder="Confirm new password"
-                  value={confirmNewPassword}
-                  onChangeText={setConfirmNewPassword}
-                  secureTextEntry={!isPasswordVisible}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
-                  placeholderTextColor="#9ca3af"
-                />
-                {confirmNewPassword.trim().length > 0 && !doPasswordsMatch && (
-                  <Text className="text-xs text-red-500 mt-2">
-                    Passwords don&apos;t match
-                  </Text>
-                )}
-              </View>
-
-              <TouchableOpacity
-                onPress={handleSubmit}
-                disabled={isLoading || !canSubmit}
-                className={`w-full flex-row items-center justify-center ${isLoading || !canSubmit ? 'bg-neutral-200' : 'bg-primary-600'} rounded-2xl py-4`}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text className={`text-base font-semibold ${isLoading || !canSubmit ? 'text-neutral-400' : 'text-white'}`}>
-                    Reset password
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleResend}
-                disabled={isResending || cooldown > 0}
-                className="w-full items-center py-2"
-              >
-                {isResending ? (
-                  <ActivityIndicator color="#6b7280" />
-                ) : (
-                  <Text className="text-sm text-muted-foreground dark:text-neutral-400">
-                    {cooldown > 0 ? (
-                      `Resend code in ${cooldown}s`
-                    ) : (
-                      <>
-                        Didn&apos;t get a code?{" "}
-                        <Text className="text-primary-600 dark:text-primary-400 font-semibold">Resend</Text>
-                      </>
-                    )}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        <Input
+          accessibilityLabel="New password"
+          value={newPassword}
+          onChangeText={setNewPassword}
+          secureTextEntry={!isPasswordVisible}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="new-password"
+          editable={!isLoading}
+          invalid={newPassword.length > 0 && !isPasswordValid}
+          trailing={
+            <Pressable
+              onPress={() => setIsPasswordVisible(v => !v)}
+              accessibilityRole="button"
+              accessibilityLabel={isPasswordVisible ? "Hide password" : "Show password"}
+              hitSlop={10}
+              className="web:cursor-pointer"
+            >
+              <Ionicons name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} size={17} color={colors.mutedForeground} />
+            </Pressable>
+          }
+        />
+      </Field>
+      <Field label="Confirm new password" error={confirmNewPassword.length > 0 && !doPasswordsMatch && "Passwords don't match"}>
+        <Input
+          accessibilityLabel="Confirm new password"
+          value={confirmNewPassword}
+          onChangeText={setConfirmNewPassword}
+          secureTextEntry={!isPasswordVisible}
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!isLoading}
+          invalid={confirmNewPassword.length > 0 && !doPasswordsMatch}
+        />
+      </Field>
+      <Button onPress={handleSubmit} loading={isLoading} disabled={!canSubmit}>
+        <Text>Reset password</Text>
+      </Button>
+    </AuthScreen>
   )
 }

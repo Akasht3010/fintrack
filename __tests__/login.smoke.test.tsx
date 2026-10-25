@@ -24,7 +24,7 @@ jest.mock("@/utils/storage", () => ({
 
 describe("LoginScreen", () => {
   it("renders without crashing", async () => {
-    const { getByText } = await render(<LoginScreen />)
-    expect(getByText(/log in/i)).toBeTruthy()
+    const { getAllByText } = await render(<LoginScreen />)
+    expect(getAllByText(/log in/i)[0]).toBeTruthy()
   })
 })

@@ -5,7 +5,7 @@ import { useTheme } from "@/lib/theme"
 import { TextClassContext } from "./text"
 
 const buttonVariants = cva(
-  "flex-row items-center justify-center gap-2 rounded-xl web:cursor-pointer web:transition-colors web:duration-150 active:opacity-80",
+  "flex-row items-center justify-center gap-2 rounded-md active:opacity-80 web:cursor-pointer web:transition-colors web:duration-150",
   {
     variants: {
       variant: {
@@ -17,17 +17,17 @@ const buttonVariants = cva(
         link: ""
       },
       size: {
-        default: "h-12 px-5",
-        sm: "h-9 rounded-lg px-3",
-        lg: "h-14 px-8",
-        icon: "h-11 w-11"
+        default: "h-10 px-4",
+        sm: "h-8 px-3",
+        lg: "h-11 px-6",
+        icon: "h-9 w-9"
       }
     },
     defaultVariants: { variant: "default", size: "default" }
   }
 )
 
-const buttonTextVariants = cva("text-base font-semibold", {
+const buttonTextVariants = cva("text-sm font-medium", {
   variants: {
     variant: {
       default: "text-primary-foreground",
@@ -35,12 +35,12 @@ const buttonTextVariants = cva("text-base font-semibold", {
       outline: "text-foreground",
       secondary: "text-secondary-foreground",
       ghost: "text-foreground",
-      link: "text-primary web:hover:underline"
+      link: "text-foreground underline"
     },
     size: {
       default: "",
-      sm: "text-sm",
-      lg: "text-lg",
+      sm: "text-[13px]",
+      lg: "text-base",
       icon: ""
     }
   },
@@ -72,7 +72,7 @@ function Button({ className, variant, size, loading = false, disabled, children,
         className={cn(buttonVariants({ variant, size }), isDisabled && "opacity-50 web:cursor-not-allowed", className)}
         {...props}
       >
-        {loading ? <ActivityIndicator color={spinnerColor} /> : children}
+        {loading ? <ActivityIndicator size="small" color={spinnerColor} /> : children}
       </Pressable>
     </TextClassContext.Provider>
   )

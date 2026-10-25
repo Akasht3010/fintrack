@@ -1,27 +1,28 @@
-import { View, Text, ScrollView, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { View, ActivityIndicator } from "react-native"
 import { router, useFocusEffect } from "expo-router"
-import { Ionicons } from "@expo/vector-icons"
 import { useQuery } from "@tanstack/react-query"
 import { useCallback } from "react"
 import { insightsApi } from "@/api/endpoints/insights"
 import { recurringApi } from "@/api/endpoints/recurring"
 import { formatCurrency } from "@/utils/currency"
-import { Colors } from "@/constants/colors"
-import { useCategoryIcons } from "@/hooks/useCategories"
+import { useTheme } from "@/lib/theme"
+import { cn } from "@/lib/utils"
+import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
-import { GlowBackground } from "@/components/shared/GlowBackground"
-import { GlassCard } from "@/components/shared/GlassCard"
-import { useTabBarClearance } from "@/hooks/useTabBarClearance"
+import { Page, PageHeader, LinkRow } from "@/components/layout"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Text } from "@/components/ui/text"
 
-// Must leave room below for the month label + gap within the chart row's
-// h-32 (128px) total height.
-const BAR_TRACK_HEIGHT = 100
+// Bar heights are computed in pixels against this fixed track rather than
+// as `%` strings: a percentage height only resolves against an ancestor
+// with an explicit pixel height, which web flexbox doesn't reliably see
+// through nested flex-1 containers (bars rendered at 0 height in browsers).
+const BAR_TRACK_HEIGHT = 120
 
 export default function InsightsScreen() {
-  const CATEGORY_ICONS = useCategoryIcons()
-  const tabBarClearance = useTabBarClearance()
+  const { colors } = useTheme()
+  const isDesktop = useIsDesktop()
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["insights"],
@@ -52,237 +53,170 @@ export default function InsightsScreen() {
     : 1
   const categoryTotal = data ? data.category_breakdown.reduce((sum, c) => sum + c.total, 0) : 0
 
-  const currentMonthExpense = data?.monthly_totals[data.monthly_totals.length - 1]?.total ?? 0
-  const currentMonthIncome = data?.monthly_income_totals[data.monthly_income_totals.length - 1]?.total ?? 0
-  const savings = currentMonthIncome - currentMonthExpense
-  const savingsRate = currentMonthIncome > 0 ? Math.round((savings / currentMonthIncome) * 100) : 0
+  const expense = data?.monthly_totals.at(-1)?.total ?? 0
+  const income = data?.monthly_income_totals.at(-1)?.total ?? 0
+  const savings = income - expense
+  const savingsRate = income > 0 ? Math.round((savings / income) * 100) : null
+
+  const summary = (
+    <Card className="flex-row">
+      {[
+        { label: "Income", value: formatCurrency(income) },
+        { label: "Spent", value: formatCurrency(expense) },
+        { label: "Saved", value: savingsRate === null ? "—" : `${savingsRate}%`, negative: savingsRate !== null && savingsRate < 0 }
+      ].map((s, i) => (
+        <View key={s.label} className={cn("flex-1 p-4", i > 0 && "border-l border-border")}>
+          <Text className="text-[13px] text-muted-foreground">{s.label}</Text>
+          <Text numberOfLines={1} className={cn("mt-1 text-lg font-semibold", s.negative && "text-destructive")}>
+            {s.value}
+          </Text>
+        </View>
+      ))}
+    </Card>
+  )
+
+  const trend = data && (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between pb-4">
+        <View>
+          <CardTitle>Monthly trend</CardTitle>
+          <CardDescription>Last {data.monthly_totals.length} months</CardDescription>
+        </View>
+        <View className="flex-row items-center gap-3">
+          <View className="flex-row items-center gap-1.5">
+            <View className="h-2 w-2 rounded-sm bg-foreground/25" />
+            <Text className="text-xs text-muted-foreground">Income</Text>
+          </View>
+          <View className="flex-row items-center gap-1.5">
+            <View className="h-2 w-2 rounded-sm bg-foreground" />
+            <Text className="text-xs text-muted-foreground">Spent</Text>
+          </View>
+        </View>
+      </CardHeader>
+      <View className="flex-row items-end justify-between px-4 pb-4">
+        {data.monthly_totals.map((m, i) => {
+          const inc = data.monthly_income_totals[i]?.total ?? 0
+          const expenseHeight = Math.max(2, (m.total / maxMonthly) * BAR_TRACK_HEIGHT)
+          const incomeHeight = Math.max(2, (inc / maxMonthly) * BAR_TRACK_HEIGHT)
+          return (
+            <View key={`${m.year}-${m.month}`} className="flex-1 items-center gap-2">
+              <View className="w-full flex-row items-end justify-center gap-1" style={{ height: BAR_TRACK_HEIGHT }}>
+                <View style={{ height: incomeHeight }} className="w-3 rounded-sm bg-foreground/25" />
+                <View style={{ height: expenseHeight }} className="w-3 rounded-sm bg-foreground" />
+              </View>
+              <Text className="text-[11px] text-muted-foreground">{m.label}</Text>
+            </View>
+          )
+        })}
+      </View>
+    </Card>
+  )
+
+  const byCategory = data && data.category_breakdown.length > 0 && (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle>By category</CardTitle>
+        <CardDescription>This month</CardDescription>
+      </CardHeader>
+      <View className="gap-4 px-4 pb-4">
+        {data.category_breakdown.map((c) => {
+          const pct = categoryTotal > 0 ? (c.total / categoryTotal) * 100 : 0
+          return (
+            <View key={c.category}>
+              <View className="mb-1.5 flex-row items-center justify-between">
+                <Text className="text-sm capitalize">{c.category}</Text>
+                <Text className="text-sm">
+                  <Text className="text-sm font-medium">{formatCurrency(c.total)}</Text>
+                  <Text className="text-xs text-muted-foreground">  {Math.round(pct)}%</Text>
+                </Text>
+              </View>
+              <View className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                <View style={{ width: `${pct}%` }} className="h-full rounded-full bg-foreground" />
+              </View>
+            </View>
+          )
+        })}
+      </View>
+    </Card>
+  )
+
+  const merchants = data && data.top_merchants.length > 0 && (
+    <Card>
+      <CardHeader className="pb-1">
+        <CardTitle>Top merchants</CardTitle>
+      </CardHeader>
+      {data.top_merchants.map((merchant, index) => (
+        <View
+          key={merchant.merchant}
+          className={cn("flex-row items-center justify-between px-4 py-3", index < data.top_merchants.length - 1 && "border-b border-border")}
+        >
+          <View className="flex-1">
+            <Text numberOfLines={1} className="text-sm font-medium">{merchant.merchant}</Text>
+            <Text className="mt-0.5 text-xs text-muted-foreground">
+              {merchant.count} transaction{merchant.count === 1 ? "" : "s"}
+            </Text>
+          </View>
+          <Text className="text-sm font-medium">{formatCurrency(merchant.total)}</Text>
+        </View>
+      ))}
+    </Card>
+  )
+
+  const subscriptions = recurring && (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3">
+        <CardTitle>Subscriptions</CardTitle>
+        <CardDescription>
+          {recurring.items.length > 0
+            ? `${formatCurrency(recurring.monthly_total)}/month across ${recurring.items.length} recurring bill${recurring.items.length === 1 ? "" : "s"}`
+            : "Nothing detected yet — recurring charges show up after a few regular payments."}
+        </CardDescription>
+      </CardHeader>
+      <View className="border-t border-border">
+        <LinkRow label="View subscriptions" icon="repeat-outline" onPress={() => router.push("/(modals)/recurring")} last />
+      </View>
+    </Card>
+  )
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
-      <GlowBackground />
-      <View className="px-6 pt-4 pb-6">
-        <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Insights</Text>
-      </View>
+    <Page>
+      <PageHeader title="Insights" description="Where your money goes." />
 
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+        <View className="flex-1 items-center justify-center py-16">
+          <ActivityIndicator color={colors.mutedForeground} />
         </View>
       ) : error ? (
         <ErrorState message="Failed to load insights" onRetry={refetch} />
       ) : !data || !hasAnySpend ? (
         <EmptyState
-          icon="📊"
-          title="No spending yet"
+          icon="bar-chart-outline"
+          title="No data yet"
           subtitle="Add or import some transactions to see your trends here."
-          actionLabel="Add Expense"
+          actionLabel="Add transaction"
           onAction={() => router.push("/(modals)/add-expense")}
         />
+      ) : isDesktop ? (
+        <View className="gap-6">
+          {summary}
+          {trend}
+          <View className="flex-row items-start gap-6">
+            <View className="flex-1 gap-6">{byCategory}</View>
+            <View className="flex-1 gap-6">
+              {merchants}
+              {subscriptions}
+            </View>
+          </View>
+        </View>
       ) : (
-        <ScrollView
-          className="px-6"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: tabBarClearance }}
-        >
-          {/* This month + Subscriptions sit stacked on a phone, but side by
-              side at lg+ — two short summary cards stacked in a narrow
-              column just leaves the rest of the window empty. */}
-          <View className="lg:flex-row lg:gap-6 lg:items-start">
-            <View className="mb-6 lg:flex-1 lg:mb-0">
-              <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-                This month
-              </Text>
-              <GlassCard className="p-4">
-                <View className="flex-row items-center">
-                  <View className="flex-1">
-                    <Text className="text-xs text-muted-foreground dark:text-neutral-400">Credit</Text>
-                    <Text className="text-xl font-bold text-green-600 dark:text-emerald-400 mt-1">
-                      {formatCurrency(currentMonthIncome)}
-                    </Text>
-                  </View>
-                  <View className="w-px h-10 bg-border dark:bg-white/10" />
-                  <View className="flex-1 items-end">
-                    <Text className="text-xs text-muted-foreground dark:text-neutral-400">Expenses</Text>
-                    <Text className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
-                      {formatCurrency(currentMonthExpense)}
-                    </Text>
-                  </View>
-                </View>
-                <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-border dark:border-white/10">
-                  <Text className="text-xs text-muted-foreground dark:text-neutral-400">
-                    {currentMonthIncome > 0 ? `Saved ${savingsRate}% of credit` : "Net this month"}
-                  </Text>
-                  <Text className={`text-sm font-bold ${savings >= 0 ? "text-neutral-900 dark:text-white" : "text-red-600 dark:text-red-400"}`}>
-                    {savings >= 0 ? "+" : "−"}{formatCurrency(Math.abs(savings))}
-                  </Text>
-                </View>
-              </GlassCard>
-            </View>
-
-            {/* Recurring subscriptions */}
-            {recurring && (
-              <View className="mb-6 lg:flex-1 lg:mb-0">
-                <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-                  Subscriptions
-                </Text>
-                <GlassCard
-                  onPress={() => router.push("/(modals)/recurring")}
-                  className="p-4 flex-row items-center justify-between"
-                >
-                  {recurring.items.length > 0 ? (
-                    <View>
-                      <Text className="text-2xl font-bold text-neutral-900 dark:text-white">
-                        {formatCurrency(recurring.monthly_total)}
-                        <Text className="text-sm font-medium text-muted-foreground dark:text-neutral-400">/mo</Text>
-                      </Text>
-                      <Text className="text-xs text-muted-foreground dark:text-neutral-400 mt-1">
-                        {recurring.items.length} recurring bill{recurring.items.length === 1 ? "" : "s"} detected
-                      </Text>
-                    </View>
-                  ) : (
-                    <View className="flex-1 mr-3">
-                      <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                        Nothing detected yet
-                      </Text>
-                      <Text className="text-xs text-muted-foreground dark:text-neutral-400 mt-1">
-                        We&apos;ll spot subscriptions once a merchant charges you a few times on a regular cadence
-                      </Text>
-                    </View>
-                  )}
-                  <Ionicons name="chevron-forward" size={20} color={Colors.muted} />
-                </GlassCard>
-              </View>
-            )}
-          </View>
-
-          {/* Monthly trend */}
-          <View className="mb-6">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
-                Last {data.monthly_totals.length} months
-              </Text>
-              <View className="flex-row items-center gap-3">
-                <View className="flex-row items-center gap-1.5">
-                  <View className="w-2 h-2 rounded-full bg-green-500 dark:bg-emerald-400" />
-                  <Text className="text-[11px] text-muted-foreground dark:text-neutral-400">Credit</Text>
-                </View>
-                <View className="flex-row items-center gap-1.5">
-                  <View className="w-2 h-2 rounded-full bg-primary-600 dark:bg-accent-500" />
-                  <Text className="text-[11px] text-muted-foreground dark:text-neutral-400">Expenses</Text>
-                </View>
-              </View>
-            </View>
-            <GlassCard className="p-4">
-              <View className="flex-row items-end justify-between h-32">
-                {data.monthly_totals.map((m, i) => {
-                  const income = data.monthly_income_totals[i]?.total ?? 0
-                  // Bar heights are computed in pixels against a fixed-height
-                  // track (BAR_TRACK_HEIGHT) rather than as a CSS `%` string.
-                  // A percentage height only resolves against an ancestor
-                  // with an explicit pixel height — here that ancestor is a
-                  // `flex-1` row nested a couple of levels inside another
-                  // flex-1 column, which Yoga (native) resolves fine but web
-                  // flexbox doesn't reliably treat as "definite," so the
-                  // bars silently rendered at 0 height in the browser.
-                  const expenseHeight = Math.max(4, (m.total / maxMonthly) * BAR_TRACK_HEIGHT)
-                  const incomeHeight = Math.max(4, (income / maxMonthly) * BAR_TRACK_HEIGHT)
-                  return (
-                    <View key={`${m.year}-${m.month}`} className="flex-1 items-center gap-2">
-                      <View
-                        className="flex-row justify-center items-end gap-1 w-full"
-                        style={{ height: BAR_TRACK_HEIGHT }}
-                      >
-                        <View
-                          style={{ height: incomeHeight }}
-                          className="w-2.5 rounded-full bg-green-500 dark:bg-emerald-400"
-                        />
-                        <View
-                          style={{ height: expenseHeight }}
-                          className="w-2.5 rounded-full bg-primary-600 dark:bg-accent-500"
-                        />
-                      </View>
-                      <Text className="text-[10px] font-medium text-muted-foreground dark:text-neutral-400">
-                        {m.label}
-                      </Text>
-                    </View>
-                  )
-                })}
-              </View>
-            </GlassCard>
-          </View>
-
-          {/* Category breakdown + Top merchants, same side-by-side treatment
-              as the summary row above once there's room for it. */}
-          <View className="lg:flex-row lg:gap-6 lg:items-start">
-            {data.category_breakdown.length > 0 && (
-              <View className="mb-6 lg:flex-1 lg:mb-0">
-                <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-                  This month by category
-                </Text>
-                <GlassCard className="p-4">
-                  <View className="gap-4">
-                    {data.category_breakdown.map((c) => {
-                      const pct = categoryTotal > 0 ? (c.total / categoryTotal) * 100 : 0
-                      return (
-                        <View key={c.category}>
-                          <View className="flex-row items-center justify-between mb-2">
-                            <View className="flex-row items-center gap-2">
-                              <Text className="text-base">{CATEGORY_ICONS[c.category] || "📌"}</Text>
-                              <Text className="text-sm font-medium text-neutral-900 dark:text-white capitalize">
-                                {c.category}
-                              </Text>
-                            </View>
-                            <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                              {formatCurrency(c.total)}
-                            </Text>
-                          </View>
-                          <View className="h-2 rounded-full bg-neutral-100 dark:bg-white/10 overflow-hidden">
-                            <View
-                              style={{ width: `${pct}%` }}
-                              className="h-full rounded-full bg-primary-600 dark:bg-accent-500"
-                            />
-                          </View>
-                        </View>
-                      )
-                    })}
-                  </View>
-                </GlassCard>
-              </View>
-            )}
-
-            {/* Top merchants */}
-            {data.top_merchants.length > 0 && (
-              <View className="mb-6 lg:flex-1 lg:mb-0">
-                <Text className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">
-                  Top merchants
-                </Text>
-                <GlassCard>
-                  {data.top_merchants.map((merchant, index) => (
-                    <View
-                      key={merchant.merchant}
-                      className={`flex-row items-center justify-between px-4 py-4 ${
-                        index < data.top_merchants.length - 1 ? "border-b border-border dark:border-white/10" : ""
-                      }`}
-                    >
-                      <View className="flex-1">
-                        <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                          {merchant.merchant}
-                        </Text>
-                        <Text className="text-xs text-muted-foreground dark:text-neutral-400 mt-1">
-                          {merchant.count} transaction{merchant.count === 1 ? "" : "s"}
-                        </Text>
-                      </View>
-                      <Text className="text-sm font-bold text-primary-600 dark:text-accent-400">
-                        {formatCurrency(merchant.total)}
-                      </Text>
-                    </View>
-                  ))}
-                </GlassCard>
-              </View>
-            )}
-          </View>
-        </ScrollView>
+        <View className="gap-6">
+          {summary}
+          {trend}
+          {byCategory}
+          {merchants}
+          {subscriptions}
+        </View>
       )}
-    </SafeAreaView>
+    </Page>
   )
 }

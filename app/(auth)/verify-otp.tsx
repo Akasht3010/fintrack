@@ -1,14 +1,16 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { StatusBar } from "expo-status-bar"
 import { router, useLocalSearchParams } from "expo-router"
+import { useState, useEffect, useRef } from "react"
 import { storage as SecureStore } from "@/utils/storage"
 import { saveSession } from "@/utils/session"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
 import { showAlert } from "@/utils/alert"
-import { useState, useEffect, useRef } from "react"
+import { AuthScreen } from "@/components/layout/AuthScreen"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
+import { Field } from "@/components/ui/misc"
 
 const OTP_LENGTH = 6
 const RESEND_COOLDOWN_SECONDS = 30
@@ -52,7 +54,6 @@ export default function VerifyOtpScreen() {
     }
 
     setIsLoading(true)
-
     try {
       const response = isEmailChange
         ? await authApi.confirmEmailChange({ pendingToken, code })
@@ -82,7 +83,6 @@ export default function VerifyOtpScreen() {
 
   const handleResend = async () => {
     setIsResending(true)
-
     try {
       await authApi.resendOtp(pendingToken)
       setCooldown(RESEND_COOLDOWN_SECONDS)
@@ -99,80 +99,39 @@ export default function VerifyOtpScreen() {
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
-      <StatusBar style="auto" />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="flex-1 items-center justify-center px-6">
-            <View className="w-20 h-20 rounded-3xl bg-primary-500 items-center justify-center mb-8">
-              <Text className="text-4xl">✉️</Text>
-            </View>
-            <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
-              Check your email
-            </Text>
-            <Text className="text-base text-muted-foreground dark:text-neutral-400 text-center leading-6 mb-12">
-              Enter the {OTP_LENGTH}-digit code we sent to{"\n"}
-              {params.emailHint ? <Text className="font-semibold">{params.emailHint}</Text> : "your email"}
-            </Text>
-
-            <View className="w-full gap-4">
-              <TextInput
-                placeholder="000000"
-                value={code}
-                onChangeText={(text) => setCode(text.replace(/\D/g, "").slice(0, OTP_LENGTH))}
-                keyboardType="number-pad"
-                maxLength={OTP_LENGTH}
-                editable={!isLoading}
-                autoFocus
-                className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-2xl tracking-[8px] text-center text-neutral-900 dark:text-white"
-                placeholderTextColor="#9ca3af"
-              />
-
-              <TouchableOpacity
-                onPress={handleVerify}
-                disabled={isLoading || !isCodeValid}
-                className={`w-full flex-row items-center justify-center ${isLoading || !isCodeValid ? 'bg-neutral-200' : 'bg-primary-600'} rounded-2xl py-4`}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text className={`text-base font-semibold ${isLoading || !isCodeValid ? 'text-neutral-400' : 'text-white'}`}>
-                    Verify
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleResend}
-                disabled={isResending || cooldown > 0}
-                className="w-full items-center py-2"
-              >
-                {isResending ? (
-                  <ActivityIndicator color="#6b7280" />
-                ) : (
-                  <Text className="text-sm text-muted-foreground dark:text-neutral-400">
-                    {cooldown > 0 ? (
-                      `Resend code in ${cooldown}s`
-                    ) : (
-                      <>
-                        Didn&apos;t get a code?{" "}
-                        <Text className="text-primary-600 dark:text-primary-400 font-semibold">Resend</Text>
-                      </>
-                    )}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <AuthScreen
+      title="Check your email"
+      subtitle={
+        <>
+          Enter the {OTP_LENGTH}-digit code we sent to{" "}
+          {params.emailHint ? <Text className="text-sm font-medium text-foreground">{params.emailHint}</Text> : "your email"}.
+        </>
+      }
+      footer={
+        <Button variant="ghost" onPress={handleResend} loading={isResending} disabled={cooldown > 0}>
+          <Text className="text-muted-foreground">{cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}</Text>
+        </Button>
+      }
+    >
+      <Field label="Verification code">
+        <Input
+          accessibilityLabel="Verification code"
+          placeholder="000000"
+          value={code}
+          onChangeText={(text) => setCode(text.replace(/\D/g, "").slice(0, OTP_LENGTH))}
+          keyboardType="number-pad"
+          autoComplete="one-time-code"
+          textContentType="oneTimeCode"
+          maxLength={OTP_LENGTH}
+          editable={!isLoading}
+          autoFocus
+          onSubmitEditing={() => isCodeValid && handleVerify()}
+          className="text-center text-lg tracking-[6px]"
+        />
+      </Field>
+      <Button onPress={handleVerify} loading={isLoading} disabled={!isCodeValid}>
+        <Text>Verify</Text>
+      </Button>
+    </AuthScreen>
   )
 }

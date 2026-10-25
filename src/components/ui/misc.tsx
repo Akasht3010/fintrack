@@ -1,32 +1,49 @@
-import { useEffect } from "react"
-import { View, type ViewProps, type TextProps } from "react-native"
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withTiming
-} from "react-native-reanimated"
+import { View, Pressable, ScrollView, type ViewProps, type TextProps } from "react-native"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 import { Text, TextClassContext } from "./text"
 
 function Label({ className, ...props }: TextProps) {
-  return <Text className={cn("text-sm font-medium text-foreground", className)} {...props} />
+  return <Text className={cn("text-[13px] font-medium text-foreground", className)} {...props} />
 }
 
-const badgeVariants = cva("flex-row items-center self-start rounded-full border px-2.5 py-0.5", {
+/** Label + control + optional hint/error, stacked — the unit every form is built from. */
+function Field({
+  label,
+  hint,
+  error,
+  children,
+  className
+}: {
+  label?: string
+  hint?: string
+  error?: string | false
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <View className={cn("gap-1.5", className)}>
+      {label && <Label>{label}</Label>}
+      {children}
+      {error ? (
+        <Text className="text-xs text-destructive">{error}</Text>
+      ) : hint ? (
+        <Text className="text-xs text-muted-foreground">{hint}</Text>
+      ) : null}
+    </View>
+  )
+}
+
+const badgeVariants = cva("flex-row items-center self-start rounded-md border px-2 py-0.5", {
   variants: {
     variant: {
       default: "border-transparent bg-primary",
       secondary: "border-transparent bg-secondary",
       outline: "border-border",
-      positive: "border-transparent bg-positive/10",
-      negative: "border-transparent bg-negative/10"
+      destructive: "border-transparent bg-destructive/10"
     }
   },
-  defaultVariants: { variant: "default" }
+  defaultVariants: { variant: "secondary" }
 })
 
 const badgeTextVariants = cva("text-xs font-medium", {
@@ -35,11 +52,10 @@ const badgeTextVariants = cva("text-xs font-medium", {
       default: "text-primary-foreground",
       secondary: "text-secondary-foreground",
       outline: "text-foreground",
-      positive: "text-positive",
-      negative: "text-negative"
+      destructive: "text-destructive"
     }
   },
-  defaultVariants: { variant: "default" }
+  defaultVariants: { variant: "secondary" }
 })
 
 function Badge({ className, variant, ...props }: ViewProps & VariantProps<typeof badgeVariants>) {
@@ -60,27 +76,86 @@ function Separator({ className, orientation = "horizontal", ...props }: ViewProp
   )
 }
 
-/**
- * Loading placeholder with a gentle pulse. The pulse runs on an outer
- * style-only Animated.View because NativeWind doesn't apply className to
- * Animated components; the shape/size classes go on the inner View.
- */
 function Skeleton({ className, ...props }: ViewProps) {
-  const reduceMotion = useReducedMotion()
-  const opacity = useSharedValue(1)
+  return <View className={cn("rounded-md bg-muted", className)} {...props} />
+}
 
-  useEffect(() => {
-    if (reduceMotion) return
-    opacity.value = withRepeat(withTiming(0.45, { duration: 900, easing: Easing.inOut(Easing.ease) }), -1, true)
-  }, [opacity, reduceMotion])
-
-  const style = useAnimatedStyle(() => ({ opacity: opacity.value }))
-
+/** Single-select pill used for filters and pickers. */
+function Chip({ label, selected, onPress, className }: { label: string; selected: boolean; onPress: () => void; className?: string }) {
   return (
-    <Animated.View style={style}>
-      <View className={cn("rounded-md bg-muted", className)} {...props} />
-    </Animated.View>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      className={cn(
+        "h-8 items-center justify-center rounded-md border px-3 web:cursor-pointer web:transition-colors web:duration-150",
+        selected ? "border-primary bg-primary" : "border-border bg-background web:hover:bg-accent",
+        className
+      )}
+    >
+      <Text className={cn("text-[13px] font-medium", selected ? "text-primary-foreground" : "text-foreground")}>{label}</Text>
+    </Pressable>
   )
 }
 
-export { Label, Badge, badgeVariants, Separator, Skeleton }
+/** A wrapping row of Chips (scrolls horizontally instead when `scroll`). */
+function ChipGroup<T extends string | number>({
+  options,
+  value,
+  onChange,
+  scroll = false
+}: {
+  options: { value: T; label: string }[]
+  value: T
+  onChange: (value: T) => void
+  scroll?: boolean
+}) {
+  const chips = options.map((o) => (
+    <Chip key={String(o.value)} label={o.label} selected={o.value === value} onPress={() => onChange(o.value)} />
+  ))
+  if (scroll) {
+    return (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} style={{ flexGrow: 0 }}>
+        {chips}
+      </ScrollView>
+    )
+  }
+  return <View className="flex-row flex-wrap gap-2">{chips}</View>
+}
+
+/** iOS-style segmented control for 2–4 mutually exclusive options. */
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  className
+}: {
+  options: { value: T; label: string }[]
+  value: T
+  onChange: (value: T) => void
+  className?: string
+}) {
+  return (
+    <View className={cn("h-9 flex-row rounded-md bg-secondary p-0.5", className)}>
+      {options.map((o) => {
+        const active = o.value === value
+        return (
+          <Pressable
+            key={o.value}
+            onPress={() => onChange(o.value)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            className={cn(
+              "flex-1 items-center justify-center rounded-[5px] web:cursor-pointer",
+              active && "border border-border bg-background"
+            )}
+          >
+            <Text className={cn("text-[13px] font-medium", active ? "text-foreground" : "text-muted-foreground")}>{o.label}</Text>
+          </Pressable>
+        )
+      })}
+    </View>
+  )
+}
+
+export { Label, Field, Badge, badgeVariants, Separator, Skeleton, Chip, ChipGroup, Segmented }

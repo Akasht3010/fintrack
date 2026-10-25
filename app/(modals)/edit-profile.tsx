@@ -1,5 +1,3 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { useState } from "react"
 import { useUserStore } from "@/store/useUserStore"
@@ -8,7 +6,11 @@ import { extractErrorMessage } from "@/api/client"
 import { storage as SecureStore } from "@/utils/storage"
 import { isValidEmail, isValidPhone } from "@/utils/identifier"
 import { showAlert } from "@/utils/alert"
-import { GlowBackground } from "@/components/shared/GlowBackground"
+import { ModalScreen } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
+import { Field } from "@/components/ui/misc"
 
 export default function EditProfileScreen() {
   const { user, setUser } = useUserStore()
@@ -59,77 +61,32 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
-      <GlowBackground />
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Edit Profile</Text>
-        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
-          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Name</Text>
-          <TextInput
-            placeholder="Your name"
-            value={name}
-            onChangeText={setName}
-            className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
-            placeholderTextColor="#9ca3af"
-          />
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Email</Text>
-          <TextInput
-            placeholder="you@example.com"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
-            placeholderTextColor="#9ca3af"
-          />
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Phone (optional)</Text>
-          <TextInput
-            placeholder="10-digit phone number"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
-            placeholderTextColor="#9ca3af"
-          />
-        </View>
-      </ScrollView>
-
-      <View className="px-6 pb-8 gap-3">
-        <TouchableOpacity
-          onPress={handleSave}
-          disabled={isSaving}
-          className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isSaving
-              ? "bg-neutral-200 dark:bg-neutral-800"
-              : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
-          }`}
-        >
-          {isSaving ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-base font-semibold text-white">Save Changes</Text>
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          disabled={isSaving}
-          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
-        >
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+    <ModalScreen
+      title="Edit profile"
+      closeDisabled={isSaving}
+      footer={
+        <Button onPress={handleSave} loading={isSaving}>
+          <Text>Save changes</Text>
+        </Button>
+      }
+    >
+      <Field label="Name">
+        <Input accessibilityLabel="Name" placeholder="Your name" value={name} onChangeText={setName} autoComplete="name" />
+      </Field>
+      <Field label="Email" hint="Changing it sends a verification code to the new address.">
+        <Input
+          accessibilityLabel="Email"
+          placeholder="you@example.com"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          autoComplete="email"
+        />
+      </Field>
+      <Field label="Phone" hint="Optional">
+        <Input accessibilityLabel="Phone" placeholder="10-digit mobile number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+      </Field>
+    </ModalScreen>
   )
 }

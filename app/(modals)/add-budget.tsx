@@ -1,5 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { View, ActivityIndicator } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useMemo, useEffect } from "react"
@@ -8,15 +7,23 @@ import { extractErrorMessage } from "@/api/client"
 import { showAlert } from "@/utils/alert"
 import { useCategories } from "@/hooks/useCategories"
 import { TransactionCategory } from "@/types/domain"
-import { GlowBackground } from "@/components/shared/GlowBackground"
-import { Chip } from "@/components/shared/Chip"
 import { parseMoneyInput } from "@/utils/money"
+import { useTheme } from "@/lib/theme"
+import { ModalScreen, InfoRow } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
+import { ChipGroup, Field, Segmented } from "@/components/ui/misc"
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export default function AddBudgetScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
   const budgetId = id ? Number(id) : undefined
   const isEditMode = !!id
   const queryClient = useQueryClient()
+  const { colors } = useTheme()
   const { data: categories } = useCategories()
 
   const { data: budgets } = useQuery({
@@ -25,10 +32,7 @@ export default function AddBudgetScreen() {
     enabled: isEditMode
   })
 
-  const existing = useMemo(
-    () => budgets?.find(b => b.id === budgetId),
-    [budgets, budgetId]
-  )
+  const existing = useMemo(() => budgets?.find(b => b.id === budgetId), [budgets, budgetId])
 
   const [category, setCategory] = useState<TransactionCategory>("food")
   const [period, setPeriod] = useState<"weekly" | "monthly">("monthly")
@@ -53,7 +57,6 @@ export default function AddBudgetScreen() {
     }
 
     setIsSubmitting(true)
-
     try {
       if (isEditMode && budgetId) {
         await budgetApi.updateLimit(budgetId, amount)
@@ -75,112 +78,56 @@ export default function AddBudgetScreen() {
 
   if (isEditMode && !existing) {
     return (
-      <SafeAreaView className="flex-1 bg-white dark:bg-transparent items-center justify-center">
-        <GlowBackground />
-        <ActivityIndicator size="large" />
-      </SafeAreaView>
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator color={colors.mutedForeground} />
+      </View>
     )
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
-      <GlowBackground />
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
-          {isEditMode ? "Edit Budget" : "New Budget"}
-        </Text>
-        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
-          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
-        {/* Category */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
-          {isEditMode ? (
-            <View className="px-4 py-3 rounded-2xl bg-neutral-100 dark:bg-white/10">
-              <Text className="text-base font-medium text-neutral-700 dark:text-neutral-300 capitalize">{category}</Text>
-            </View>
-          ) : (
-            <View className="flex-row flex-wrap gap-2">
-              {categories?.map((cat) => (
-                <Chip
-                  key={cat.id}
-                  label={`${cat.icon} ${cat.name}`}
-                  selected={category === cat.name}
-                  onPress={() => setCategory(cat.name)}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Period */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Period</Text>
-          {isEditMode ? (
-            <View className="px-4 py-3 rounded-2xl bg-neutral-100 dark:bg-white/10">
-              <Text className="text-base font-medium text-neutral-700 dark:text-neutral-300 capitalize">{period}</Text>
-            </View>
-          ) : (
-            <View className="flex-row gap-2">
-              {(["weekly", "monthly"] as const).map((p) => (
-                <Chip
-                  key={p}
-                  label={p}
-                  selected={period === p}
-                  onPress={() => setPeriod(p)}
-                  className="flex-1"
-                  padding="py-3"
-                  rounded="rounded-2xl"
-                />
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Limit amount */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Limit</Text>
-          <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4">
-            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">₹</Text>
-            <TextInput
-              placeholder="0.00"
-              value={limitAmount}
-              onChangeText={setLimitAmount}
-              keyboardType="decimal-pad"
-              className="flex-1 py-4 px-3 text-xl font-bold text-neutral-900 dark:text-white"
-              placeholderTextColor="#9ca3af"
-              accessibilityLabel="Limit amount"
+    <ModalScreen
+      title={isEditMode ? "Edit budget" : "New budget"}
+      closeDisabled={isSubmitting}
+      footer={
+        <Button onPress={handleSubmit} loading={isSubmitting}>
+          <Text>{isEditMode ? "Save changes" : "Create budget"}</Text>
+        </Button>
+      }
+    >
+      {isEditMode ? (
+        <Card>
+          <InfoRow label="Category" value={capitalize(category)} />
+          <InfoRow label="Period" value={capitalize(period)} last />
+        </Card>
+      ) : (
+        <>
+          <Field label="Category">
+            <ChipGroup
+              options={categories?.map(c => ({ value: c.name, label: capitalize(c.name) })) ?? []}
+              value={category}
+              onChange={setCategory}
             />
-          </View>
-        </View>
-      </ScrollView>
+          </Field>
+          <Field label="Period">
+            <Segmented
+              options={[{ value: "weekly", label: "Weekly" }, { value: "monthly", label: "Monthly" }]}
+              value={period}
+              onChange={setPeriod}
+            />
+          </Field>
+        </>
+      )}
 
-      <View className="px-6 pb-8 gap-3">
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-          accessibilityRole="button"
-          className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isSubmitting
-              ? "bg-neutral-200 dark:bg-neutral-800"
-              : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
-          }`}
-        >
-          <Text className={`text-base font-semibold ${isSubmitting ? "text-neutral-400" : "text-white"}`}>
-            {isSubmitting ? "Saving..." : isEditMode ? "Save Changes" : "Create Budget"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          disabled={isSubmitting}
-          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
-        >
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      <Field label="Limit">
+        <Input
+          accessibilityLabel="Limit amount"
+          placeholder="0.00"
+          value={limitAmount}
+          onChangeText={setLimitAmount}
+          keyboardType="decimal-pad"
+          leading={<Text className="text-sm text-muted-foreground">₹</Text>}
+        />
+      </Field>
+    </ModalScreen>
   )
 }

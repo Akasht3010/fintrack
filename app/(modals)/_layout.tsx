@@ -1,56 +1,44 @@
 import { useRef } from "react"
 import { View } from "react-native"
 import { Stack } from "expo-router"
-import Animated from "react-native-reanimated"
-import { GlowBackground } from "@/components/shared/GlowBackground"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
-import { useEntranceAnimation } from "@/hooks/useEntranceAnimation"
 import { useModalA11y } from "@/hooks/useModalA11y"
 
 export default function ModalsLayout() {
   const isDesktop = useIsDesktop()
-  const animatedStyle = useEntranceAnimation(200, 0.94)
   const containerRef = useRef(null)
   useModalA11y(containerRef)
 
+  const stack = (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="transaction-detail" />
+      <Stack.Screen name="add-expense" />
+      <Stack.Screen name="add-budget" />
+      <Stack.Screen name="recurring" />
+      <Stack.Screen name="export" />
+      <Stack.Screen name="categories" />
+      <Stack.Screen name="accounts" />
+      <Stack.Screen name="edit-profile" />
+      <Stack.Screen name="delete-account" />
+    </Stack>
+  )
+
   return (
-    // Same idea as the (auth) card: below `md` this is a no-op and modals
-    // present full-screen as they always have. At `md` and up they read as
-    // a centered dialog instead of a full-bleed page — wider than the auth
-    // card since forms like add-expense need room for a category grid. This
-    // group remounts every time a modal opens, so the pop-in animation
-    // below replays on each open rather than once per session — same for
-    // the desktop-only glow behind it.
-    <View className="flex-1 bg-white dark:bg-neutral-950 relative md:items-center md:justify-center md:bg-neutral-100 md:dark:bg-black">
-      {isDesktop && <GlowBackground />}
-      {/* See app/(auth)/_layout.tsx for why the animated wrapper is bare
-          (style-only, driven by useEntranceAnimation rather than Reanimated's
-          `entering` prop) with the actual card styling on a nested plain View. */}
-      <Animated.View
-        style={[{ flex: 1, width: "100%", alignItems: "center", justifyContent: "center" }, animatedStyle]}
+    // Phones: modals present full-screen. Desktop: a normal centered dialog
+    // on the same light page tone as the sign-in screen (the tab page
+    // isn't rendered behind a modal route, so a dimmed overlay would
+    // just be flat grey).
+    <View className="flex-1 bg-background md:items-center md:justify-center md:bg-secondary/50">
+      <View
+        ref={containerRef}
+        // role/aria-modal aren't in RN's View prop types but are real,
+        // supported pass-through props on react-native-web — no-ops on
+        // native. Paired with useModalA11y's focus trap + Escape-to-close.
+        {...({ role: "dialog", "aria-modal": true } as any)}
+        className={isDesktop ? "h-[82vh] max-h-[760px] w-[560px] overflow-hidden rounded-xl border border-border bg-background" : "flex-1"}
       >
-        <View
-          ref={containerRef}
-          // role/aria-modal aren't in RN's View prop types but are real,
-          // supported pass-through props on react-native-web — no-ops on
-          // native. Paired with useModalA11y's focus trap + Escape-to-close
-          // above, since RN's own View has neither on web by default.
-          {...({ role: "dialog", "aria-modal": true } as any)}
-          className="flex-1 w-full md:flex-none md:h-[85vh] md:w-[calc(100%-160px)] md:max-w-[640px] md:rounded-[28px] md:border md:border-neutral-200 md:dark:border-neutral-800 md:shadow-2xl md:overflow-hidden"
-        >
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="transaction-detail" />
-            <Stack.Screen name="add-expense" />
-            <Stack.Screen name="add-budget" />
-            <Stack.Screen name="recurring" />
-            <Stack.Screen name="export" />
-            <Stack.Screen name="categories" />
-            <Stack.Screen name="accounts" />
-            <Stack.Screen name="edit-profile" />
-            <Stack.Screen name="delete-account" />
-          </Stack>
-        </View>
-      </Animated.View>
+        {stack}
+      </View>
     </View>
   )
 }

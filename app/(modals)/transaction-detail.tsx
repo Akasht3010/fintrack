@@ -1,19 +1,19 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { View, ActivityIndicator } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { transactionApi } from "@/api/endpoints/transactions"
+import { invalidateTransactionQueries } from "@/api/invalidate"
 import { showAlert } from "@/utils/alert"
 import { formatCurrency } from "@/utils/currency"
 import { formatDateTime } from "@/utils/date"
-import { Colors } from "@/constants/colors"
-import { useCategoryIcons } from "@/hooks/useCategories"
-import { useAccounts } from "@/hooks/useAccounts"
-import { GlowBackground } from "@/components/shared/GlowBackground"
-import { GlassCard } from "@/components/shared/GlassCard"
 import { confirm } from "@/utils/confirm"
-import { useState } from "react"
-import { invalidateTransactionQueries } from "@/api/invalidate"
+import { useTheme } from "@/lib/theme"
+import { useAccounts } from "@/hooks/useAccounts"
+import { ModalScreen, InfoRow, Initial } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Text } from "@/components/ui/text"
 
 const SOURCE_LABELS: Record<string, string> = {
   manual: "Added manually",
@@ -23,11 +23,11 @@ const SOURCE_LABELS: Record<string, string> = {
 }
 
 export default function TransactionDetailScreen() {
-  const CATEGORY_ICONS = useCategoryIcons()
   const { data: accounts } = useAccounts(true)
   const { id } = useLocalSearchParams<{ id: string }>()
   const transactionId = Number(id)
   const queryClient = useQueryClient()
+  const { colors } = useTheme()
   const [isDeleting, setIsDeleting] = useState(false)
 
   const { data: transaction, isLoading, error } = useQuery({
@@ -54,123 +54,63 @@ export default function TransactionDetailScreen() {
     }
   }
 
-  return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
-      <GlowBackground />
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Transaction</Text>
-        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
-          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
-        </TouchableOpacity>
-      </View>
+  const accountName = transaction?.account_id ? accounts?.find(a => a.id === transaction.account_id)?.name : undefined
 
+  return (
+    <ModalScreen
+      title="Transaction"
+      footer={
+        transaction && (
+          <View className="flex-row gap-2">
+            <Button variant="outline" className="flex-1" onPress={handleDelete} loading={isDeleting}>
+              <Text className="text-destructive">Delete</Text>
+            </Button>
+            <Button
+              className="flex-1"
+              disabled={isDeleting}
+              onPress={() => router.push({ pathname: "/(modals)/add-expense", params: { id: transaction.id } })}
+            >
+              <Text>Edit</Text>
+            </Button>
+          </View>
+        )
+      }
+    >
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+        <View className="flex-1 items-center justify-center py-16">
+          <ActivityIndicator color={colors.mutedForeground} />
         </View>
       ) : error || !transaction ? (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-neutral-500 dark:text-neutral-400 text-center">Couldn&apos;t load this transaction</Text>
+        <View className="flex-1 items-center justify-center py-16">
+          <Text className="text-center text-muted-foreground">Couldn&apos;t load this transaction</Text>
         </View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1 }}>
-          <View className="items-center px-6 pt-8 pb-6">
-            <View className="w-16 h-16 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center mb-4">
-              <Text className="text-3xl">{CATEGORY_ICONS[transaction.category] || "📌"}</Text>
-            </View>
-            <Text className="text-lg font-semibold text-neutral-900 dark:text-white">{transaction.merchant}</Text>
-            <Text
-              className={`text-3xl font-bold mt-2 ${
-                transaction.type === "debit" ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-emerald-400"
-              }`}
-            >
+        <>
+          <View className="items-center pt-4">
+            <Initial name={transaction.merchant} size={48} />
+            <Text className="mt-3 text-base font-medium">{transaction.merchant}</Text>
+            <Text className="mt-1 text-3xl font-semibold tracking-tight">
               {transaction.type === "debit" ? "−" : "+"}
               {formatCurrency(transaction.amount)}
             </Text>
           </View>
 
-          <View className="px-6 mb-6">
-            <GlassCard>
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Category</Text>
-                <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
-                  {transaction.category}
-                </Text>
+          <Card>
+            <InfoRow label="Category" value={<Text className="text-sm font-medium capitalize">{transaction.category}</Text>} />
+            <InfoRow label="Date" value={formatDateTime(transaction.date)} />
+            <InfoRow label="Type" value={transaction.type === "debit" ? "Expense" : "Income"} />
+            <InfoRow label="Source" value={SOURCE_LABELS[transaction.source] || transaction.source} />
+            {!!transaction.account_id && <InfoRow label="Account" value={accountName || "—"} />}
+            {transaction.is_recurring && <InfoRow label="Recurring" value="Yes" />}
+            {!!transaction.description && (
+              <View className="gap-1 px-4 py-3">
+                <Text className="text-sm text-muted-foreground">Note</Text>
+                <Text className="text-sm">{transaction.description}</Text>
               </View>
-
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Date</Text>
-                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                  {formatDateTime(transaction.date)}
-                </Text>
-              </View>
-
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Type</Text>
-                <Text className="text-sm font-semibold text-neutral-900 dark:text-white capitalize">
-                  {transaction.type}
-                </Text>
-              </View>
-
-              <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                <Text className="text-sm text-muted-foreground dark:text-neutral-400">Source</Text>
-                <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                  {SOURCE_LABELS[transaction.source] || transaction.source}
-                </Text>
-              </View>
-
-              {!!transaction.account_id && (
-                <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                  <Text className="text-sm text-muted-foreground dark:text-neutral-400">Account</Text>
-                  <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                    {accounts?.find(a => a.id === transaction.account_id)?.name || "—"}
-                  </Text>
-                </View>
-              )}
-
-              {transaction.is_recurring && (
-                <View className="flex-row items-center justify-between px-4 py-4 border-b border-border dark:border-white/10">
-                  <Text className="text-sm text-muted-foreground dark:text-neutral-400">Recurring</Text>
-                  <View className="px-3 py-1 rounded-full bg-primary-100 dark:bg-accent-900">
-                    <Text className="text-xs font-medium text-primary-600 dark:text-accent-400">Yes</Text>
-                  </View>
-                </View>
-              )}
-
-              {!!transaction.description && (
-                <View className="px-4 py-4">
-                  <Text className="text-sm text-muted-foreground dark:text-neutral-400 mb-1">Description</Text>
-                  <Text className="text-sm text-neutral-900 dark:text-white">{transaction.description}</Text>
-                </View>
-              )}
-            </GlassCard>
-          </View>
-
-          <View className="px-6 pb-6 mt-auto gap-3">
-            <TouchableOpacity
-              onPress={() => router.push({ pathname: "/(modals)/add-expense", params: { id: transaction.id } })}
-              disabled={isDeleting}
-              accessibilityRole="button"
-              className="w-full items-center justify-center bg-primary-600 dark:bg-accent-600 rounded-2xl py-4 cursor-pointer hover:opacity-90 transition-opacity duration-150"
-            >
-              <Text className="text-base font-semibold text-white">Edit Transaction</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleDelete}
-              disabled={isDeleting}
-              accessibilityRole="button"
-              className="w-full items-center justify-center border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-red-100 dark:hover:bg-red-500/20"
-            >
-              {isDeleting ? (
-                <ActivityIndicator color="#dc2626" />
-              ) : (
-                <Text className="text-base font-semibold text-red-600 dark:text-red-400">Delete Transaction</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+            )}
+          </Card>
+        </>
       )}
-    </SafeAreaView>
+    </ModalScreen>
   )
 }

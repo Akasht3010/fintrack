@@ -5,7 +5,7 @@ import * as WebBrowser from "expo-web-browser"
 import { storage as SecureStore } from "@/utils/storage"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
-import { Colors } from "@/constants/colors"
+import { useTheme } from "@/lib/theme"
 import { showAlert } from "@/utils/alert"
 
 /**
@@ -20,6 +20,7 @@ import { showAlert } from "@/utils/alert"
  * matching screen here or the user is stranded on "Unmatched Route".
  */
 export default function GmailCallback() {
+  const { colors } = useTheme()
   const { gmail_connected, error } = useLocalSearchParams<{ gmail_connected?: string; error?: string }>()
   const { setUser } = useUserStore()
   const handled = useRef(false)
@@ -49,9 +50,9 @@ export default function GmailCallback() {
   }, [])
 
   return (
-    <View className="flex-1 items-center justify-center bg-white dark:bg-black">
-      <ActivityIndicator size="large" color={Colors.primary[600]} />
-      <Text className="mt-4 text-sm text-muted-foreground dark:text-neutral-400">Finishing Gmail connection…</Text>
+    <View className="flex-1 items-center justify-center bg-background">
+      <ActivityIndicator color={colors.mutedForeground} />
+      <Text className="mt-4 text-sm text-muted-foreground">Finishing Gmail connection…</Text>
     </View>
   )
 }

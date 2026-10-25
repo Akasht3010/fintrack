@@ -1,7 +1,7 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { View, ActivityIndicator } from "react-native"
 import { router, useLocalSearchParams } from "expo-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState, useEffect, useRef } from "react"
 import { useUserStore } from "@/store/useUserStore"
 import { useCreateTransaction } from "@/hooks/useCreateTransaction"
 import { useCategories } from "@/hooks/useCategories"
@@ -15,15 +15,21 @@ import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { generateIdempotencyKey } from "@/utils/idempotencyKey"
 import { parseMoneyInput } from "@/utils/money"
 import { showAlert } from "@/utils/alert"
-import { GlowBackground } from "@/components/shared/GlowBackground"
-import { Chip } from "@/components/shared/Chip"
-import { useState, useEffect, useRef } from "react"
+import { useTheme } from "@/lib/theme"
+import { ModalScreen } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
+import { ChipGroup, Field, Segmented } from "@/components/ui/misc"
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export default function AddExpenseScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
   const transactionId = id ? Number(id) : undefined
   const isEditMode = !!id
   const { user } = useUserStore()
+  const { colors } = useTheme()
   const { mutate: createTransaction, isPending: isCreating } = useCreateTransaction()
   const [transactionType, setTransactionType] = useState<"debit" | "credit">("debit")
   // Credit gets every category (same expense list plus the income-only
@@ -75,6 +81,8 @@ export default function AddExpenseScreen() {
   }, [existing])
 
   const isPending = isCreating || isSaving
+  const isCredit = transactionType === "credit"
+  const submitLabel = isEditMode ? "Save changes" : isCredit ? "Add income" : "Add expense"
 
   const handleSubmit = async () => {
     const parsedAmount = parseMoneyInput(amount)
@@ -161,173 +169,84 @@ export default function AddExpenseScreen() {
         if (__DEV__) {
           console.log("Add transaction failed:", error?.response?.status, error?.response?.data, error?.message)
         }
-        showAlert(
-          "Error",
-          extractErrorMessage(error, `Failed to add ${transactionType === "credit" ? "credit" : "expense"}`)
-        )
+        showAlert("Error", extractErrorMessage(error, `Failed to add ${isCredit ? "income" : "expense"}`))
       }
     })
   }
 
   if (isEditMode && isLoadingExisting) {
     return (
-      <SafeAreaView className="flex-1 bg-white dark:bg-transparent items-center justify-center">
-        <GlowBackground />
-        <ActivityIndicator size="large" />
-      </SafeAreaView>
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator color={colors.mutedForeground} />
+      </View>
     )
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
-      <GlowBackground />
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">
-          {isEditMode ? "Edit Transaction" : transactionType === "credit" ? "Add Credit" : "Add Expense"}
-        </Text>
-        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
-          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
-        </TouchableOpacity>
-      </View>
+    <ModalScreen
+      title={isEditMode ? "Edit transaction" : "New transaction"}
+      closeDisabled={isPending}
+      footer={
+        <Button onPress={handleSubmit} loading={isPending}>
+          <Text>{submitLabel}</Text>
+        </Button>
+      }
+    >
+      <Segmented
+        options={[{ value: "debit", label: "Expense" }, { value: "credit", label: "Income" }]}
+        value={transactionType}
+        onChange={setTransactionType}
+      />
 
-      <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
-        {/* Type toggle */}
-        <View className="flex-row bg-neutral-100 dark:bg-white/10 rounded-2xl p-1 mb-6">
-          {(["debit", "credit"] as const).map((t) => (
-            <TouchableOpacity
-              key={t}
-              onPress={() => setTransactionType(t)}
-              className={`flex-1 items-center py-2 rounded-xl cursor-pointer transition-colors duration-150 ${
-                transactionType === t ? "bg-white dark:bg-white/20" : "hover:bg-white/50 dark:hover:bg-white/10"
-              }`}
-            >
-              <Text
-                className={`text-sm font-semibold ${
-                  transactionType === t
-                    ? "text-neutral-900 dark:text-white"
-                    : "text-muted-foreground dark:text-neutral-400"
-                }`}
-              >
-                {t === "debit" ? "Expense" : "Credit"}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <Field label="Amount">
+        <Input
+          accessibilityLabel="Amount"
+          placeholder="0.00"
+          value={amount}
+          onChangeText={setAmount}
+          keyboardType="decimal-pad"
+          leading={<Text className="text-sm text-muted-foreground">₹</Text>}
+        />
+      </Field>
 
-        {/* Amount */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Amount</Text>
-          <View className="flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4">
-            <Text className="text-2xl font-bold text-neutral-900 dark:text-white">₹</Text>
-            <TextInput
-              placeholder="0.00"
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-              className="flex-1 py-4 px-3 text-xl font-bold text-neutral-900 dark:text-white"
-              placeholderTextColor="#9ca3af"
-              accessibilityLabel="Amount"
-            />
-          </View>
-        </View>
+      <Field label={isCredit ? "Source" : "Merchant"}>
+        <Input
+          accessibilityLabel={isCredit ? "Source" : "Merchant"}
+          placeholder={isCredit ? "e.g. Salary, Freelance" : "e.g. Swiggy, Uber"}
+          value={merchant}
+          maxLength={120}
+          onChangeText={setMerchant}
+        />
+      </Field>
 
-        {/* Merchant / Source */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">
-            {transactionType === "credit" ? "Source" : "Merchant"}
-          </Text>
-          <TextInput
-            placeholder={transactionType === "credit" ? "e.g., Salary, Freelance, etc." : "e.g., Swiggy, Uber, etc."}
-            value={merchant}
-            maxLength={120}
-            accessibilityLabel={transactionType === "credit" ? "Source" : "Merchant"}
-            onChangeText={setMerchant}
-            className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white"
-            placeholderTextColor="#9ca3af"
+      <Field label={isCredit ? "Received as" : "Category"}>
+        <ChipGroup
+          options={categories?.map(c => ({ value: c.name, label: capitalize(c.name) })) ?? []}
+          value={selectedCategory}
+          onChange={setSelectedCategory}
+        />
+      </Field>
+
+      {!!accounts?.length && (
+        <Field label="Account" hint="Optional">
+          <ChipGroup
+            options={[{ value: 0, label: "None" }, ...accounts.map(a => ({ value: a.id, label: a.name }))]}
+            value={selectedAccountId ?? 0}
+            onChange={(v) => setSelectedAccountId(v === 0 ? undefined : v)}
           />
-        </View>
+        </Field>
+      )}
 
-        {/* Account */}
-        {!!accounts?.length && (
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Account (optional)</Text>
-            <View className="flex-row flex-wrap gap-2">
-              <Chip label="None" selected={!selectedAccountId} onPress={() => setSelectedAccountId(undefined)} capitalize={false} />
-              {accounts.map((acc) => (
-                <Chip
-                  key={acc.id}
-                  label={acc.name}
-                  selected={selectedAccountId === acc.id}
-                  onPress={() => setSelectedAccountId(acc.id)}
-                  capitalize={false}
-                />
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Category */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">
-            {transactionType === "credit" ? "Received as" : "Category"}
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {categories?.map((cat) => (
-              <Chip
-                key={cat.id}
-                label={`${cat.icon} ${cat.name}`}
-                selected={selectedCategory === cat.name}
-                onPress={() => setSelectedCategory(cat.name)}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Description */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Description (optional)</Text>
-          <TextInput
-            placeholder="Add notes"
-            value={description}
-            maxLength={500}
-            onChangeText={setDescription}
-            className="border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-4 py-3 text-base text-neutral-900 dark:text-white h-20"
-            placeholderTextColor="#9ca3af"
-            multiline
-          />
-        </View>
-      </ScrollView>
-
-      {/* Submit Button */}
-      <View className="px-6 pb-8 gap-3">
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={isPending}
-          accessibilityRole="button"
-          className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isPending
-              ? "bg-neutral-200 dark:bg-neutral-800"
-              : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
-          }`}
-        >
-          <Text className={`text-base font-semibold ${
-            isPending ? "text-neutral-400" : "text-white"
-          }`}>
-            {isPending
-              ? "Saving..."
-              : isEditMode
-                ? "Save Changes"
-                : transactionType === "credit" ? "Add Credit" : "Add Expense"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          disabled={isPending}
-          className="w-full items-center justify-center border border-border dark:border-white/15 rounded-2xl py-4 cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5"
-        >
-          <Text className="text-base font-semibold text-neutral-900 dark:text-white">Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+      <Field label="Note" hint="Optional">
+        <Input
+          accessibilityLabel="Note"
+          placeholder="Add a note"
+          value={description}
+          maxLength={500}
+          onChangeText={setDescription}
+          multiline
+        />
+      </Field>
+    </ModalScreen>
   )
 }

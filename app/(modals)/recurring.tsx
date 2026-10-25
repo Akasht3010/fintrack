@@ -1,17 +1,16 @@
-import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { router } from "expo-router"
+import { View, ActivityIndicator } from "react-native"
 import { useQuery } from "@tanstack/react-query"
 import dayjs from "dayjs"
 import { recurringApi } from "@/api/endpoints/recurring"
 import { formatCurrency } from "@/utils/currency"
 import { formatDate, formatRelative } from "@/utils/date"
-import { Colors } from "@/constants/colors"
-import { useCategoryIcons } from "@/hooks/useCategories"
+import { useTheme } from "@/lib/theme"
+import { cn } from "@/lib/utils"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
-import { GlowBackground } from "@/components/shared/GlowBackground"
-import { GlassCard } from "@/components/shared/GlassCard"
+import { ModalScreen, Initial } from "@/components/layout"
+import { Card } from "@/components/ui/card"
+import { Text } from "@/components/ui/text"
 import { RecurringCadence } from "@/types/domain"
 
 const CADENCE_LABELS: Record<RecurringCadence, string> = {
@@ -21,81 +20,57 @@ const CADENCE_LABELS: Record<RecurringCadence, string> = {
 }
 
 export default function RecurringScreen() {
-  const CATEGORY_ICONS = useCategoryIcons()
+  const { colors } = useTheme()
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["recurring"],
     queryFn: ({ signal }) => recurringApi.summary(signal)
   })
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
-      <GlowBackground />
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Subscriptions</Text>
-        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
-          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
-        </TouchableOpacity>
-      </View>
-
+    <ModalScreen title="Subscriptions">
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={Colors.primary[600]} />
+        <View className="flex-1 items-center justify-center py-16">
+          <ActivityIndicator color={colors.mutedForeground} />
         </View>
       ) : error ? (
         <ErrorState message="Failed to load subscriptions" onRetry={refetch} />
       ) : !data || data.items.length === 0 ? (
         <EmptyState
-          icon="🔁"
+          icon="repeat-outline"
           title="Nothing recurring yet"
           subtitle="Once a merchant charges you on a regular cadence a few times, it'll show up here."
         />
       ) : (
-        <ScrollView className="px-6 py-6" showsVerticalScrollIndicator={false}>
-          <View className="mb-6">
-            <Text className="text-sm text-muted-foreground dark:text-neutral-400">Estimated monthly cost</Text>
-            <Text className="text-4xl font-bold text-neutral-900 dark:text-white mt-1">
-              {formatCurrency(data.monthly_total)}
-            </Text>
+        <>
+          <View>
+            <Text className="text-[13px] text-muted-foreground">Estimated monthly cost</Text>
+            <Text className="mt-1 text-3xl font-semibold tracking-tight">{formatCurrency(data.monthly_total)}</Text>
           </View>
 
-          <View className="gap-3 pb-8">
-            {data.items.map((item) => {
+          <Card>
+            {data.items.map((item, i) => {
               const isOverdue = dayjs(item.next_due_date).isBefore(dayjs())
               return (
-                <GlassCard key={item.merchant} className="p-4">
-                  <View className="flex-row items-center justify-between mb-3">
-                    <View className="flex-row items-center gap-3 flex-1">
-                      <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
-                        <Text className="text-lg">{CATEGORY_ICONS[item.category] || "📌"}</Text>
-                      </View>
-                      <View className="flex-1">
-                        <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                          {item.merchant}
-                        </Text>
-                        <Text className="text-xs text-muted-foreground dark:text-neutral-400 capitalize mt-0.5">
-                          {CADENCE_LABELS[item.cadence]} • {item.occurrences} charges seen
-                        </Text>
-                      </View>
-                    </View>
-                    <Text className="text-sm font-bold text-neutral-900 dark:text-white">
-                      {formatCurrency(item.average_amount)}
+                <View key={item.merchant} className={cn("flex-row items-center gap-3 px-4 py-3", i < data.items.length - 1 && "border-b border-border")}>
+                  <Initial name={item.merchant} />
+                  <View className="flex-1">
+                    <Text numberOfLines={1} className="text-sm font-medium">{item.merchant}</Text>
+                    <Text className="mt-0.5 text-xs text-muted-foreground">
+                      {CADENCE_LABELS[item.cadence]} · last {formatDate(item.last_date)}
                     </Text>
                   </View>
-
-                  <View className="flex-row items-center justify-between pt-3 border-t border-border dark:border-white/10">
-                    <Text className="text-xs text-muted-foreground dark:text-neutral-400">
-                      Last charged {formatDate(item.last_date)}
-                    </Text>
-                    <Text className={`text-xs font-medium ${isOverdue ? "text-red-600 dark:text-red-400" : "text-primary-600 dark:text-accent-400"}`}>
+                  <View className="items-end">
+                    <Text className="text-sm font-medium">{formatCurrency(item.average_amount)}</Text>
+                    <Text className={cn("mt-0.5 text-xs", isOverdue ? "text-destructive" : "text-muted-foreground")}>
                       {isOverdue ? "Due" : "Next"} {formatRelative(item.next_due_date)}
                     </Text>
                   </View>
-                </GlassCard>
+                </View>
               )
             })}
-          </View>
-        </ScrollView>
+          </Card>
+        </>
       )}
-    </SafeAreaView>
+    </ModalScreen>
   )
 }

@@ -48,8 +48,8 @@ function renderWithClient(ui: React.ReactElement) {
 
 describe("AddExpenseScreen", () => {
   it("renders without crashing", async () => {
-    const { getAllByText } = await renderWithClient(<AddExpenseScreen />)
-    await waitFor(() => expect(getAllByText("Add Expense").length).toBeGreaterThan(0))
+    const { getByText } = await renderWithClient(<AddExpenseScreen />)
+    await waitFor(() => expect(getByText("Add expense")).toBeTruthy())
   })
 
   // "abc" used to reach the API as `amount: NaN` (-> JSON null); the rest are
@@ -58,11 +58,11 @@ describe("AddExpenseScreen", () => {
   it.each(["abc", "12abc", "1e5", "0.001", "-50"])("rejects %p instead of submitting it", async (input) => {
     jest.mocked(showAlert).mockClear()
     jest.mocked(transactionApi.create).mockClear()
-    const { getAllByText, getByPlaceholderText } = await renderWithClient(<AddExpenseScreen />)
-    await waitFor(() => expect(getAllByText("Add Expense").length).toBeGreaterThan(0))
+    const { getByText, getByPlaceholderText } = await renderWithClient(<AddExpenseScreen />)
+    await waitFor(() => expect(getByText("Add expense")).toBeTruthy())
 
     await fireEvent.changeText(getByPlaceholderText("0.00"), input)
-    await fireEvent.press(getAllByText("Add Expense")[1])
+    await fireEvent.press(getByText("Add expense"))
 
     await waitFor(() =>
       expect(showAlert).toHaveBeenCalledWith("Error", "Please enter a valid amount (up to 2 decimal places)")
@@ -82,11 +82,11 @@ describe("AddExpenseScreen retry handling", () => {
       response: { status: 409, data: { detail: "A transaction with this idempotency_key already exists" } }
     })
 
-    const { getAllByText, getByPlaceholderText, getByLabelText } = await renderWithClient(<AddExpenseScreen />)
-    await waitFor(() => expect(getAllByText("Add Expense").length).toBeGreaterThan(0))
+    const { getByText, getByPlaceholderText, getByLabelText } = await renderWithClient(<AddExpenseScreen />)
+    await waitFor(() => expect(getByText("Add expense")).toBeTruthy())
     await fireEvent.changeText(getByPlaceholderText("0.00"), "250")
     await fireEvent.changeText(getByLabelText("Merchant"), "Cafe")
-    await fireEvent.press(getAllByText("Add Expense")[1])
+    await fireEvent.press(getByText("Add expense"))
 
     await waitFor(() => expect(router.back).toHaveBeenCalled())
     expect(showAlert).not.toHaveBeenCalled()

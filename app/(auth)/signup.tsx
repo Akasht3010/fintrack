@@ -1,24 +1,26 @@
-import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { StatusBar } from "expo-status-bar"
+import { View, Pressable } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useLocalSearchParams } from "expo-router"
+import { useState } from "react"
 import { authApi } from "@/api/endpoints/auth"
 import { extractErrorMessage } from "@/api/client"
-import { useState } from "react"
 import { classifyIdentifier, isValidEmail, isValidPhone } from "@/utils/identifier"
 import { useGoogleAuth } from "@/hooks/useGoogleAuth"
 import { confirm } from "@/utils/confirm"
 import { showAlert } from "@/utils/alert"
-import { useIsDesktop } from "@/hooks/useIsDesktop"
-import { BrandMark } from "@/components/shared/BrandMark"
+import { useTheme } from "@/lib/theme"
+import { AuthScreen } from "@/components/layout/AuthScreen"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
+import { Field, Separator } from "@/components/ui/misc"
 
 const MIN_PASSWORD_LENGTH = 8
 
 export default function SignupScreen() {
   const params = useLocalSearchParams<{ identifier?: string }>()
   const prefill = classifyIdentifier(params.identifier ?? "")
-  const isDesktop = useIsDesktop()
+  const { colors } = useTheme()
 
   const [name, setName] = useState("")
   const [email, setEmail] = useState(prefill.kind === "email" ? prefill.value : "")
@@ -50,29 +52,24 @@ export default function SignupScreen() {
       showAlert("Error", "Please enter your name")
       return
     }
-
     if (!isEmailValid) {
       showAlert("Invalid email", "Please enter a valid email address")
       return
     }
-
     if (!isPhoneValid) {
       showAlert("Invalid phone", "Please enter a valid 10-digit phone number")
       return
     }
-
     if (!isPasswordValid) {
       showAlert("Weak password", `Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
       return
     }
-
     if (!doPasswordsMatch) {
       showAlert("Passwords don't match", "Make sure both password fields are the same")
       return
     }
 
     setIsLoading(true)
-
     try {
       const response = await authApi.signup({
         name: name.trim(),
@@ -94,7 +91,7 @@ export default function SignupScreen() {
         const goToLogin = await confirm(
           "Account already exists",
           extractErrorMessage(error, "This email or phone number is already registered."),
-          { confirmLabel: "Log In" }
+          { confirmLabel: "Log in" }
         )
         if (goToLogin) {
           router.replace({ pathname: "/(auth)/login", params: { identifier: email.trim() } })
@@ -107,189 +104,111 @@ export default function SignupScreen() {
     }
   }
 
+  const eye = (
+    <Pressable
+      onPress={() => setIsPasswordVisible(v => !v)}
+      accessibilityRole="button"
+      accessibilityLabel={isPasswordVisible ? "Hide password" : "Show password"}
+      hitSlop={10}
+      className="web:cursor-pointer"
+    >
+      <Ionicons name={isPasswordVisible ? "eye-off-outline" : "eye-outline"} size={17} color={colors.mutedForeground} />
+    </Pressable>
+  )
+
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-neutral-950">
-      <StatusBar style="auto" />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+    <AuthScreen
+      title="Create an account"
+      subtitle="Track every expense in one place."
+      footer={
+        <View className="flex-row items-center justify-center">
+          <Text className="text-sm text-muted-foreground">Already have an account? </Text>
+          <Pressable
+            onPress={() => router.replace({ pathname: "/(auth)/login", params: { identifier: email || phone } })}
+            disabled={isLoading}
+            accessibilityRole="link"
+            hitSlop={8}
+            className="web:cursor-pointer"
+          >
+            <Text className="text-sm font-medium underline">Log in</Text>
+          </Pressable>
+        </View>
+      }
+    >
+      <Field label="Full name">
+        <Input accessibilityLabel="Full name" value={name} onChangeText={setName} autoCapitalize="words" autoComplete="name" editable={!isLoading} />
+      </Field>
+      <Field label="Email" error={email.trim().length > 0 && !isEmailValid && "Please enter a valid email address"}>
+        <Input
+          accessibilityLabel="Email"
+          placeholder="you@example.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="email"
+          editable={!isLoading}
+          invalid={email.trim().length > 0 && !isEmailValid}
+        />
+      </Field>
+      <Field label="Phone" error={phone.trim().length > 0 && !isPhoneValid && "Please enter a valid 10-digit phone number"}>
+        <Input
+          accessibilityLabel="Phone"
+          placeholder="10-digit mobile number"
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+          maxLength={10}
+          editable={!isLoading}
+          invalid={phone.trim().length > 0 && !isPhoneValid}
+        />
+      </Field>
+      <Field
+        label="Password"
+        hint={`At least ${MIN_PASSWORD_LENGTH} characters`}
+        error={password.length > 0 && !isPasswordValid && `Password must be at least ${MIN_PASSWORD_LENGTH} characters`}
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="flex-1 items-center justify-center px-6">
-            {isDesktop ? (
-              // See login.tsx — AuthBrandPanel already carries the full
-              // mark/wordmark/tagline on desktop, so this stays a plain
-              // heading rather than repeating all three.
-              <Text className="text-2xl font-bold text-neutral-900 dark:text-white text-center mb-8">
-                Create your account
-              </Text>
-            ) : (
-              <>
-                <View className="mb-8">
-                  <BrandMark size={80} />
-                </View>
-                <Text className="text-4xl font-bold text-neutral-900 dark:text-white text-center mb-3">
-                  Create account
-                </Text>
-                <Text className="text-base text-muted-foreground dark:text-neutral-400 text-center leading-6 mb-12">
-                  All your expenses across every app,{"\n"}in one clear view.
-                </Text>
-              </>
-            )}
+        <Input
+          accessibilityLabel="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!isPasswordVisible}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="new-password"
+          editable={!isLoading}
+          invalid={password.length > 0 && !isPasswordValid}
+          trailing={eye}
+        />
+      </Field>
+      <Field label="Confirm password" error={confirmPassword.length > 0 && !doPasswordsMatch && "Passwords don't match"}>
+        <Input
+          accessibilityLabel="Confirm password"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry={!isPasswordVisible}
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!isLoading}
+          invalid={confirmPassword.length > 0 && !doPasswordsMatch}
+        />
+      </Field>
 
-            <View className="w-full gap-4">
-              <TextInput
-                placeholder="Full name"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                editable={!isLoading}
-                className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
-                placeholderTextColor="#9ca3af"
-              />
+      <Button onPress={handleSignup} loading={isLoading} disabled={!canSubmit} className="mt-2">
+        <Text>Create account</Text>
+      </Button>
 
-              <View>
-                <TextInput
-                  placeholder="Email address"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
-                  placeholderTextColor="#9ca3af"
-                />
-                {email.trim().length > 0 && !isEmailValid && (
-                  <Text className="text-xs text-red-500 mt-2">
-                    Please enter a valid email address
-                  </Text>
-                )}
-              </View>
+      <View className="flex-row items-center gap-3">
+        <Separator className="flex-1" />
+        <Text className="text-xs text-muted-foreground">or</Text>
+        <Separator className="flex-1" />
+      </View>
 
-              <View>
-                <TextInput
-                  placeholder="Phone number"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  maxLength={10}
-                  editable={!isLoading}
-                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
-                  placeholderTextColor="#9ca3af"
-                />
-                {phone.trim().length > 0 && !isPhoneValid && (
-                  <Text className="text-xs text-red-500 mt-2">
-                    Please enter a valid 10-digit phone number
-                  </Text>
-                )}
-              </View>
-
-              <View>
-                <View className="relative">
-                  <TextInput
-                    placeholder="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!isPasswordVisible}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isLoading}
-                    className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 pr-12 text-base text-neutral-900 dark:text-white"
-                    placeholderTextColor="#9ca3af"
-                  />
-                  <TouchableOpacity
-                    onPress={() => setIsPasswordVisible(v => !v)}
-                    className="absolute right-4 top-0 bottom-0 items-center justify-center"
-                  >
-                    <Ionicons name={isPasswordVisible ? "eye-off" : "eye"} size={20} color="#9ca3af" />
-                  </TouchableOpacity>
-                </View>
-                {password.trim().length > 0 && !isPasswordValid && (
-                  <Text className="text-xs text-red-500 mt-2">
-                    Password must be at least {MIN_PASSWORD_LENGTH} characters
-                  </Text>
-                )}
-              </View>
-
-              <View>
-                <TextInput
-                  placeholder="Confirm password"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!isPasswordVisible}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  editable={!isLoading}
-                  className="w-full border border-border dark:border-neutral-700 rounded-2xl px-4 py-4 text-base text-neutral-900 dark:text-white"
-                  placeholderTextColor="#9ca3af"
-                />
-                {confirmPassword.trim().length > 0 && !doPasswordsMatch && (
-                  <Text className="text-xs text-red-500 mt-2">
-                    Passwords don&apos;t match
-                  </Text>
-                )}
-              </View>
-
-              <TouchableOpacity
-                onPress={handleSignup}
-                disabled={isLoading || !canSubmit}
-                className={`w-full flex-row items-center justify-center ${isLoading || !canSubmit ? 'bg-neutral-200' : 'bg-primary-600'} rounded-2xl py-4`}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text className={`text-base font-semibold ${isLoading || !canSubmit ? 'text-neutral-400' : 'text-white'}`}>
-                    Sign Up
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <View className="flex-row items-center gap-3 my-1">
-                <View className="flex-1 h-px bg-border dark:bg-neutral-800" />
-                <Text className="text-xs text-muted-foreground dark:text-neutral-400">or</Text>
-                <View className="flex-1 h-px bg-border dark:bg-neutral-800" />
-              </View>
-
-              <TouchableOpacity
-                onPress={handleGoogleSignIn}
-                disabled={isLoading || isGoogleLoading}
-                className="w-full flex-row items-center justify-center border border-border dark:border-neutral-700 rounded-2xl py-4"
-              >
-                {isGoogleLoading ? (
-                  <ActivityIndicator color="#111827" />
-                ) : (
-                  <Text className="text-base font-semibold text-neutral-900 dark:text-white">
-                    Continue with Google
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => router.replace({ pathname: "/(auth)/login", params: { identifier: email || phone } })}
-                disabled={isLoading}
-                className="w-full items-center py-2"
-              >
-                <Text className="text-sm text-muted-foreground dark:text-neutral-400">
-                  Already have an account?{" "}
-                  <Text className="text-primary-600 dark:text-primary-400 font-semibold">Log In</Text>
-                </Text>
-              </TouchableOpacity>
-
-              <Text className="text-xs text-muted-foreground dark:text-neutral-400 text-center mt-4 leading-5">
-                By continuing, you agree to our{" "}
-                <Text className="text-primary-600 dark:text-primary-400">Terms of Service</Text>
-                {" "}and{" "}
-                <Text className="text-primary-600 dark:text-primary-400">Privacy Policy</Text>
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <Button variant="outline" onPress={handleGoogleSignIn} loading={isGoogleLoading} disabled={isLoading}>
+        <Ionicons name="logo-google" size={15} color={colors.foreground} />
+        <Text>Continue with Google</Text>
+      </Button>
+    </AuthScreen>
   )
 }

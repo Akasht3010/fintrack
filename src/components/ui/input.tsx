@@ -5,7 +5,7 @@ import { useTheme } from "@/lib/theme"
 
 type InputProps = TextInputProps & {
   ref?: Ref<TextInput>
-  /** Rendered inside the field, before the text (typically an icon). */
+  /** Rendered inside the field, before the text (typically an icon or "₹"). */
   leading?: ReactNode
   /** Rendered inside the field, after the text (e.g. a show-password toggle). */
   trailing?: ReactNode
@@ -27,6 +27,7 @@ function Input({
   trailing,
   invalid = false,
   editable = true,
+  multiline,
   onFocus,
   onBlur,
   ...props
@@ -37,7 +38,8 @@ function Input({
   return (
     <View
       className={cn(
-        "h-12 flex-row items-center gap-2 rounded-xl border bg-background px-3.5 web:transition-colors",
+        "flex-row items-center gap-2 rounded-md border bg-background px-3 web:transition-colors",
+        multiline ? "min-h-[80px] items-start py-2" : "h-10",
         invalid ? "border-destructive" : focused ? "border-ring" : "border-input",
         !editable && "opacity-60",
         containerClassName
@@ -47,6 +49,7 @@ function Input({
       <TextInput
         ref={ref}
         editable={editable}
+        multiline={multiline}
         placeholderTextColor={colors.mutedForeground}
         aria-invalid={invalid}
         onFocus={(e) => {
@@ -57,7 +60,8 @@ function Input({
           setFocused(false)
           onBlur?.(e)
         }}
-        className={cn("h-full flex-1 text-base text-foreground web:outline-none", className)}
+        className={cn("flex-1 text-sm text-foreground web:outline-none", multiline ? "min-h-[64px]" : "h-full", className)}
+        style={multiline ? { textAlignVertical: "top" } : undefined}
         {...props}
       />
       {trailing}

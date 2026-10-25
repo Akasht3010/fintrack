@@ -6,7 +6,7 @@ import { storage as SecureStore } from "@/utils/storage"
 import { saveSession } from "@/utils/session"
 import { useUserStore } from "@/store/useUserStore"
 import { authApi } from "@/api/endpoints/auth"
-import { Colors } from "@/constants/colors"
+import { useTheme } from "@/lib/theme"
 import { showAlert } from "@/utils/alert"
 
 /**
@@ -22,6 +22,7 @@ import { showAlert } from "@/utils/alert"
  * the actual access token via authApi.exchangeGoogleCode.
  */
 export default function AuthCallback() {
+  const { colors } = useTheme()
   const { code, error } = useLocalSearchParams<{ code?: string; error?: string }>()
   const { setUser } = useUserStore()
   const handled = useRef(false)
@@ -55,9 +56,9 @@ export default function AuthCallback() {
   }, [])
 
   return (
-    <View className="flex-1 items-center justify-center bg-white dark:bg-black">
-      <ActivityIndicator size="large" color={Colors.primary[600]} />
-      <Text className="mt-4 text-sm text-muted-foreground dark:text-neutral-400">Finishing sign-in…</Text>
+    <View className="flex-1 items-center justify-center bg-background">
+      <ActivityIndicator color={colors.mutedForeground} />
+      <Text className="mt-4 text-sm text-muted-foreground">Finishing sign-in…</Text>
     </View>
   )
 }

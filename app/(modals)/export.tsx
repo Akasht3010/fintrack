@@ -1,51 +1,31 @@
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from "expo-router"
 import { useState } from "react"
 import { useExportTransactions } from "@/hooks/useExportTransactions"
 import { showAlert } from "@/utils/alert"
 import { useCategories } from "@/hooks/useCategories"
 import { DateRange, DATE_RANGES, dateFromForRange } from "@/utils/dateRanges"
-import { GlowBackground } from "@/components/shared/GlowBackground"
-import { GlassCard } from "@/components/shared/GlassCard"
-import { Chip } from "@/components/shared/Chip"
+import { ModalScreen } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Text } from "@/components/ui/text"
+import { ChipGroup, Field } from "@/components/ui/misc"
 
-const TYPES: { key: string; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "debit", label: "Expenses" },
-  { key: "credit", label: "Credit" }
+const TYPES = [
+  { value: "all", label: "All" },
+  { value: "debit", label: "Expenses" },
+  { value: "credit", label: "Income" }
 ]
 
-const SOURCES: { key: string; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "manual", label: "Manual" },
-  { key: "gmail", label: "Gmail" },
-  { key: "sms", label: "SMS" },
-  { key: "aa", label: "Account Aggregator" }
+const SOURCES = [
+  { value: "all", label: "All" },
+  { value: "manual", label: "Manual" },
+  { value: "gmail", label: "Gmail" },
+  { value: "sms", label: "SMS" },
+  { value: "aa", label: "Account aggregator" }
 ]
-
-function ChipRow<T extends string>({
-  options,
-  value,
-  onChange
-}: {
-  options: { key: T; label: string }[]
-  value: T
-  onChange: (key: T) => void
-}) {
-  return (
-    <View className="flex-row flex-wrap gap-2">
-      {options.map((option) => (
-        <Chip key={option.key} label={option.label} selected={value === option.key} onPress={() => onChange(option.key)} />
-      ))}
-    </View>
-  )
-}
 
 export default function ExportScreen() {
   const { exportCsv, isExporting } = useExportTransactions()
   const { data: categories } = useCategories()
-  const categoryFilters = ["all", ...(categories?.map(c => c.name) ?? [])]
   const [dateRange, setDateRange] = useState<DateRange>("all")
   const [type, setType] = useState("all")
   const [source, setSource] = useState("all")
@@ -66,64 +46,33 @@ export default function ExportScreen() {
   }
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-white dark:bg-transparent">
-      <GlowBackground />
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-border dark:border-white/10">
-        <Text className="text-lg font-semibold text-neutral-900 dark:text-white">Export Transactions</Text>
-        <TouchableOpacity onPress={() => router.back()} className="cursor-pointer hover:opacity-70 transition-opacity duration-150">
-          <Text className="text-base text-primary-600 dark:text-accent-400">✕</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Date range</Text>
-          <ChipRow options={DATE_RANGES} value={dateRange} onChange={setDateRange} />
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Type</Text>
-          <ChipRow options={TYPES} value={type} onChange={setType} />
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Source</Text>
-          <ChipRow options={SOURCES} value={source} onChange={setSource} />
-        </View>
-
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-neutral-900 dark:text-white mb-2">Category</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {categoryFilters.map((cat) => (
-              <Chip key={cat} label={cat} selected={category === cat} onPress={() => setCategory(cat)} />
-            ))}
-          </View>
-        </View>
-
-        <GlassCard className="p-4 mb-6">
-          <Text className="text-xs text-muted-foreground dark:text-neutral-400">
-            Exports a CSV with the date, type, amount, category, merchant, description, source, and recurring flag for every matching transaction.
-          </Text>
-        </GlassCard>
-      </ScrollView>
-
-      <View className="px-6 pb-8">
-        <TouchableOpacity
-          onPress={handleExport}
-          disabled={isExporting}
-          className={`w-full items-center justify-center rounded-2xl py-4 ${
-            isExporting
-              ? "bg-neutral-200 dark:bg-neutral-800"
-              : "bg-primary-600 dark:bg-accent-600 cursor-pointer hover:opacity-90 transition-opacity duration-150"
-          }`}
-        >
-          {isExporting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-base font-semibold text-white">Export CSV</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+    <ModalScreen
+      title="Export transactions"
+      footer={
+        <Button onPress={handleExport} loading={isExporting}>
+          <Text>Export CSV</Text>
+        </Button>
+      }
+    >
+      <Text className="text-sm text-muted-foreground">
+        Downloads a CSV with the date, type, amount, category, merchant, note, source and recurring flag of every matching transaction.
+      </Text>
+      <Field label="Date range">
+        <ChipGroup options={DATE_RANGES.map(r => ({ value: r.key, label: r.label }))} value={dateRange} onChange={setDateRange} />
+      </Field>
+      <Field label="Type">
+        <ChipGroup options={TYPES} value={type} onChange={setType} />
+      </Field>
+      <Field label="Source">
+        <ChipGroup options={SOURCES} value={source} onChange={setSource} />
+      </Field>
+      <Field label="Category">
+        <ChipGroup
+          options={[{ value: "all", label: "All" }, ...(categories?.map(c => ({ value: c.name, label: c.name.charAt(0).toUpperCase() + c.name.slice(1) })) ?? [])]}
+          value={category}
+          onChange={setCategory}
+        />
+      </Field>
+    </ModalScreen>
   )
 }

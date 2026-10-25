@@ -1,29 +1,35 @@
-import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native"
+import { View, ScrollView, Pressable, ActivityIndicator, RefreshControl } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router, useFocusEffect } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useInfiniteQuery } from "@tanstack/react-query"
+import { useState, useCallback, useEffect } from "react"
 import { useUserStore } from "@/store/useUserStore"
 import { transactionApi } from "@/api/endpoints/transactions"
 import { formatCurrency } from "@/utils/currency"
 import { parseMoneyInput, sumMoney } from "@/utils/money"
 import { formatDate } from "@/utils/date"
-import { Colors } from "@/constants/colors"
-import { EmptyState } from "@/components/shared/EmptyState"
-import { ErrorState } from "@/components/shared/ErrorState"
-import { GlowBackground } from "@/components/shared/GlowBackground"
-import { GlassCard } from "@/components/shared/GlassCard"
+import { useTheme } from "@/lib/theme"
 import { useTabBarClearance } from "@/hooks/useTabBarClearance"
-import { useCategories, useCategoryIcons } from "@/hooks/useCategories"
+import { useCategories } from "@/hooks/useCategories"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { DateRange, DATE_RANGES, dateFromForRange } from "@/utils/dateRanges"
-import { useState, useCallback, useEffect } from "react"
+import { EmptyState } from "@/components/shared/EmptyState"
+import { ErrorState } from "@/components/shared/ErrorState"
+import { PageHeader } from "@/components/layout"
+import { TransactionRow } from "@/components/layout/TransactionRow"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Text } from "@/components/ui/text"
+import { ChipGroup, Field } from "@/components/ui/misc"
 import type { Transaction } from "@/types/domain"
 
 const PAGE_SIZE = 50
 
 export default function TransactionsScreen() {
   const { user } = useUserStore()
+  const { colors } = useTheme()
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [searchInput, setSearchInput] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
@@ -34,8 +40,6 @@ export default function TransactionsScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const tabBarClearance = useTabBarClearance()
   const { data: categories } = useCategories()
-  const CATEGORY_ICONS = useCategoryIcons()
-  const categoryFilters = ["all", ...(categories?.map(c => c.name) ?? [])]
   const isDesktop = useIsDesktop()
 
   useEffect(() => {
@@ -43,18 +47,10 @@ export default function TransactionsScreen() {
     return () => clearTimeout(timeout)
   }, [searchInput])
 
-  const hasActiveFilters =
-    selectedCategory !== "all" || !!debouncedSearch || dateRange !== "all" || !!minAmount || !!maxAmount
+  const hasExtraFilters = dateRange !== "all" || !!minAmount || !!maxAmount
+  const hasActiveFilters = selectedCategory !== "all" || !!debouncedSearch || hasExtraFilters
 
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    error,
-    refetch,
-    fetchNextPage,
-    hasNextPage
-  } = useInfiniteQuery({
+  const { data, isLoading, isFetchingNextPage, error, refetch, fetchNextPage, hasNextPage } = useInfiniteQuery({
     queryKey: ["transactions", user?.id, selectedCategory, debouncedSearch, dateRange, minAmount, maxAmount],
     queryFn: ({ pageParam, signal }) =>
       transactionApi.list({
@@ -85,311 +81,130 @@ export default function TransactionsScreen() {
     refetch().finally(() => setRefreshing(false))
   }, [refetch])
 
-  // Group by date
   const groupedByDate = allTransactions.reduce((acc, t) => {
     const date = formatDate(t.date)
     if (!acc[date]) acc[date] = []
     acc[date].push(t)
     return acc
-  }, {} as Record<string, typeof allTransactions>)
+  }, {} as Record<string, Transaction[]>)
 
   const debits = allTransactions.filter(t => t.type === "debit")
-  const stats = {
-    count: debits.length,
-    total: sumMoney(debits.map(t => t.amount))
-  }
+  const spentTotal = sumMoney(debits.map(t => t.amount))
+
+  const categoryOptions = [{ value: "all", label: "All" }, ...(categories?.map(c => ({ value: c.name, label: c.name.charAt(0).toUpperCase() + c.name.slice(1) })) ?? [])]
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} className="flex-1 bg-background dark:bg-transparent">
-      <GlowBackground />
-      {/* Header */}
-      <View className="px-6 pt-4 pb-4">
-        <Text className="text-3xl font-bold text-neutral-900 dark:text-white">Transactions</Text>
-        {hasActiveFilters && (
-          <Text className="text-sm text-muted-foreground dark:text-neutral-400 mt-2">
-            {stats.count} transactions • {formatCurrency(stats.total)}
-          </Text>
-        )}
-      </View>
-
-      {/* Search + filter toggle */}
-      <View className="px-6 mb-3 flex-row items-center gap-2">
-        <View className="flex-1 flex-row items-center border border-border dark:border-white/15 dark:bg-white/5 rounded-2xl px-3">
-          <Ionicons name="search" size={16} color={Colors.muted} />
-          <TextInput
-            placeholder="Search merchant or description"
-            value={searchInput}
-            onChangeText={setSearchInput}
-            className="flex-1 py-3 px-2 text-sm text-neutral-900 dark:text-white"
-            placeholderTextColor="#9ca3af"
+    <SafeAreaView edges={isDesktop ? [] : ["top"]} className="flex-1 bg-background">
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: tabBarClearance }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.mutedForeground} />}
+      >
+        <View className="w-full flex-1 px-4 md:mx-auto md:max-w-[1080px] md:px-8">
+          <PageHeader
+            title="Transactions"
+            description={
+              hasActiveFilters && allTransactions.length > 0
+                ? `${allTransactions.length} shown · ${formatCurrency(spentTotal)} spent`
+                : "Everything you've spent and received."
+            }
           />
-          {searchInput.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchInput("")} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close-circle" size={16} color={Colors.muted} />
-            </TouchableOpacity>
+
+          <View className="mb-3 flex-row items-center gap-2">
+            <Input
+              containerClassName="flex-1"
+              placeholder="Search merchant or description"
+              value={searchInput}
+              onChangeText={setSearchInput}
+              leading={<Ionicons name="search" size={16} color={colors.mutedForeground} />}
+              trailing={
+                searchInput.length > 0 && (
+                  <Pressable onPress={() => setSearchInput("")} hitSlop={8} accessibilityLabel="Clear search">
+                    <Ionicons name="close-circle" size={16} color={colors.mutedForeground} />
+                  </Pressable>
+                )
+              }
+            />
+            <Button
+              variant={showFilters || hasExtraFilters ? "default" : "outline"}
+              onPress={() => setShowFilters(v => !v)}
+              accessibilityLabel="Filters"
+            >
+              <Ionicons name="options-outline" size={16} color={showFilters || hasExtraFilters ? colors.primaryForeground : colors.foreground} />
+              {isDesktop && <Text>Filters</Text>}
+            </Button>
+          </View>
+
+          {showFilters && (
+            <Card className="mb-3 gap-4 p-4">
+              <Field label="Date range">
+                <ChipGroup options={DATE_RANGES.map(r => ({ value: r.key, label: r.label }))} value={dateRange} onChange={setDateRange} />
+              </Field>
+              <Field label="Amount">
+                <View className="flex-row items-center gap-2">
+                  <Input containerClassName="flex-1" placeholder="Min" value={minAmount} onChangeText={setMinAmount} keyboardType="decimal-pad" />
+                  <Text className="text-muted-foreground">–</Text>
+                  <Input containerClassName="flex-1" placeholder="Max" value={maxAmount} onChangeText={setMaxAmount} keyboardType="decimal-pad" />
+                </View>
+              </Field>
+              {hasExtraFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="self-start"
+                  onPress={() => {
+                    setDateRange("all")
+                    setMinAmount("")
+                    setMaxAmount("")
+                  }}
+                >
+                  <Text>Clear filters</Text>
+                </Button>
+              )}
+            </Card>
+          )}
+
+          <View className="mb-5">
+            <ChipGroup options={categoryOptions} value={selectedCategory} onChange={setSelectedCategory} scroll={!isDesktop} />
+          </View>
+
+          {isLoading ? (
+            <View className="flex-1 items-center justify-center py-16">
+              <ActivityIndicator color={colors.mutedForeground} />
+            </View>
+          ) : error ? (
+            <ErrorState message="Failed to load transactions" onRetry={refetch} />
+          ) : allTransactions.length === 0 ? (
+            <EmptyState
+              icon="search-outline"
+              title="No transactions"
+              subtitle={hasActiveFilters ? "Nothing matches these filters." : "Add your first transaction to get started."}
+              actionLabel={hasActiveFilters ? undefined : "Add transaction"}
+              onAction={hasActiveFilters ? undefined : () => router.push("/(modals)/add-expense")}
+            />
+          ) : (
+            <View className="gap-5">
+              {Object.entries(groupedByDate).map(([date, txns]) => (
+                <View key={date}>
+                  <Text className="mb-2 text-[13px] font-medium text-muted-foreground">{date}</Text>
+                  <Card className="overflow-hidden">
+                    {txns.map((t, i) => (
+                      <TransactionRow key={t.id} transaction={t} last={i === txns.length - 1} wide={isDesktop} showDate={false} />
+                    ))}
+                  </Card>
+                </View>
+              ))}
+
+              {hasNextPage && (
+                <Button variant="outline" onPress={() => fetchNextPage()} loading={isFetchingNextPage} className="self-center">
+                  <Text>Load more</Text>
+                </Button>
+              )}
+            </View>
           )}
         </View>
-        <TouchableOpacity
-          onPress={() => setShowFilters(v => !v)}
-          className={`w-11 h-11 items-center justify-center rounded-2xl border ${
-            showFilters || dateRange !== "all" || minAmount || maxAmount
-              ? "bg-primary-600 dark:bg-accent-600 border-transparent"
-              : "border-border dark:border-white/15 dark:bg-white/5"
-          }`}
-        >
-          <Ionicons
-            name="options-outline"
-            size={18}
-            color={showFilters || dateRange !== "all" || minAmount || maxAmount ? "#fff" : Colors.muted}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Expandable filter panel */}
-      {showFilters && (
-        <View className="px-6 mb-3">
-          <GlassCard className="p-4">
-            <Text className="text-xs font-medium text-muted-foreground dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Date range
-            </Text>
-            <View className="flex-row flex-wrap gap-2 mb-4">
-              {DATE_RANGES.map((r) => (
-                <TouchableOpacity
-                  key={r.key}
-                  onPress={() => setDateRange(r.key)}
-                  className={`px-3 py-2 rounded-full ${
-                    dateRange === r.key ? "bg-primary-600 dark:bg-accent-600" : "bg-neutral-100 dark:bg-white/10"
-                  }`}
-                >
-                  <Text
-                    className={`text-xs font-medium ${
-                      dateRange === r.key ? "text-white" : "text-neutral-700 dark:text-neutral-300"
-                    }`}
-                  >
-                    {r.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text className="text-xs font-medium text-muted-foreground dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Amount
-            </Text>
-            <View className="flex-row items-center gap-3">
-              <TextInput
-                placeholder="Min"
-                value={minAmount}
-                onChangeText={setMinAmount}
-                keyboardType="decimal-pad"
-                className="flex-1 border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-white"
-                placeholderTextColor="#9ca3af"
-              />
-              <Text className="text-muted-foreground dark:text-neutral-400">–</Text>
-              <TextInput
-                placeholder="Max"
-                value={maxAmount}
-                onChangeText={setMaxAmount}
-                keyboardType="decimal-pad"
-                className="flex-1 border border-border dark:border-white/15 dark:bg-white/5 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-white"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-          </GlassCard>
-        </View>
-      )}
-
-      {/* Category Filter — a horizontally-scrolling chip row makes sense on
-          a phone, but on desktop there's usually enough width to just wrap
-          the chips onto a second line instead of hiding them behind a
-          scroll gesture mouse users won't think to try. */}
-      {isDesktop ? (
-        <View className="px-6 mb-2 flex-row flex-wrap gap-2">
-          {categoryFilters.map((category) => (
-            <TouchableOpacity
-              key={category}
-              onPress={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full ${
-                selectedCategory === category
-                  ? "bg-primary-600 dark:bg-accent-600"
-                  : "bg-white dark:bg-white/10 border border-border dark:border-white/15"
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium capitalize ${
-                  selectedCategory === category
-                    ? "text-white"
-                    : "text-neutral-700 dark:text-neutral-300"
-                }`}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="px-6 mb-2"
-          style={{ flexGrow: 0, height: 40 }}
-          contentContainerStyle={{ gap: 8, alignItems: "center" }}
-        >
-          {categoryFilters.map((category) => (
-            <TouchableOpacity
-              key={category}
-              onPress={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full ${
-                selectedCategory === category
-                  ? "bg-primary-600 dark:bg-accent-600"
-                  : "bg-white dark:bg-white/10 border border-border dark:border-white/15"
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium capitalize ${
-                  selectedCategory === category
-                    ? "text-white"
-                    : "text-neutral-700 dark:text-neutral-300"
-                }`}
-              >
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
-
-      {/* Transactions List */}
-      <View className="flex-1">
-        {isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="large" color={Colors.primary[600]} />
-          </View>
-        ) : error ? (
-          <ErrorState message="Failed to load transactions" onRetry={refetch} />
-        ) : allTransactions.length === 0 ? (
-          <EmptyState
-            icon="🔍"
-            title="No transactions"
-            subtitle={hasActiveFilters ? "No transactions match these filters." : "Add your first expense to get started."}
-            actionLabel={hasActiveFilters ? undefined : "Add Expense"}
-            onAction={hasActiveFilters ? undefined : () => router.push("/(modals)/add-expense")}
-          />
-        ) : (
-          <ScrollView
-            className="px-6"
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-            showsVerticalScrollIndicator={false}
-          >
-            {Object.entries(groupedByDate).map(([date, txns]) => (
-              <View key={date} className="mb-6">
-                {/* Date Header */}
-                <Text className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3 uppercase tracking-wider">
-                  {date}
-                </Text>
-
-                {/* Transactions for this date — a column of individually
-                    "floating" cards suits touch, but on desktop it's just
-                    repeated whitespace and shadow; grouping the day's rows
-                    into one bordered list (each row a plain divider-separated
-                    line) reads more like a real transaction table. */}
-                {isDesktop ? (
-                  <View className="rounded-2xl border border-border dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
-                    {txns.map((transaction: Transaction, index: number) => (
-                      <TouchableOpacity
-                        key={transaction.id}
-                        onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                        className={`px-4 py-3 flex-row items-center justify-between cursor-pointer transition-colors duration-150 hover:bg-neutral-50 dark:hover:bg-white/5 ${
-                          index < txns.length - 1 ? "border-b border-border dark:border-white/10" : ""
-                        }`}
-                      >
-                        <View className="flex-row items-center gap-3 flex-1">
-                          <View className="w-9 h-9 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
-                            <Text className="text-base">
-                              {CATEGORY_ICONS[transaction.category] || "📌"}
-                            </Text>
-                          </View>
-                          <Text className="text-sm font-semibold text-neutral-900 dark:text-white flex-1">
-                            {transaction.merchant}
-                          </Text>
-                        </View>
-                        <Text className="text-xs text-muted-foreground dark:text-neutral-400 capitalize w-32">
-                          {transaction.category}
-                        </Text>
-                        <Text
-                          className={`text-sm font-bold w-32 text-right ${
-                            transaction.type === "debit"
-                              ? "text-red-600 dark:text-red-400"
-                              : "text-green-600 dark:text-emerald-400"
-                          }`}
-                        >
-                          {transaction.type === "debit" ? "−" : "+"}
-                          {formatCurrency(transaction.amount)}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                ) : (
-                  <View className="gap-2">
-                    {txns.map((transaction: Transaction) => (
-                      <GlassCard
-                        key={transaction.id}
-                        onPress={() => router.push({ pathname: "/(modals)/transaction-detail", params: { id: transaction.id } })}
-                        className="p-4 flex-row items-center justify-between"
-                      >
-                        <View className="flex-row items-center gap-3 flex-1">
-                          <View className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-white/10 items-center justify-center">
-                            <Text className="text-lg">
-                              {CATEGORY_ICONS[transaction.category] || "📌"}
-                            </Text>
-                          </View>
-                          <View className="flex-1">
-                            <Text className="text-sm font-semibold text-neutral-900 dark:text-white">
-                              {transaction.merchant}
-                            </Text>
-                            <Text className="text-xs text-muted-foreground dark:text-neutral-400 capitalize">
-                              {transaction.category}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <Text
-                          className={`text-sm font-bold ${
-                            transaction.type === "debit"
-                              ? "text-red-600 dark:text-red-400"
-                              : "text-green-600 dark:text-emerald-400"
-                          }`}
-                        >
-                          {transaction.type === "debit" ? "−" : "+"}
-                          {formatCurrency(transaction.amount)}
-                        </Text>
-                      </GlassCard>
-                    ))}
-                  </View>
-                )}
-              </View>
-            ))}
-
-            {hasNextPage && (
-              <TouchableOpacity
-                onPress={() => fetchNextPage()}
-                disabled={isFetchingNextPage}
-                className="items-center justify-center py-4 mb-2"
-              >
-                {isFetchingNextPage ? (
-                  <ActivityIndicator color={Colors.primary[600]} />
-                ) : (
-                  <Text className="text-sm font-semibold text-primary-600 dark:text-accent-400">Load more</Text>
-                )}
-              </TouchableOpacity>
-            )}
-
-            {/* Clearance for the floating tab bar */}
-            <View style={{ height: tabBarClearance }} />
-          </ScrollView>
-        )}
-      </View>
+      </ScrollView>
     </SafeAreaView>
   )
 }
