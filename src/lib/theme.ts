@@ -11,25 +11,29 @@ export const THEME = {
     background: "#ffffff",
     foreground: "#0a0a0a",
     card: "#ffffff",
-    primary: "#171717",
-    primaryForeground: "#fafafa",
+    primary: "#2563eb",
+    primaryForeground: "#ffffff",
     secondary: "#f5f5f5",
     muted: "#f5f5f5",
     mutedForeground: "#737373",
     border: "#e5e5e5",
-    destructive: "#dc2626"
+    destructive: "#dc2626",
+    positive: "#16a34a",
+    negative: "#dc2626"
   },
   dark: {
     background: "#0a0a0a",
     foreground: "#fafafa",
     card: "#0a0a0a",
-    primary: "#fafafa",
-    primaryForeground: "#171717",
+    primary: "#3b82f6",
+    primaryForeground: "#ffffff",
     secondary: "#262626",
     muted: "#262626",
     mutedForeground: "#a3a3a3",
     border: "#262626",
-    destructive: "#ef4444"
+    destructive: "#ef4444",
+    positive: "#4ade80",
+    negative: "#f87171"
   }
 } as const
 

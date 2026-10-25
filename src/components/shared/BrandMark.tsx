@@ -7,8 +7,8 @@ interface BrandMarkProps {
 }
 
 /**
- * The logo mark — three ascending bars on a square, drawn in the theme's
- * foreground/background so it stays monochrome in both color schemes.
+ * The logo mark — three ascending white bars on a square in the theme's
+ * primary (blue).
  * Plain Views rather than an SVG so no react-native-svg dependency.
  */
 export function BrandMark({ size = 40, radius }: BrandMarkProps) {
@@ -22,7 +22,7 @@ export function BrandMark({ size = 40, radius }: BrandMarkProps) {
         width: size,
         height: size,
         borderRadius: radius ?? size * 0.24,
-        backgroundColor: colors.foreground,
+        backgroundColor: colors.primary,
         alignItems: "center",
         justifyContent: "center",
         flexDirection: "row",
@@ -30,7 +30,7 @@ export function BrandMark({ size = 40, radius }: BrandMarkProps) {
       }}
     >
       {[0.32, 0.5, 0.66].map((h) => (
-        <View key={h} style={{ width: barWidth, height: size * h, borderRadius: barWidth / 2, backgroundColor: colors.background }} />
+        <View key={h} style={{ width: barWidth, height: size * h, borderRadius: barWidth / 2, backgroundColor: colors.primaryForeground }} />
       ))}
     </View>
   )

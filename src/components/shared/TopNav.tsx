@@ -57,10 +57,10 @@ export function TopNav() {
                 accessibilityState={{ selected: isActive }}
                 className={cn(
                   "h-8 justify-center rounded-md px-3 web:cursor-pointer web:transition-colors",
-                  isActive ? "bg-secondary" : "web:hover:bg-accent/60"
+                  isActive ? "bg-primary/10" : "web:hover:bg-accent/60"
                 )}
               >
-                <Text className={cn("text-sm", isActive ? "font-medium text-foreground" : "text-muted-foreground")}>{item.label}</Text>
+                <Text className={cn("text-sm", isActive ? "font-medium text-primary" : "text-muted-foreground")}>{item.label}</Text>
               </Pressable>
             )
           })}
@@ -77,7 +77,7 @@ export function TopNav() {
             accessibilityLabel="Settings"
             className={cn(
               "h-8 w-8 items-center justify-center rounded-full border border-border bg-secondary web:cursor-pointer",
-              pathname === "/profile" && "border-foreground"
+              pathname === "/profile" && "border-primary"
             )}
           >
             <Text className="text-xs font-medium">{initialsFor(user?.name)}</Text>

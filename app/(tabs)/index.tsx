@@ -11,6 +11,7 @@ import { formatCurrency } from "@/utils/currency"
 import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { useNetWorth } from "@/hooks/useAccounts"
+import { categoryStyle } from "@/lib/categories"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
@@ -21,11 +22,11 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
 import type { Transaction } from "@/types/domain"
 
-function Stat({ label, value, hint, onPress, tone }: { label: string; value: string; hint?: string; onPress?: () => void; tone?: "negative" }) {
+function Stat({ label, value, hint, onPress, tone }: { label: string; value: string; hint?: string; onPress?: () => void; tone?: "positive" | "negative" }) {
   const body = (
     <>
       <Text className="text-[13px] text-muted-foreground">{label}</Text>
-      <Text numberOfLines={1} className={cn("mt-1.5 text-xl font-semibold tracking-tight md:text-2xl", tone === "negative" && "text-destructive")}>
+      <Text numberOfLines={1} className={cn("mt-1.5 text-xl font-semibold tracking-tight md:text-2xl", tone === "negative" && "text-negative", tone === "positive" && "text-positive")}>
         {value}
       </Text>
       {hint && <Text numberOfLines={1} className="mt-1 text-xs text-muted-foreground">{hint}</Text>}
@@ -130,11 +131,17 @@ export default function OverviewScreen() {
           categories.map((c) => (
             <View key={c.category}>
               <View className="mb-1.5 flex-row items-center justify-between">
-                <Text className="text-sm capitalize">{c.category}</Text>
+                <View className="flex-row items-center gap-2">
+                  <View className="h-2 w-2 rounded-full" style={{ backgroundColor: categoryStyle(c.category).color }} />
+                  <Text className="text-sm capitalize">{c.category}</Text>
+                </View>
                 <Text className="text-sm font-medium">{formatCurrency(c.total)}</Text>
               </View>
               <View className="h-1.5 overflow-hidden rounded-full bg-secondary">
-                <View className="h-full rounded-full bg-foreground" style={{ width: `${(c.total / categoryMax) * 100}%` }} />
+                <View
+                  className="h-full rounded-full"
+                  style={{ width: `${(c.total / categoryMax) * 100}%`, backgroundColor: categoryStyle(c.category).color }}
+                />
               </View>
             </View>
           ))
@@ -158,13 +165,13 @@ export default function OverviewScreen() {
       />
 
       <View className="mb-6 flex-row flex-wrap gap-3">
-        <Stat label="Income" value={formatCurrency(income)} hint="This month" />
-        <Stat label="Spent" value={formatCurrency(spent)} hint="This month" />
+        <Stat label="Income" value={formatCurrency(income)} hint="This month" tone="positive" />
+        <Stat label="Spent" value={formatCurrency(spent)} hint="This month" tone="negative" />
         <Stat
           label="Net"
           value={`${net >= 0 ? "+" : "−"}${formatCurrency(Math.abs(net))}`}
           hint={income > 0 ? `${Math.round((net / income) * 100)}% of income saved` : "This month"}
-          tone={net < 0 ? "negative" : undefined}
+          tone={net < 0 ? "negative" : "positive"}
         />
         <Stat
           label="Net worth"

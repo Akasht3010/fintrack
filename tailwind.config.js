@@ -35,14 +35,13 @@ module.exports = {
         primary: {
           DEFAULT: "rgb(var(--primary) / <alpha-value>)",
           foreground: "rgb(var(--primary-foreground) / <alpha-value>)",
-          // Legacy numbered shades, kept only so any stray old class can't
-          // reintroduce color: they map onto the neutral scale.
-          50:  "#fafafa",
-          100: "#f5f5f5",
-          400: "#a3a3a3",
-          500: "#737373",
-          600: "#171717",
-          900: "#0a0a0a"
+          // Numbered shades of the same blue, for the odd fixed-tone need.
+          50:  "#eff6ff",
+          100: "#dbeafe",
+          400: "#60a5fa",
+          500: "#3b82f6",
+          600: "#2563eb",
+          900: "#1e3a8a"
         },
         secondary: {
           DEFAULT: "rgb(var(--secondary) / <alpha-value>)",

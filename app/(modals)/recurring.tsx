@@ -8,7 +8,7 @@ import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
-import { ModalScreen, Initial } from "@/components/layout"
+import { ModalScreen, CategoryIcon } from "@/components/layout"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
 import { RecurringCadence } from "@/types/domain"
@@ -52,7 +52,7 @@ export default function RecurringScreen() {
               const isOverdue = dayjs(item.next_due_date).isBefore(dayjs())
               return (
                 <View key={item.merchant} className={cn("flex-row items-center gap-3 px-4 py-3", i < data.items.length - 1 && "border-b border-border")}>
-                  <Initial name={item.merchant} />
+                  <CategoryIcon category={item.category} />
                   <View className="flex-1">
                     <Text numberOfLines={1} className="text-sm font-medium">{item.merchant}</Text>
                     <Text className="mt-0.5 text-xs text-muted-foreground">

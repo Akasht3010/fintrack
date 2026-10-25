@@ -8,6 +8,7 @@ import { formatCurrency } from "@/utils/currency"
 import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
+import { categoryStyle } from "@/lib/categories"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { Page, PageHeader, LinkRow } from "@/components/layout"
@@ -61,13 +62,13 @@ export default function InsightsScreen() {
   const summary = (
     <Card className="flex-row">
       {[
-        { label: "Income", value: formatCurrency(income) },
-        { label: "Spent", value: formatCurrency(expense) },
-        { label: "Saved", value: savingsRate === null ? "—" : `${savingsRate}%`, negative: savingsRate !== null && savingsRate < 0 }
+        { label: "Income", value: formatCurrency(income), tone: "text-positive" },
+        { label: "Spent", value: formatCurrency(expense), tone: "text-negative" },
+        { label: "Saved", value: savingsRate === null ? "—" : `${savingsRate}%`, tone: savingsRate !== null && savingsRate < 0 ? "text-negative" : "" }
       ].map((s, i) => (
         <View key={s.label} className={cn("flex-1 p-4", i > 0 && "border-l border-border")}>
           <Text className="text-[13px] text-muted-foreground">{s.label}</Text>
-          <Text numberOfLines={1} className={cn("mt-1 text-lg font-semibold", s.negative && "text-destructive")}>
+          <Text numberOfLines={1} className={cn("mt-1 text-lg font-semibold", s.tone)}>
             {s.value}
           </Text>
         </View>
@@ -84,11 +85,11 @@ export default function InsightsScreen() {
         </View>
         <View className="flex-row items-center gap-3">
           <View className="flex-row items-center gap-1.5">
-            <View className="h-2 w-2 rounded-sm bg-foreground/25" />
+            <View className="h-2 w-2 rounded-sm bg-positive" />
             <Text className="text-xs text-muted-foreground">Income</Text>
           </View>
           <View className="flex-row items-center gap-1.5">
-            <View className="h-2 w-2 rounded-sm bg-foreground" />
+            <View className="h-2 w-2 rounded-sm bg-primary" />
             <Text className="text-xs text-muted-foreground">Spent</Text>
           </View>
         </View>
@@ -101,8 +102,8 @@ export default function InsightsScreen() {
           return (
             <View key={`${m.year}-${m.month}`} className="flex-1 items-center gap-2">
               <View className="w-full flex-row items-end justify-center gap-1" style={{ height: BAR_TRACK_HEIGHT }}>
-                <View style={{ height: incomeHeight }} className="w-3 rounded-sm bg-foreground/25" />
-                <View style={{ height: expenseHeight }} className="w-3 rounded-sm bg-foreground" />
+                <View style={{ height: incomeHeight }} className="w-3 rounded-sm bg-positive" />
+                <View style={{ height: expenseHeight }} className="w-3 rounded-sm bg-primary" />
               </View>
               <Text className="text-[11px] text-muted-foreground">{m.label}</Text>
             </View>
@@ -124,14 +125,17 @@ export default function InsightsScreen() {
           return (
             <View key={c.category}>
               <View className="mb-1.5 flex-row items-center justify-between">
-                <Text className="text-sm capitalize">{c.category}</Text>
+                <View className="flex-row items-center gap-2">
+                  <View className="h-2 w-2 rounded-full" style={{ backgroundColor: categoryStyle(c.category).color }} />
+                  <Text className="text-sm capitalize">{c.category}</Text>
+                </View>
                 <Text className="text-sm">
                   <Text className="text-sm font-medium">{formatCurrency(c.total)}</Text>
                   <Text className="text-xs text-muted-foreground">  {Math.round(pct)}%</Text>
                 </Text>
               </View>
               <View className="h-1.5 overflow-hidden rounded-full bg-secondary">
-                <View style={{ width: `${pct}%` }} className="h-full rounded-full bg-foreground" />
+                <View style={{ width: `${pct}%`, backgroundColor: categoryStyle(c.category).color }} className="h-full rounded-full" />
               </View>
             </View>
           )

@@ -6,6 +6,7 @@ import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { useTheme } from "@/lib/theme"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
+import { categoryStyle, withAlpha } from "@/lib/categories"
 import { Text } from "@/components/ui/text"
 
 /**
@@ -114,6 +115,19 @@ export function Initial({ name, size = 36 }: { name: string; size?: number }) {
       <Text className="font-medium text-muted-foreground" style={{ fontSize: size * 0.4 }}>
         {(name.trim()[0] ?? "?").toUpperCase()}
       </Text>
+    </View>
+  )
+}
+
+/** A category's icon on a soft tint of its color — used in lists and headers. */
+export function CategoryIcon({ category, size = 36 }: { category: string; size?: number }) {
+  const { color, icon } = categoryStyle(category)
+  return (
+    <View
+      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: withAlpha(color, 0.14) }}
+      className="items-center justify-center"
+    >
+      <Ionicons name={icon} size={Math.round(size * 0.48)} color={color} />
     </View>
   )
 }

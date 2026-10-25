@@ -22,7 +22,7 @@ export default function TabsLayout() {
         screenOptions={{
           headerShown: false,
           sceneStyle: { backgroundColor: colors.background },
-          tabBarActiveTintColor: colors.foreground,
+          tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.mutedForeground,
           tabBarStyle: {
             display: isDesktop ? "none" : "flex",

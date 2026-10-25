@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
-import { Page, PageHeader } from "@/components/layout"
+import { Page, PageHeader, CategoryIcon } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Text } from "@/components/ui/text"
 import { confirm } from "@/utils/confirm"
@@ -101,7 +101,8 @@ export default function BudgetScreen() {
                 accessibilityRole="button"
                 className="w-full rounded-lg border border-border bg-card p-4 active:bg-accent web:cursor-pointer web:hover:bg-accent/60 md:w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)]"
               >
-                <View className="flex-row items-start justify-between">
+                <View className="flex-row items-center gap-3">
+                  <CategoryIcon category={budget.category} />
                   <View className="flex-1">
                     <Text className="text-[15px] font-medium capitalize">{budget.category}</Text>
                     <Text className="mt-0.5 text-xs capitalize text-muted-foreground">{budget.period}</Text>
@@ -124,7 +125,7 @@ export default function BudgetScreen() {
                 <View className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
                   <View
                     style={{ width: `${percent}%` }}
-                    className={cn("h-full rounded-full", isOver ? "bg-destructive" : "bg-foreground")}
+                    className={cn("h-full rounded-full", isOver ? "bg-destructive" : "bg-primary")}
                   />
                 </View>
                 <Text className={cn("mt-2 text-xs", isOver ? "text-destructive" : "text-muted-foreground")}>

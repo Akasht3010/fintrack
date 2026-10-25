@@ -4,12 +4,12 @@ import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/utils/currency"
 import { formatDateShort } from "@/utils/date"
 import { Text } from "@/components/ui/text"
-import { Initial } from "./index"
+import { CategoryIcon } from "./index"
 import type { Transaction } from "@/types/domain"
 
 /**
- * One transaction in a bordered list. Expenses and income share the
- * foreground color; income is marked by its "+" sign rather than a hue.
+ * One transaction in a bordered list: category icon, merchant, and the
+ * amount in green (income) or red (expense).
  * `wide` adds a category column for desktop tables.
  */
 export function TransactionRow({ transaction, last, wide, showDate = true }: { transaction: Transaction; last?: boolean; wide?: boolean; showDate?: boolean }) {
@@ -23,7 +23,7 @@ export function TransactionRow({ transaction, last, wide, showDate = true }: { t
         !last && "border-b border-border"
       )}
     >
-      <Initial name={transaction.merchant} />
+      <CategoryIcon category={transaction.category} />
       <View className="flex-1">
         <Text numberOfLines={1} className="text-sm font-medium">
           {transaction.merchant}
@@ -43,7 +43,7 @@ export function TransactionRow({ transaction, last, wide, showDate = true }: { t
           {showDate && <Text className="w-20 text-[13px] text-muted-foreground">{formatDateShort(transaction.date)}</Text>}
         </>
       )}
-      <Text className={cn("text-sm font-medium", wide && "w-28 text-right", "text-foreground")}>
+      <Text className={cn("text-sm font-medium", wide && "w-28 text-right", isCredit ? "text-positive" : "text-negative")}>
         {isCredit ? "+" : "−"}
         {formatCurrency(transaction.amount)}
       </Text>

@@ -10,7 +10,8 @@ import { formatDateTime } from "@/utils/date"
 import { confirm } from "@/utils/confirm"
 import { useTheme } from "@/lib/theme"
 import { useAccounts } from "@/hooks/useAccounts"
-import { ModalScreen, InfoRow, Initial } from "@/components/layout"
+import { ModalScreen, InfoRow, CategoryIcon } from "@/components/layout"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
@@ -87,9 +88,9 @@ export default function TransactionDetailScreen() {
       ) : (
         <>
           <View className="items-center pt-4">
-            <Initial name={transaction.merchant} size={48} />
+            <CategoryIcon category={transaction.category} size={52} />
             <Text className="mt-3 text-base font-medium">{transaction.merchant}</Text>
-            <Text className="mt-1 text-3xl font-semibold tracking-tight">
+            <Text className={cn("mt-1 text-3xl font-semibold tracking-tight", transaction.type === "debit" ? "text-negative" : "text-positive")}>
               {transaction.type === "debit" ? "−" : "+"}
               {formatCurrency(transaction.amount)}
             </Text>
