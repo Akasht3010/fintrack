@@ -176,7 +176,7 @@ export default function OverviewScreen() {
         <Stat
           label="Net worth"
           value={hasAccounts ? formatCurrency(netWorth.net_worth) : "—"}
-          hint={hasAccounts ? `${netWorth.accounts.length} account${netWorth.accounts.length === 1 ? "" : "s"}` : "Add an account"}
+          hint={hasAccounts ? `${netWorth.accounts.length} account${netWorth.accounts.length === 1 ? "" : "s"}` : "Add a card"}
           onPress={() => router.push("/(modals)/accounts")}
         />
       </View>

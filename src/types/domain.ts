@@ -58,6 +58,10 @@ export interface Account {
   // null = opening balance + transactions.
   balance_source?: "alert" | "manual" | null
   balance_as_of?: string | null
+  // False until the bank (an alert) or the user has supplied a real figure.
+  balance_known?: boolean
+  // Newest bank alert matched to this account — "verified" once set.
+  last_alert_at?: string | null
 }
 
 export interface NetWorthAccountItem {
