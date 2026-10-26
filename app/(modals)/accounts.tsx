@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { View, Pressable, ActivityIndicator } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { router } from "expo-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { accountsApi } from "@/api/endpoints/accounts"
 import { useAccounts } from "@/hooks/useAccounts"
@@ -320,6 +321,13 @@ function AccountRow({ account, last }: { account: Account; last: boolean }) {
       <View className="mt-2 flex-row flex-wrap gap-x-4 gap-y-1 pl-12">
         {[
           { label: known ? "Update balance" : "Set balance", onPress: () => setMode("balance"), busy: false },
+          ...(kind === "debit" && !account.is_archived
+            ? [{
+                label: "Import statement",
+                onPress: () => router.push({ pathname: "/(modals)/import-statement", params: { accountId: account.id } }),
+                busy: false
+              }]
+            : []),
           { label: "Edit", onPress: () => setMode("edit"), busy: false },
           { label: account.is_archived ? "Unarchive" : "Archive", onPress: () => archive(), busy: isArchiving },
           { label: "Delete", onPress: handleDelete, busy: isDeleting, destructive: true }

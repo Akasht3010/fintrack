@@ -8,7 +8,7 @@ export interface TransactionCreatePayload {
   merchant: string
   description: string
   date: string
-  source: "gmail" | "manual" | "sms" | "aa"
+  source: "gmail" | "manual" | "sms" | "aa" | "statement"
   is_recurring?: boolean
   account_id?: number | null
   payment_method?: PaymentMethod | null

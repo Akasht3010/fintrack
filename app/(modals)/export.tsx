@@ -20,7 +20,8 @@ const SOURCES = [
   { value: "manual", label: "Manual" },
   { value: "gmail", label: "Gmail" },
   { value: "sms", label: "SMS" },
-  { value: "aa", label: "Account aggregator" }
+  { value: "aa", label: "Account aggregator" },
+  { value: "statement", label: "Bank statement" }
 ]
 
 export default function ExportScreen() {

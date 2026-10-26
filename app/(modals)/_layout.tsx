@@ -18,6 +18,7 @@ export default function ModalsLayout() {
       <Stack.Screen name="export" />
       <Stack.Screen name="categories" />
       <Stack.Screen name="accounts" />
+      <Stack.Screen name="import-statement" />
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="delete-account" />
     </Stack>

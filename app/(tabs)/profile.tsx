@@ -157,7 +157,8 @@ export default function SettingsScreen() {
     <View>
       <SectionTitle title="Data" />
       <Card className="overflow-hidden">
-        <LinkRow label="Accounts" icon="card-outline" onPress={() => router.push("/(modals)/accounts")} />
+        <LinkRow label="Cards" icon="card-outline" onPress={() => router.push("/(modals)/accounts")} />
+        <LinkRow label="Import bank statement" icon="document-text-outline" onPress={() => router.push("/(modals)/import-statement")} />
         <LinkRow label="Categories" icon="pricetags-outline" onPress={() => router.push("/(modals)/categories")} />
         <LinkRow label="Export transactions (CSV)" icon="download-outline" onPress={() => router.push("/(modals)/export")} last />
       </Card>

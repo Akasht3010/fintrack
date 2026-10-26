@@ -27,7 +27,7 @@ export interface Transaction {
   merchant: string
   description: string
   date: string
-  source: "gmail" | "manual" | "sms" | "aa"
+  source: "gmail" | "manual" | "sms" | "aa" | "statement"
   is_recurring: boolean
   created_at: string
   payment_method?: PaymentMethod | null
@@ -56,7 +56,7 @@ export interface Account {
   card_last4?: string | null
   // "alert" = the bank's last "Avl Bal"; "manual" = typed in by the user;
   // null = opening balance + transactions.
-  balance_source?: "alert" | "manual" | null
+  balance_source?: "alert" | "manual" | "statement" | null
   balance_as_of?: string | null
   // False until the bank (an alert) or the user has supplied a real figure.
   balance_known?: boolean
@@ -173,4 +173,19 @@ export interface RecurringItem {
 export interface RecurringSummary {
   items: RecurringItem[]
   monthly_total: number
+}
+
+export interface StatementImportResult {
+  bank: string
+  account_last4: string | null
+  period_start: string
+  period_end: string
+  rows: number
+  matched: number // already in the app — linked, not duplicated
+  already_imported: number // from an earlier upload
+  added: number // missing from the app — now added
+  added_debit_total: string
+  closing_balance: string | null
+  balance_updated: boolean
+  not_in_statement: { id: number; date: string; merchant: string; amount: string; type: TransactionType }[]
 }

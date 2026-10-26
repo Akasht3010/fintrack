@@ -21,7 +21,8 @@ const SOURCE_LABELS: Record<string, string> = {
   manual: "Added manually",
   gmail: "Imported from Gmail",
   sms: "Imported from SMS",
-  aa: "Imported via account aggregator"
+  aa: "Imported via account aggregator",
+  statement: "Imported from bank statement"
 }
 
 export default function TransactionDetailScreen() {
