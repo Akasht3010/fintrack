@@ -1,7 +1,7 @@
 import { View, ActivityIndicator } from "react-native"
 import { router, useFocusEffect } from "expo-router"
 import { useQuery } from "@tanstack/react-query"
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { insightsApi } from "@/api/endpoints/insights"
 import { recurringApi } from "@/api/endpoints/recurring"
 import { formatCurrency } from "@/utils/currency"
@@ -9,6 +9,11 @@ import { useTheme } from "@/lib/theme"
 import { cn } from "@/lib/utils"
 import { useIsDesktop } from "@/hooks/useIsDesktop"
 import { categoryStyle } from "@/lib/categories"
+import { PAYMENT_METHODS, paymentMethodIcon, paymentMethodLabel } from "@/lib/paymentMethods"
+import { useAccounts } from "@/hooks/useAccounts"
+import { InsightsFilters, PaymentMethod } from "@/types/domain"
+import { Ionicons } from "@expo/vector-icons"
+import { ChipGroup } from "@/components/ui/misc"
 import { EmptyState } from "@/components/shared/EmptyState"
 import { ErrorState } from "@/components/shared/ErrorState"
 import { Page, PageHeader, LinkRow } from "@/components/layout"
@@ -25,9 +30,14 @@ export default function InsightsScreen() {
   const { colors } = useTheme()
   const isDesktop = useIsDesktop()
 
+  const [filters, setFilters] = useState<InsightsFilters>({})
+  const isFiltered = filters.accountId !== undefined || filters.paymentMethod !== undefined
+  const { data: accounts } = useAccounts()
+
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["insights"],
-    queryFn: ({ signal }) => insightsApi.summary(6, signal)
+    queryKey: ["insights", filters],
+    queryFn: ({ signal }) => insightsApi.summary(6, signal, filters),
+    placeholderData: (previous) => previous
   })
 
   const { data: recurring, refetch: refetchRecurring } = useQuery({
@@ -166,6 +176,106 @@ export default function InsightsScreen() {
     </Card>
   )
 
+  // Spend split by account and by method — the numbers to hold up against
+  // a single bank's or a single UPI app's own "spent this month".
+  const breakdownCard = (
+    title: string,
+    description: string,
+    rows: { key: string; label: string; total: number; icon: keyof typeof Ionicons.glyphMap; onPress?: () => void }[]
+  ) => {
+    if (rows.length === 0) return null
+    const total = rows.reduce((sum, r) => sum + r.total, 0)
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <View className="gap-4 px-4 pb-4">
+          {rows.map((r) => {
+            const pct = total > 0 ? (r.total / total) * 100 : 0
+            return (
+              <View key={r.key}>
+                <View className="mb-1.5 flex-row items-center justify-between">
+                  <View className="flex-1 flex-row items-center gap-2">
+                    <Ionicons name={r.icon} size={14} color={colors.mutedForeground} />
+                    <Text numberOfLines={1} className="flex-1 text-sm">{r.label}</Text>
+                  </View>
+                  <Text className="text-sm font-medium">{formatCurrency(r.total)}</Text>
+                </View>
+                <View className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                  <View style={{ width: `${pct}%` }} className="h-full rounded-full bg-primary" />
+                </View>
+              </View>
+            )
+          })}
+        </View>
+      </Card>
+    )
+  }
+
+  const byAccount =
+    data &&
+    filters.accountId === undefined &&
+    breakdownCard(
+      "By account",
+      "Spent this month",
+      data.account_breakdown.map((a) => ({
+        key: String(a.account_id ?? "none"),
+        label: a.name,
+        total: a.total,
+        icon: a.account_id === null ? "help-circle-outline" : a.type === "credit_card" ? "card-outline" : "business-outline"
+      }))
+    )
+
+  const byMethod =
+    data &&
+    filters.paymentMethod === undefined &&
+    breakdownCard(
+      "By payment method",
+      "Spent this month",
+      data.payment_method_breakdown.map((m) => ({
+        key: m.payment_method ?? "unknown",
+        label: paymentMethodLabel(m.payment_method),
+        total: m.total,
+        icon: paymentMethodIcon(m.payment_method)
+      }))
+    )
+
+  const accountOptions = [
+    { value: -1, label: "All accounts" },
+    ...(accounts ?? []).map((a) => ({ value: a.id, label: a.name })),
+    { value: 0, label: "Not linked" }
+  ]
+  const methodOptions: { value: PaymentMethod | "all"; label: string }[] = [
+    { value: "all", label: "All methods" },
+    ...PAYMENT_METHODS.map((m) => ({ value: m, label: paymentMethodLabel(m) }))
+  ]
+
+  const filterBar = (
+    <View className="gap-2">
+      {!!accounts?.length && (
+        <ChipGroup
+          scroll
+          options={accountOptions}
+          value={filters.accountId ?? -1}
+          onChange={(v) => setFilters((f) => ({ ...f, accountId: v === -1 ? undefined : v }))}
+        />
+      )}
+      <ChipGroup
+        scroll
+        options={methodOptions}
+        value={filters.paymentMethod ?? "all"}
+        onChange={(v) => setFilters((f) => ({ ...f, paymentMethod: v === "all" ? undefined : v }))}
+      />
+      {filters.paymentMethod === "upi" && (
+        <Text className="text-xs text-muted-foreground">
+          Google Pay and other UPI apps only count UPI payments made in that app — card, ATM, autopay and bank transfers aren&apos;t in their total.
+        </Text>
+      )}
+    </View>
+  )
+
   const subscriptions = recurring && (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">
@@ -192,6 +302,11 @@ export default function InsightsScreen() {
         </View>
       ) : error ? (
         <ErrorState message="Failed to load insights" onRetry={refetch} />
+      ) : isFiltered && !hasAnySpend ? (
+        <View className="gap-6">
+          {filterBar}
+          <EmptyState icon="funnel-outline" title="Nothing here" subtitle="No transactions match this filter yet." />
+        </View>
       ) : !data || !hasAnySpend ? (
         <EmptyState
           icon="bar-chart-outline"
@@ -202,11 +317,16 @@ export default function InsightsScreen() {
         />
       ) : isDesktop ? (
         <View className="gap-6">
+          {filterBar}
           {summary}
           {trend}
           <View className="flex-row items-start gap-6">
-            <View className="flex-1 gap-6">{byCategory}</View>
             <View className="flex-1 gap-6">
+              {byCategory}
+              {byAccount}
+            </View>
+            <View className="flex-1 gap-6">
+              {byMethod}
               {merchants}
               {subscriptions}
             </View>
@@ -214,8 +334,11 @@ export default function InsightsScreen() {
         </View>
       ) : (
         <View className="gap-6">
+          {filterBar}
           {summary}
           {trend}
+          {byMethod}
+          {byAccount}
           {byCategory}
           {merchants}
           {subscriptions}

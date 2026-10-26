@@ -1,6 +1,8 @@
 import { apiClient } from "@/api/client"
 import { Account, AccountType, NetWorthSummary } from "@/types/domain"
 
+type AccountMatchFields = { institution?: string | null; last4?: string | null; card_last4?: string | null }
+
 export const accountsApi = {
   async list(includeArchived = false, signal?: AbortSignal): Promise<Account[]> {
     const response = await apiClient.get<Account[]>("/api/accounts", {
@@ -13,12 +15,17 @@ export const accountsApi = {
     const response = await apiClient.get<NetWorthSummary>("/api/accounts/net-worth", { signal })
     return response.data
   },
-  async create(data: { name: string; type: AccountType; opening_balance?: number }): Promise<Account> {
+  async create(data: { name: string; type: AccountType; opening_balance?: number } & AccountMatchFields): Promise<Account> {
     const response = await apiClient.post<Account>("/api/accounts", data)
     return response.data
   },
-  async update(id: number, data: { name?: string; opening_balance?: number; is_archived?: boolean }): Promise<Account> {
+  async update(id: number, data: { name?: string; opening_balance?: number; is_archived?: boolean } & AccountMatchFields): Promise<Account> {
     const response = await apiClient.patch<Account>(`/api/accounts/${id}`, data)
+    return response.data
+  },
+  /** Reconcile: the balance the bank / UPI app shows right now. */
+  async setBalance(id: number, balance: number): Promise<Account> {
+    const response = await apiClient.post<Account>(`/api/accounts/${id}/balance`, { balance })
     return response.data
   },
   async remove(id: number): Promise<void> {

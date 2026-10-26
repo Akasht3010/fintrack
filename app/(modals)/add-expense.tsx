@@ -10,7 +10,8 @@ import { transactionApi } from "@/api/endpoints/transactions"
 import { budgetApi } from "@/api/endpoints/budgets"
 import { extractErrorMessage } from "@/api/client"
 import { invalidateTransactionQueries } from "@/api/invalidate"
-import { Budget } from "@/types/domain"
+import { Budget, PaymentMethod } from "@/types/domain"
+import { PAYMENT_METHODS, paymentMethodLabel } from "@/lib/paymentMethods"
 import { notifyBudgetThresholdCrossings } from "@/utils/budgetAlerts"
 import { generateIdempotencyKey } from "@/utils/idempotencyKey"
 import { parseMoneyInput } from "@/utils/money"
@@ -55,6 +56,7 @@ export default function AddExpenseScreen() {
   const [description, setDescription] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("food")
   const [selectedAccountId, setSelectedAccountId] = useState<number | undefined>(undefined)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | undefined>(undefined)
 
   // The category list is scoped to the current type (expense vs income), so
   // switching the toggle can leave selectedCategory pointing at a name from
@@ -77,6 +79,7 @@ export default function AddExpenseScreen() {
       setSelectedCategory(existing.category)
       setTransactionType(existing.type)
       setSelectedAccountId(existing.account_id ?? undefined)
+      setPaymentMethod(existing.payment_method ?? undefined)
     }
   }, [existing])
 
@@ -105,7 +108,8 @@ export default function AddExpenseScreen() {
           category: selectedCategory,
           merchant,
           description: description || merchant,
-          account_id: selectedAccountId ?? null
+          account_id: selectedAccountId ?? null,
+          payment_method: paymentMethod ?? null
         })
         invalidateTransactionQueries(queryClient)
         router.back()
@@ -141,6 +145,7 @@ export default function AddExpenseScreen() {
       source: "manual",
       is_recurring: false,
       account_id: selectedAccountId ?? null,
+      payment_method: paymentMethod ?? null,
       idempotency_key: idempotencyKeyRef.current
     }, {
       // Cache invalidation is handled by useCreateTransaction itself.
@@ -236,6 +241,14 @@ export default function AddExpenseScreen() {
           />
         </Field>
       )}
+
+      <Field label="Paid via" hint="Optional">
+        <ChipGroup
+          options={[{ value: "", label: "—" }, ...PAYMENT_METHODS.map(m => ({ value: m, label: paymentMethodLabel(m) }))]}
+          value={paymentMethod ?? ""}
+          onChange={(v) => setPaymentMethod(v === "" ? undefined : (v as PaymentMethod))}
+        />
+      </Field>
 
       <Field label="Note" hint="Optional">
         <Input

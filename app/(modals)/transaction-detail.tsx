@@ -12,6 +12,7 @@ import { useTheme } from "@/lib/theme"
 import { useAccounts } from "@/hooks/useAccounts"
 import { ModalScreen, InfoRow, CategoryIcon } from "@/components/layout"
 import { cn } from "@/lib/utils"
+import { maskedDigits, paymentMethodLabel } from "@/lib/paymentMethods"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
@@ -56,6 +57,7 @@ export default function TransactionDetailScreen() {
   }
 
   const accountName = transaction?.account_id ? accounts?.find(a => a.id === transaction.account_id)?.name : undefined
+  const hintedDigits = transaction?.account_hint?.split(",")[0]
 
   return (
     <ModalScreen
@@ -101,7 +103,22 @@ export default function TransactionDetailScreen() {
             <InfoRow label="Date" value={formatDateTime(transaction.date)} />
             <InfoRow label="Type" value={transaction.type === "debit" ? "Expense" : "Income"} />
             <InfoRow label="Source" value={SOURCE_LABELS[transaction.source] || transaction.source} />
-            {!!transaction.account_id && <InfoRow label="Account" value={accountName || "—"} />}
+            {!!transaction.payment_method && <InfoRow label="Paid via" value={paymentMethodLabel(transaction.payment_method)} />}
+            {transaction.account_id ? (
+              <InfoRow label="Account" value={accountName || "—"} />
+            ) : hintedDigits ? (
+              <InfoRow
+                label="Account"
+                value={
+                  <Text
+                    onPress={() => router.push("/(modals)/accounts")}
+                    className="text-sm font-medium text-primary web:cursor-pointer"
+                  >
+                    {maskedDigits(hintedDigits)} · add this account
+                  </Text>
+                }
+              />
+            ) : null}
             {transaction.is_recurring && <InfoRow label="Recurring" value="Yes" />}
             {!!transaction.description && (
               <View className="gap-1 px-4 py-3">

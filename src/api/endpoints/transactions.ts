@@ -1,5 +1,5 @@
 import { apiClient } from "@/api/client"
-import { Transaction } from "@/types/domain"
+import { PaymentMethod, Transaction } from "@/types/domain"
 
 export interface TransactionCreatePayload {
   amount: number
@@ -11,6 +11,7 @@ export interface TransactionCreatePayload {
   source: "gmail" | "manual" | "sms" | "aa"
   is_recurring?: boolean
   account_id?: number | null
+  payment_method?: PaymentMethod | null
   // Lets a retried create (e.g. resent after a timeout, the first attempt
   // having actually succeeded) 409 instead of silently double-inserting —
   // see the backend's (user_id, idempotency_key) unique index.
@@ -24,6 +25,7 @@ export interface TransactionUpdatePayload {
   merchant?: string
   description?: string
   account_id?: number | null
+  payment_method?: PaymentMethod | null
 }
 
 export interface TransactionListResponse {
@@ -42,6 +44,8 @@ export interface TransactionListFilters {
   date_to?: string
   min_amount?: number
   max_amount?: number
+  account_id?: number // 0 = not linked to an account
+  payment_method?: PaymentMethod
 }
 
 export interface TransactionExportFilters {

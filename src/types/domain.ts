@@ -30,7 +30,13 @@ export interface Transaction {
   source: "gmail" | "manual" | "sms" | "aa"
   is_recurring: boolean
   created_at: string
+  payment_method?: PaymentMethod | null
+  // Trailing account/card digits the bank alert quoted (comma-separated) —
+  // set on imports, so an unlinked one can say which account it was.
+  account_hint?: string | null
 }
+
+export type PaymentMethod = "upi" | "card" | "netbanking" | "atm" | "autopay" | "cash" | "other"
 
 export type AccountType = "bank" | "cash" | "credit_card" | "wallet" | "investment"
 
@@ -44,6 +50,14 @@ export interface Account {
   balance: string
   is_archived: boolean
   created_at: string
+  institution?: string | null
+  // Trailing digits bank alerts print — how imports find this account.
+  last4?: string | null
+  card_last4?: string | null
+  // "alert" = the bank's last "Avl Bal"; "manual" = typed in by the user;
+  // null = opening balance + transactions.
+  balance_source?: "alert" | "manual" | null
+  balance_as_of?: string | null
 }
 
 export interface NetWorthAccountItem {
@@ -112,11 +126,31 @@ export interface MerchantBreakdownItem {
   count: number
 }
 
+export interface AccountBreakdownItem {
+  account_id: number | null // null = not linked to an account
+  name: string
+  type: AccountType | null
+  total: number
+}
+
+export interface PaymentMethodBreakdownItem {
+  payment_method: PaymentMethod | null
+  total: number
+  count: number
+}
+
 export interface InsightsSummary {
   monthly_totals: MonthlyTotal[]
   monthly_income_totals: MonthlyTotal[]
   category_breakdown: CategoryBreakdownItem[]
   top_merchants: MerchantBreakdownItem[]
+  account_breakdown: AccountBreakdownItem[]
+  payment_method_breakdown: PaymentMethodBreakdownItem[]
+}
+
+export interface InsightsFilters {
+  accountId?: number // 0 = not linked to an account
+  paymentMethod?: PaymentMethod
 }
 
 export type RecurringCadence = "weekly" | "monthly" | "yearly"
