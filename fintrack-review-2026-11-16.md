@@ -1,10 +1,25 @@
 # Fintrack Weekly Code Review - 2026-11-16
 
 ## Summary
-Both repos were available and reviewed in full: `fintrack` (frontend, SHA `8a37d4c9d34bf445a51304b3212c502b29e55a84`) and `fintrack-backend` (SHA `0dd0ce4a66645cc14f42570fef2e1518ee99d7de`). The backend is unusually security-mature for a fintech app this size — the recent commit history shows a deliberate, well-documented campaign against IDOR, OAuth redirect forgery, OTP timing/TOCTOU races, and float money math, and this review's independent read of the code confirms those fixes actually hold (every transaction/account/budget/category route filters by `user_id`, OAuth state is server-bound with a strict redirect allowlist, OTP attempts/consumption use atomic conditional updates). No P0 or P1 issues were found in either repo. The headline concerns are narrower: a couple of backend log lines that could leak exception detail from a token-bearing request, a frontend write-path convention violation (money sent as JSON numbers instead of the documented decimal-string wire format — verified *not* to cause actual precision loss, but inconsistent with the app's own stated contract and worth closing defensively), and a few accessibility/idempotency gaps on screens the earlier hardening commits didn't reach. Static analysis tooling could only partially run: backend `ruff` ran cleanly (style-only findings), but backend `mypy`/`pytest --collect-only` and all frontend tooling (`lint`/`typecheck`/`npm audit`) could not run because dependencies are not installed in this review container — this is a review-environment gap, not a code finding, and CI (configured in both repos' `.github/workflows`) remains the real source of truth for those checks.
+Both repos were available and reviewed in full: `fintrack` (frontend, SHA `8a37d4c9d34bf445a51304b3212c502b29e55a84`) and `fintrack-backend` (SHA `0dd0ce4a66645cc14f42570fef2e1518ee99d7de`) — both unchanged since the last two review cycles (same SHAs as PRs #10 and #11). The backend is unusually security-mature for a fintech app this size — the recent commit history shows a deliberate, well-documented campaign against IDOR, OAuth redirect forgery, OTP timing/TOCTOU races, and float money math, and this review's independent read of the code confirms those fixes actually hold (every transaction/account/budget/category route filters by `user_id`, OAuth state is server-bound with a strict redirect allowlist, OTP attempts/consumption use atomic conditional updates). **The headline concern carries over unfixed from PRs #9, #10, and #11: logout does not clear the React Query cache, and most query keys are not scoped by user id, so a shared device can render the previous user's financial data after a login switch.** Beyond that repeat P0, no new P1s were found. The other concerns are narrower: a couple of backend log lines that could leak exception detail from a token-bearing request, a frontend write-path convention violation (money sent as JSON numbers instead of the documented decimal-string wire format — verified *not* to cause actual precision loss, but inconsistent with the app's own stated contract and worth closing defensively), and a few accessibility/idempotency gaps on screens the earlier hardening commits didn't reach. Static analysis tooling could only partially run: backend `ruff` ran cleanly (style-only findings), but backend `mypy`/`pytest --collect-only` and all frontend tooling (`lint`/`typecheck`/`npm audit`) could not run because dependencies are not installed in this review container — this is a review-environment gap, not a code finding, and CI (configured in both repos' `.github/workflows`) remains the real source of truth for those checks. **Separately: PRs #5 through #11 from prior weekly reviews are all still open and unmerged — this backlog of 7 (now 8, with this PR) unreviewed weekly reports should get attention before another cycle piles on.**
 
 ## Critical (P0) - fix before deploy
-None found.
+- **[fintrack/app/(tabs)/profile.tsx:49]**, **[fintrack/src/store/useUserStore.ts:25-43]**, **[fintrack/app/_layout.tsx:26]** — Still unfixed; first reported in PR #9, repeated in PR #10 and #11. `handleLogout` calls `logout()` then `router.replace("/(auth)/login")`; `logout()` clears the local token/user record but never touches the TanStack Query cache (no `queryClient.clear()`/`removeQueries()`/`resetQueries()` anywhere in the codebase). Independently confirmed this review cycle that most query keys are also not scoped by user id: `["accounts", ...]` (`src/hooks/useAccounts.ts:7`), `["net-worth"]` (`useAccounts.ts:14`), `["categories", ...]` (`src/hooks/useCategories.ts:10`), `["budgets"]` (`app/(tabs)/budget.tsx:31`), `["insights"]` and `["recurring"]` (`app/(tabs)/insights.tsx:27,32`) carry no user identifier. Only `["transactions", user?.id, ...]` (`app/(tabs)/index.tsx:65`, `app/(tabs)/transactions.tsx:58`) is scoped, and even that cache entry is never evicted on logout — it's just orphaned, not cleared.
+  Why it matters: on any shared or handed-down device (the realistic case for a family finance app), User A logs out, User B logs in, and TanStack Query serves User B the in-memory cached accounts/net-worth/budgets/insights/recurring/categories data belonging to User A instantly on mount, before the background refetch resolves — a direct cross-user financial-data and PII leak, not a theoretical one.
+  Fix:
+  ```ts
+  // src/store/useUserStore.ts — give logout access to the QueryClient and
+  // clear it as the very last step, after local state is already cleared
+  // (clearing never blocks logout even if something above threw).
+  import { QueryClient } from "@tanstack/react-query"
+
+  export const configureUserStoreQueryClient = (qc: QueryClient) => { queryClient = qc }
+  let queryClient: QueryClient | undefined
+
+  // ...inside logout(), after set({ user: null, ... }):
+  await queryClient?.clear()
+  ```
+  and scope every remaining query key by `user?.id` (`["accounts", user?.id, { includeArchived }]`, etc.) as defense in depth, so a cache that somehow survives a logout still can't leak across users.
 
 ## High (P1) - fix this sprint
 None found.
@@ -51,12 +66,14 @@ None found.
 - Backend authorization is uniformly correct: every transaction/account/budget/category read/write filters by `user_id == current_user.id` before 404ing otherwise, with no exceptions found and no route trusting a client-supplied user id — this is the single most common serious bug class in personal-finance apps, and it's closed everywhere.
 - Money is `Decimal`/`NUMERIC(12,2)` end-to-end on the backend, serialized as a JSON string (not a float) with an explicit, tested migration off an earlier `FLOAT` schema and bounds that are documented as deliberate defensive ceilings rather than arbitrary limits.
 - OTP handling closes a real TOCTOU race: both attempt-counting and single-use consumption use conditional `UPDATE ... WHERE` statements instead of read-then-write, and login/forgot-password responses are enumeration-safe (identical response shape plus a constant-time dummy-hash compare for unknown identifiers).
-- The frontend's web session migration off `localStorage` is actually complete, not just claimed in the commit message: every `access_token` write site was traced and none fires when `usesCookieSession` is true, and `useUserStore.logout()` performs real server-side session invalidation rather than a local-only token wipe.
+- The frontend's web session migration off `localStorage` is actually complete, not just claimed in the commit message: every `access_token` write site was traced and none fires when `usesCookieSession` is true, and `useUserStore.logout()` performs real server-side session invalidation (token_version bump) rather than a local-only token wipe — the token itself is handled correctly on logout; it's the separate React Query cache (see P0 above) that isn't.
 
 ## Suggested next steps
-1. Fix the two `print(str(e))` log sites in `fintrack-backend/app/api/auth.py:502` and `app/api/gmail.py:111` (small, isolated, no deploy risk).
-2. Serialize money fields as strings on the frontend's write paths (`transactions.ts`, `budgets.ts`, `accounts.ts`) to match the documented wire contract.
-3. Add `accessibilityLabel`/`accessibilityRole` to the five `(auth)` screens.
-4. Extend the transaction idempotency-key pattern to budget and account creation.
-5. Add smoke tests for signup/OTP/password-reset flows in `fintrack/__tests__/`.
-6. Run `ruff check --fix .` in `fintrack-backend` for the style-only findings.
+1. Fix the React Query cache/user-scoping P0 above — it's been open for three review cycles now and is a real cross-user data leak on shared devices.
+2. Fix the two `print(str(e))` log sites in `fintrack-backend/app/api/auth.py:502` and `app/api/gmail.py:111` (small, isolated, no deploy risk).
+3. Serialize money fields as strings on the frontend's write paths (`transactions.ts`, `budgets.ts`, `accounts.ts`) to match the documented wire contract.
+4. Add `accessibilityLabel`/`accessibilityRole` to the five `(auth)` screens.
+5. Extend the transaction idempotency-key pattern to budget and account creation.
+6. Add smoke tests for signup/OTP/password-reset flows in `fintrack/__tests__/`.
+7. Run `ruff check --fix .` in `fintrack-backend` for the style-only findings.
+8. Clear the backlog: PRs #5–#11 (prior weekly reviews) are still open and unmerged — triage or close them so findings don't get lost in the pile-up.
